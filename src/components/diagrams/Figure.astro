@@ -1,0 +1,150 @@
+---
+/*
+ * The frame every diagram shares: a panel, a perforation, and a caption. The summary is the
+ * figure's description for screen readers, and the Markdown copy of a page writes the summary in
+ * place of the figure (see src/pages/[...slug].md.ts).
+ *
+ * It also holds the shared pieces, so the diagrams look alike:
+ *   .dg-node    a step or a thing, on the page color with a rule
+ *   .dg-ticket  a publish session, drawn as the yellow ticket with its two notches
+ *   .dg-stamp   a state, in stamp ink: .dg-stamp-ok, .dg-stamp-bad, .dg-stamp-muted
+ *   .dg-note    a short note in Recursive's casual cut
+ *   .dg-arrow   the arrow from Arrow.astro
+ */
+interface Props {
+    caption: string;
+    summary: string;
+}
+
+const { caption, summary } = Astro.props;
+---
+
+<figure class="tr-figure not-content">
+    <p class="tr-figure-summary sr-only">{summary}</p>
+    <div class="stage">
+        <slot />
+    </div>
+    <div class="perforation" aria-hidden="true"></div>
+    <figcaption>{caption}</figcaption>
+</figure>
+
+<style>
+    .tr-figure {
+        margin-block: 2rem;
+        border: 1px solid var(--tr-line);
+        border-radius: 4px;
+        background-color: var(--tr-surface);
+    }
+
+    /* Each diagram adapts to the width of its own panel, not the window. */
+    .stage {
+        container-type: inline-size;
+        padding: 1.5rem 1.25rem 1.25rem;
+        color: var(--tr-body);
+        font-size: var(--sl-text-sm);
+        line-height: 1.45;
+    }
+
+    /* The tear line between the diagram and its caption. */
+    .perforation {
+        height: 6px;
+        margin-inline: 0.75rem;
+        background-image: radial-gradient(circle, var(--tr-line-strong) 1.75px, transparent 2.25px);
+        background-size: 10px 6px;
+        background-repeat: repeat-x;
+    }
+
+    figcaption {
+        padding: 0.625rem 1.25rem 0.75rem;
+        color: var(--tr-muted);
+        font-size: var(--sl-text-sm);
+    }
+
+    @media (max-width: 30rem) {
+        .stage {
+            padding: 1.25rem 0.875rem 1rem;
+        }
+
+        figcaption {
+            padding-inline: 0.875rem;
+        }
+    }
+
+    .tr-figure :global(p) {
+        margin: 0;
+    }
+
+    .tr-figure :global(code) {
+        font-size: 0.875em;
+        color: var(--tr-heading);
+    }
+
+    .tr-figure :global(.dg-node) {
+        padding: 0.625rem 0.75rem;
+        border: 1px solid var(--tr-line-strong);
+        border-radius: 3px;
+        background-color: var(--tr-page);
+        color: var(--tr-body);
+    }
+
+    .tr-figure :global(.dg-title) {
+        color: var(--tr-heading);
+        font-weight: 650;
+    }
+
+    /* The ticket: a yellow card with a notch on each side. */
+    .tr-figure :global(.dg-ticket) {
+        --notch: 6px;
+        position: relative;
+        padding: 0.625rem 1rem;
+        border-radius: 4px;
+        background-color: var(--tr-ticket);
+        color: var(--tr-ticket-ink);
+        mask:
+            radial-gradient(circle var(--notch) at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+            radial-gradient(circle var(--notch) at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+    }
+
+    .tr-figure :global(.dg-ticket code) {
+        color: inherit;
+    }
+
+    .tr-figure :global(.dg-stamp) {
+        display: inline-block;
+        padding: 0.0625rem 0.5rem;
+        border: 2px solid currentColor;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 750;
+        font-variation-settings: 'MONO' 1;
+        line-height: 1.5;
+        white-space: nowrap;
+        rotate: -3deg;
+    }
+
+    .tr-figure :global(.dg-stamp-ok) {
+        color: var(--tr-ok);
+    }
+
+    .tr-figure :global(.dg-stamp-bad) {
+        color: var(--tr-stamp);
+    }
+
+    .tr-figure :global(.dg-stamp-muted) {
+        color: var(--tr-muted);
+    }
+
+    .tr-figure :global(.dg-note) {
+        color: var(--tr-muted);
+        font-size: 0.8125rem;
+        font-variation-settings: 'CASL' 1;
+    }
+
+    .tr-figure :global(.dg-arrow) {
+        flex: none;
+        align-self: center;
+        width: 1.5rem;
+        height: 1rem;
+        color: var(--tr-accent);
+    }
+</style>

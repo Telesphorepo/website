@@ -4,10 +4,13 @@ description: Mirror hosted repositories from Nexus 3 into Telesphorepo, then cut
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import NexusCutover from '../../../components/diagrams/NexusCutover.astro';
 
 You can move hosted repositories from a Sonatype Nexus 3 server. An admin adds Nexus as a **source**. Telesphorepo then mirrors the repos you pick with repeated syncs. The mirrored repos are read only. When you are ready, you **cut over**: the mirroring ends and the repos become writable. Clients then publish to Telesphorepo.
 
 Telesphorepo reads Nexus only through its REST API. It never writes to Nexus. It does not offer a Nexus-compatible API.
+
+<NexusCutover />
 
 ## What it imports
 

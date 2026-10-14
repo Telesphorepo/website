@@ -4,6 +4,7 @@ description: Move every blob to another storage backend while the server keeps r
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
+import StorageMove from '../../../components/diagrams/StorageMove.astro';
 
 You can change the blob store of a running server, for example from the local disk to R2. The server copies every existing blob in the background. Reads and uploads keep working during the copy. The old store is never changed or deleted.
 
@@ -35,6 +36,8 @@ While the move copies, the server holds the old and the new store together:
 - **Uploads and deletes** go to the new store first, then to the old store. If either fails, the request fails.
 
 So a file that a client uploads during the move is in both stores. You do not need to stop publishing.
+
+<StorageMove />
 
 The copier walks the assets in order and saves its position after every 500 assets. For each asset it:
 

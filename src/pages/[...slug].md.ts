@@ -87,6 +87,17 @@ const toMarkdown = unified()
             }
         };
     })
+    .use(function figures() {
+        return (tree: Root) => {
+            // A diagram (src/components/diagrams/Figure.astro) is drawn for the eye. Write its summary instead.
+            for (const figure of selectAll('figure.tr-figure', tree)) {
+                const summary = textOf(select('.tr-figure-summary', figure)).trim();
+                figure.tagName = 'p';
+                figure.properties = {};
+                figure.children = [text(summary)];
+            }
+        };
+    })
     .use(function removeDecoration() {
         return (tree: Root) => {
             // Icons, buttons, scripts, and heading links carry no text for a reader.

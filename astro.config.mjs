@@ -86,27 +86,29 @@ export default defineConfig({
     site: 'https://telesphorepo.com',
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'A small, fast, self-hosted artifact repository for Maven, Gradle and Debian.',
+        description: 'A self-hosted repository for Maven, Gradle, Debian and raw files. One Go binary with SQLite.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
         ],
         components: {
+            Hero: './src/components/landing/Hero.astro',
             SiteTitle: './src/components/overrides/SiteTitle.astro',
             TableOfContents: './src/components/overrides/TableOfContents.astro',
             MobileTableOfContents: './src/components/overrides/MobileTableOfContents.astro',
             ThemeSelect: './src/components/overrides/ThemeSelect.astro',
         },
         customCss: [
-            '@fontsource-variable/archivo/wdth.css',
-            '@fontsource-variable/archivo/wdth-italic.css',
-            '@fontsource-variable/jetbrains-mono/wght.css',
+            '@fontsource-variable/big-shoulders/standard.css',
+            '@fontsource-variable/recursive/full.css',
             './src/styles/custom.css',
         ],
         expressiveCode: {
             themes: ['github-dark-default', 'github-light'],
             styleOverrides: {
-                borderRadius: '6px',
+                codeFontFamily: "'Recursive Variable', ui-monospace, monospace",
+                uiFontFamily: "'Recursive Variable', system-ui, sans-serif",
+                borderRadius: '4px',
                 borderColor: 'var(--tr-line)',
                 codeBackground: 'var(--tr-surface)',
                 frames: {

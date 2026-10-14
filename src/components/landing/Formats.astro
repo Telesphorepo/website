@@ -1,0 +1,133 @@
+---
+/* The formats the server hosts, each with the route it answers and a guide. */
+const formats = [
+    {
+        name: 'Maven',
+        route: '/maven/{repo}/',
+        text: 'Artifacts with their checksums. A release file never changes. Metadata and SNAPSHOT files can.',
+        href: '/repositories/maven-gradle/',
+    },
+    {
+        name: 'Gradle',
+        route: '/maven/{repo}/',
+        text: 'Builds and Gradle plugins use a maven repo. The Gradle plugin gets its own publish sessions.',
+        href: '/publishing/gradle-plugin/',
+    },
+    {
+        name: 'Debian',
+        route: '/debian/{repo}/',
+        text: 'A signed apt repository. Upload a .deb and the server builds the indexes.',
+        href: '/repositories/debian/',
+    },
+    {
+        name: 'Raw',
+        route: '/raw/{repo}/',
+        text: 'Plain files at any path. Each repo allows or denies overwrites.',
+        href: '/repositories/raw/',
+    },
+];
+---
+
+<ul class="tr-formats not-content" aria-label="Formats">
+    {formats.map((format) => (
+        <li>
+            <a href={format.href}>
+                <span class="name">{format.name}</span>
+                <code class="route">{format.route}</code>
+                <span class="text">{format.text}</span>
+            </a>
+        </li>
+    ))}
+</ul>
+
+<style>
+    .tr-formats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        margin: 0;
+        padding: 0;
+        border-block: 1px solid var(--tr-line);
+        list-style: none;
+    }
+
+    li + li {
+        border-inline-start: 1px solid var(--tr-line);
+    }
+
+    a {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        height: 100%;
+        padding: 1.25rem;
+        color: var(--tr-body);
+        text-decoration: none;
+        transition: background-color 150ms ease;
+    }
+
+    a:hover {
+        background-color: var(--tr-surface);
+    }
+
+    .name {
+        color: var(--tr-heading);
+        font-family: var(--tr-display);
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    a:hover .name {
+        color: var(--tr-link);
+    }
+
+    .route {
+        color: var(--tr-accent);
+        font-size: 0.8125rem;
+    }
+
+    :root[data-theme='light'] .route {
+        color: var(--tr-accent-high);
+    }
+
+    .text {
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 56rem) {
+        .tr-formats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        li:nth-child(3) {
+            border-inline-start: 0;
+        }
+
+        li:nth-child(n + 3) {
+            border-top: 1px solid var(--tr-line);
+        }
+    }
+
+    @media (max-width: 30rem) {
+        .tr-formats {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        li + li {
+            border-inline-start: 0;
+            border-top: 1px solid var(--tr-line);
+        }
+
+        a {
+            padding-inline: 0;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        a {
+            transition: none;
+        }
+    }
+</style>

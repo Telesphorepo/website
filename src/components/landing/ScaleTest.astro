@@ -1,0 +1,227 @@
+---
+/*
+ * The scale test: p95 latency of four request-path operations at 100k and at 1M assets, on one
+ * axis, with the limit at which the test fails. The numbers come from `go tool task test scale`.
+ */
+import Figure from '../diagrams/Figure.astro';
+
+const axisMs = 7;
+const ticks = [0, 1, 2, 3, 4, 5, 6, 7];
+
+// p95 in milliseconds.
+const ops = [
+    { name: 'Maven GET', detail: 'with If-None-Match', small: 0.586, large: 0.607 },
+    { name: 'Asset list page', detail: 'keyset pagination', small: 1.49, large: 1.51 },
+    { name: 'Search', detail: 'trigram index', small: 3.38, large: 3.39 },
+    { name: 'Token auth', detail: '/api/me', small: 1.03, large: 1.03 },
+].map((op) => ({
+    ...op,
+    // The test fails when the p95 at 1M exceeds max(2 x p95 at 100k, p95 at 100k + 2 ms).
+    limit: Math.max(2 * op.small, op.small + 2),
+}));
+
+const pct = (ms: number) => `${Math.min(ms / axisMs, 1) * 100}%`;
+const show = (ms: number) => (ms < 1 ? `${Math.round(ms * 1000)} µs` : `${ms.toFixed(2)} ms`);
+---
+
+<Figure
+    caption="p95 of 400 runs per operation, over HTTP, against the server image. With ten times the assets, no p95 moves by more than 21 µs."
+    summary={`The scale test measures the p95 latency of four operations at 100k and at 1M assets. ${ops.map((op) => `${op.name}: ${show(op.small)} at 100k, ${show(op.large)} at 1M.`).join(' ')} An operation fails the test when its p95 at 1M exceeds the larger of twice its p95 at 100k and its p95 at 100k plus 2 ms.`}
+>
+    <div class="legend" aria-hidden="true">
+        <span><span class="key key-small"></span>100k assets</span>
+        <span><span class="key key-large"></span>1M assets</span>
+        <span><span class="key key-limit"></span>The test fails past this line</span>
+    </div>
+
+    <ul class="ops">
+        {ops.map((op) => (
+            <li class="op">
+                <p class="label">
+                    <span class="name">{op.name}</span>
+                    <span class="detail">{op.detail}</span>
+                </p>
+                <div class="track" aria-hidden="true">
+                    {ticks.slice(1, -1).map((t) => <span class="grid" style={`left: ${pct(t)}`}></span>)}
+                    <span class="fail" style={`left: ${pct(op.limit)}`}></span>
+                    <span class="mark mark-small" style={`left: ${pct(op.small)}`}></span>
+                    <span class="mark mark-large" style={`left: ${pct(op.large)}`}></span>
+                </div>
+                <p class="values">{show(op.small)} <span class="to">to</span> {show(op.large)}</p>
+            </li>
+        ))}
+    </ul>
+
+    <div class="axis" aria-hidden="true">
+        <span></span>
+        <div class="ticks">
+            {ticks.map((t) => <span style={`left: ${pct(t)}`}>{t === 0 ? '0' : `${t} ms`}</span>)}
+        </div>
+        <span></span>
+    </div>
+</Figure>
+
+<style>
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1.5rem;
+        margin-bottom: 1.25rem;
+        color: var(--tr-muted);
+        font-size: 0.8125rem;
+    }
+
+    .legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .key {
+        display: inline-block;
+        width: 0.75rem;
+        height: 0.75rem;
+    }
+
+    .key-small {
+        border: 2px solid var(--tr-heading);
+        border-radius: 50%;
+    }
+
+    .key-large {
+        width: 0.25rem;
+        height: 1rem;
+        background-color: var(--tr-accent);
+    }
+
+    .key-limit {
+        width: 1rem;
+        background-image: repeating-linear-gradient(-45deg, var(--tr-stamp) 0 1.5px, transparent 1.5px 4px);
+        border-left: 2px solid var(--tr-stamp);
+    }
+
+    .ops {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .op,
+    .axis {
+        display: grid;
+        grid-template-columns: 9.5rem minmax(0, 1fr) 9rem;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .label {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .name {
+        color: var(--tr-heading);
+        font-weight: 650;
+    }
+
+    .detail {
+        color: var(--tr-muted);
+        font-size: 0.75rem;
+    }
+
+    .track {
+        position: relative;
+        height: 1.75rem;
+        border-bottom: 1px solid var(--tr-line-strong);
+    }
+
+    .grid {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background-color: var(--tr-line);
+    }
+
+    /* From the limit to the end of the axis: the zone where the test fails. */
+    .fail {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        border-left: 2px solid var(--tr-stamp);
+        background-image: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--tr-stamp) 45%, transparent) 0 1.5px, transparent 1.5px 6px);
+    }
+
+    .mark {
+        position: absolute;
+        top: 50%;
+        translate: -50% -50%;
+    }
+
+    .mark-small {
+        width: 0.875rem;
+        height: 0.875rem;
+        border: 2px solid var(--tr-heading);
+        border-radius: 50%;
+    }
+
+    .mark-large {
+        width: 0.25rem;
+        height: 1.375rem;
+        background-color: var(--tr-accent);
+    }
+
+    .values {
+        color: var(--tr-heading);
+        font-variant-numeric: tabular-nums;
+        font-variation-settings: 'MONO' 1;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+    }
+
+    .to {
+        color: var(--tr-muted);
+    }
+
+    .axis {
+        margin-top: 0.375rem;
+    }
+
+    .ticks {
+        position: relative;
+        height: 1rem;
+        color: var(--tr-muted);
+        font-size: 0.6875rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ticks span {
+        position: absolute;
+        translate: -50% 0;
+        white-space: nowrap;
+    }
+
+    .ticks span:first-child {
+        translate: 0 0;
+    }
+
+    .ticks span:last-child {
+        translate: -100% 0;
+    }
+
+    @container (max-width: 36rem) {
+        .op,
+        .axis {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.375rem;
+        }
+
+        .axis > span {
+            display: none;
+        }
+    }
+</style>

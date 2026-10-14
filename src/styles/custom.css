@@ -3,43 +3,63 @@
  * so Starlight's own components follow both themes. Starlight's styles sit in cascade layers,
  * so these unlayered rules win without extra specificity.
  *
- * Dark is the primary theme: near-black surfaces, 1px hairlines, one violet accent.
- * The accent marks links, the current location, focus rings and selection. Nothing else.
+ * The idea: Telesphorepo works like an issuing desk. Nobody writes with a password. The server
+ * issues a short ticket (a publish session) for one repo, checks every file, and logs each ticket.
+ * The yellow ticket is the brand: the logo, the hero, the session in the diagrams. Its perforation
+ * (a row of punched holes) is the one recurring motif. It separates diagram captions and marks
+ * horizontal rules. Nothing else uses it.
  *
- * Spacing scale: 0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem, 3rem, 4rem.
- * JetBrains Mono is for code and for small labels (sidebar groups, table headers, feature labels, the contents heading).
+ * Palette: ledger green-black, ticket yellow, stock (the paper color of the text), and two ink
+ * colors that only mark state: stamp red for refused or failed, and green for done.
+ *
+ * Type: Big Shoulders (condensed, signage) for page titles, h2 and sidebar groups. Recursive for
+ * everything else. Code uses Recursive with its MONO axis, so text and code are one family.
+ * Diagram notes use Recursive's CASL axis, the hand of the clerk.
  */
 
 :root {
-    --tr-page: #08090a;
-    --tr-surface: #0f1012;
-    --tr-raised: #16171a;
-    --tr-line: #1e2024;
-    --tr-line-strong: #2b2d32;
-    --tr-muted: #8a8f98;
-    --tr-body: #c9ced6;
-    --tr-heading: #f7f8f8;
-    --tr-accent-low: #1c1a3d;
-    --tr-accent: #8b85ff;
-    --tr-accent-high: #b3afff;
-    /* Links in running text. */
+    --tr-page: #0f1a16;
+    --tr-surface: #14231d;
+    --tr-raised: #1b2e26;
+    --tr-line: #233a30;
+    --tr-line-strong: #33503f;
+    --tr-tick: #4a6a58;
+    --tr-muted: #8fa396;
+    --tr-body: #c9d3cb;
+    --tr-heading: #f1ebd6;
+    --tr-accent-low: #2f2a14;
+    --tr-accent: #e9b546;
+    --tr-accent-high: #f3cf7c;
     --tr-link: var(--tr-accent-high);
+    --tr-stamp: #ec6a52;
+    --tr-ok: #8cd3a6;
+
+    /* The ticket: the same yellow card with dark ink in both themes. */
+    --tr-ticket: #e9b546;
+    --tr-ticket-edge: #c99429;
+    --tr-ticket-ink: #1c2219;
+    --tr-ticket-faint: #574718;
+    --tr-ticket-stamp: #8e2014;
+    --tr-logo-mark: var(--tr-ticket);
+
+    --tr-display: 'Big Shoulders Variable', 'Arial Narrow', sans-serif;
 
     --sl-color-accent-low: var(--tr-accent-low);
     --sl-color-accent: var(--tr-accent);
     --sl-color-accent-high: var(--tr-accent-high);
 
     --sl-color-white: var(--tr-heading);
-    --sl-color-gray-1: #e6e8eb;
+    --sl-color-gray-1: #e2e6df;
     --sl-color-gray-2: var(--tr-body);
     --sl-color-gray-3: var(--tr-muted);
-    --sl-color-gray-4: #4d5158;
+    --sl-color-gray-4: #52685b;
     --sl-color-gray-5: var(--tr-line-strong);
     --sl-color-gray-6: var(--tr-surface);
     --sl-color-black: var(--tr-page);
 
     --sl-color-text: var(--tr-body);
     --sl-color-text-accent: var(--tr-link);
+    --sl-color-text-invert: var(--tr-ticket-ink);
     --sl-color-bg: var(--tr-page);
     --sl-color-bg-nav: var(--tr-page);
     --sl-color-bg-sidebar: var(--tr-page);
@@ -48,37 +68,40 @@
     --sl-color-hairline: var(--tr-line);
     --sl-color-hairline-shade: var(--tr-line);
 
-    --sl-font: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
-    --sl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+    --sl-font: 'Recursive Variable', system-ui, sans-serif;
+    --sl-font-mono: 'Recursive Variable', ui-monospace, monospace;
 
-    --sl-text-h1: clamp(2rem, 1.5rem + 2vw, 2.75rem);
-    --sl-text-h2: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+    --sl-text-h1: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+    --sl-text-h2: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
     --sl-text-h3: 1.1875rem;
     --sl-text-h4: 1rem;
     --sl-line-height: 1.7;
     --sl-content-width: 46rem;
     --sl-sidebar-width: 16.5rem;
-    --sl-nav-height: 3.5rem;
+    --sl-nav-height: 3.75rem;
 
     color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-    --tr-page: #ffffff;
-    --tr-surface: #f7f7f8;
-    --tr-raised: #f0f0f2;
-    --tr-line: #e7e7eb;
-    --tr-line-strong: #d5d5db;
-    --tr-muted: #6b6f76;
-    --tr-body: #2b2d31;
-    --tr-heading: #0d0e10;
-    --tr-accent-low: #ecebff;
-    --tr-accent: #5b50e6;
-    --tr-accent-high: #4338ca;
-    --tr-link: var(--tr-accent);
+    --tr-page: #eef1e8;
+    --tr-surface: #e4e9dc;
+    --tr-raised: #d9e0cf;
+    --tr-line: #cdd5c3;
+    --tr-line-strong: #aebba6;
+    --tr-tick: #8b9a85;
+    --tr-muted: #55665b;
+    --tr-body: #26352d;
+    --tr-heading: #0f1e17;
+    --tr-accent-low: #f3e3b3;
+    --tr-accent: #a07000;
+    --tr-accent-high: #7a5200;
+    --tr-link: var(--tr-accent-high);
+    --tr-stamp: #b3301c;
+    --tr-ok: #18693b;
 
-    --sl-color-gray-1: #1d1f23;
-    --sl-color-gray-4: #a3a6ad;
+    --sl-color-gray-1: #1b2a22;
+    --sl-color-gray-4: #8b9a85;
     --sl-color-gray-7: var(--tr-surface);
 
     color-scheme: light;
@@ -130,9 +153,18 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Code in Recursive's monospace cut. */
+code,
+kbd,
+pre,
+samp,
+.expressive-code pre {
+    font-variation-settings: 'MONO' 1;
+}
+
 ::selection {
-    background-color: var(--tr-accent-low);
-    color: var(--tr-heading);
+    background-color: var(--tr-accent);
+    color: var(--tr-ticket-ink);
 }
 
 :focus-visible {
@@ -140,13 +172,20 @@ body {
     outline-offset: 2px;
 }
 
+/* Header: the page color with one rule under it. */
+
+.header {
+    border-bottom-color: var(--tr-line);
+}
+
 /* Page titles, including the landing title */
 
 #_top {
+    font-family: var(--tr-display);
     font-size: var(--sl-text-h1);
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: 0.005em;
+    line-height: 1;
     color: var(--tr-heading);
     overflow-wrap: break-word;
 }
@@ -157,12 +196,19 @@ body {
     padding-top: 0;
 }
 
-/* Headings: weight and size set the hierarchy; space above separates the sections. */
+/* Headings: the condensed face for h2, Recursive for the levels under it. */
 
 .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
     color: var(--tr-heading);
-    font-weight: 600;
-    letter-spacing: -0.02em;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+}
+
+.sl-markdown-content h2:not(:where(.not-content *)) {
+    font-family: var(--tr-display);
+    font-weight: 750;
+    letter-spacing: 0.005em;
+    line-height: 1.05;
 }
 
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
@@ -201,15 +247,14 @@ body {
 
 .sl-markdown-content strong:not(:where(.not-content *)) {
     color: var(--tr-heading);
-    font-weight: 600;
+    font-weight: 650;
 }
 
-/* Inline code: a raised chip with a hairline. */
+/* Inline code: a raised chip. */
 
 .sl-markdown-content code:not(:where(.not-content *)) {
     padding: 0.125em 0.375em;
-    border: 1px solid var(--tr-line);
-    border-radius: 4px;
+    border-radius: 3px;
     color: var(--tr-heading);
     font-size: 0.85em;
 }
@@ -218,9 +263,15 @@ body {
     color: inherit;
 }
 
+/* Code blocks: the surface color and one rule. */
+
+.sl-markdown-content .expressive-code .frame {
+    box-shadow: none;
+}
+
 /*
- * Tables: one rule system. The line under the header and the lines between rows have the same
- * weight and color. No frame above the header or below the last row.
+ * Tables: a heavier rule under the header, light rules between the rows. Every cell has the same
+ * padding, so the first column does not touch the edge.
  */
 
 .sl-markdown-content table:not(:where(.not-content *)) {
@@ -228,18 +279,19 @@ body {
     line-height: 1.5;
 }
 
-.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
-    padding-block: 0.625rem;
+.sl-markdown-content :is(th, td):not(:where(.not-content *)),
+.sl-markdown-content :is(th, td):is(:first-child, :last-child):not(:where(.not-content *)) {
+    padding: 0.625rem 0.875rem;
     border-bottom: 1px solid var(--tr-line);
+    vertical-align: top;
 }
 
 .sl-markdown-content th:not(:where(.not-content *)) {
-    font-family: var(--sl-font-mono);
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--tr-muted);
+    border-bottom: 2px solid var(--tr-line-strong);
+    background-color: var(--tr-surface);
+    font-size: 0.8125rem;
+    font-weight: 650;
+    color: var(--tr-heading);
 }
 
 .sl-markdown-content td:not(:where(.not-content *)) {
@@ -254,11 +306,16 @@ body {
     white-space: nowrap;
 }
 
-/* Rules and quotes */
+/* Rules: a perforation, a row of punched holes. */
 
 .sl-markdown-content hr:not(:where(.not-content *)) {
-    margin-block: 2rem;
-    border-bottom-color: var(--tr-line);
+    height: 8px;
+    margin-block: 2.5rem;
+    border: 0;
+    background-image: radial-gradient(circle, var(--tr-line-strong) 2px, transparent 2.5px);
+    background-size: 12px 8px;
+    background-repeat: repeat-x;
+    background-position: center;
 }
 
 .sl-markdown-content blockquote:not(:where(.not-content *)) {
@@ -266,39 +323,36 @@ body {
     color: var(--tr-muted);
 }
 
-/* Asides: the surface color, a hairline, and the type color only on the left edge. */
+/* Asides: a slip on the surface color. The type color marks the left edge and the title. */
 
 .starlight-aside {
     border: 1px solid var(--tr-line);
-    border-inline-start: 2px solid var(--sl-color-asides-border);
-    border-radius: 6px;
+    border-inline-start: 3px solid var(--sl-color-asides-border);
+    border-radius: 3px;
     padding: 0.875rem 1.125rem;
     background-color: var(--tr-surface);
     color: var(--tr-body);
 }
 
 .starlight-aside__title {
-    font-size: var(--sl-text-sm);
-    font-weight: 600;
+    font-family: var(--tr-display);
+    font-size: 1.125rem;
+    font-weight: 750;
+    letter-spacing: 0.01em;
 }
 
-/* Sidebar: mono group labels, muted links, the current page in the heading color on a raised row */
+/* Sidebar: condensed group names, quiet links, and the current page with a ticket-yellow edge. */
 
 #starlight__sidebar summary .large {
-    font-family: var(--sl-font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--tr-muted);
-}
-
-#starlight__sidebar summary:hover .large {
+    font-family: var(--tr-display);
+    font-size: 1.0625rem;
+    font-weight: 750;
+    letter-spacing: 0.01em;
     color: var(--tr-heading);
 }
 
 #starlight__sidebar a {
-    border-radius: 4px;
+    border-radius: 0 3px 3px 0;
     color: var(--tr-muted);
     font-size: 0.875rem;
 }
@@ -316,19 +370,19 @@ body {
 #starlight__sidebar a[aria-current='page']:hover,
 #starlight__sidebar a[aria-current='page']:focus {
     background-color: var(--tr-raised);
+    box-shadow: inset 3px 0 0 var(--tr-accent);
     color: var(--tr-heading);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* Table of contents */
 
 starlight-toc h2 {
-    font-family: var(--sl-font-mono);
-    font-size: 0.6875rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--tr-muted);
+    font-family: var(--tr-display);
+    font-size: 1.0625rem;
+    font-weight: 750;
+    letter-spacing: 0.01em;
+    color: var(--tr-heading);
 }
 
 starlight-toc a {
@@ -343,7 +397,7 @@ starlight-toc a[aria-current='true']:hover {
 }
 
 starlight-toc a[aria-current='true'] {
-    box-shadow: inset 1px 0 0 var(--tr-accent);
+    box-shadow: inset 2px 0 0 var(--tr-accent);
 }
 
 /* Previous and next links */
@@ -354,7 +408,7 @@ starlight-toc a[aria-current='true'] {
 
 .pagination-links a {
     border: 1px solid var(--tr-line);
-    border-radius: 6px;
+    border-radius: 4px;
     box-shadow: none;
     color: var(--tr-muted);
     transition: border-color 150ms ease, background-color 150ms ease;
@@ -366,168 +420,77 @@ starlight-toc a[aria-current='true'] {
 }
 
 .pagination-links .link-title {
-    font-size: var(--sl-text-lg);
-    font-weight: 600;
+    font-family: var(--tr-display);
+    font-size: 1.375rem;
+    font-weight: 750;
     color: var(--tr-heading);
 }
 
-/* Buttons: the primary is the heading color on the page, the secondary is a hairline. */
+/* Buttons: the primary is the ticket, the secondary is a rule. */
 
-.sl-link-button {
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    padding: 0.5rem 1rem;
+.sl-link-button,
+.tr-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.625rem 1.125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
     transition: background-color 150ms ease, border-color 150ms ease;
 }
 
-.sl-link-button.primary {
-    background-color: var(--tr-heading);
-    border-color: var(--tr-heading);
-    color: var(--tr-page);
+.sl-link-button.primary,
+.tr-button-primary {
+    background-color: var(--tr-ticket);
+    border-color: var(--tr-ticket);
+    color: var(--tr-ticket-ink);
 }
 
-.sl-link-button.primary:hover {
-    background-color: var(--tr-body);
-    border-color: var(--tr-body);
-    color: var(--tr-page);
+.sl-link-button.primary:hover,
+.tr-button-primary:hover {
+    background-color: var(--tr-accent-high);
+    border-color: var(--tr-accent-high);
+    color: var(--tr-ticket-ink);
 }
 
-.sl-link-button.secondary {
+:root[data-theme='light'] :is(.sl-link-button.primary, .tr-button-primary):hover {
+    background-color: var(--tr-ticket-edge);
+    border-color: var(--tr-ticket-edge);
+}
+
+.sl-link-button.secondary,
+.tr-button-secondary {
     border-color: var(--tr-line-strong);
     color: var(--tr-heading);
 }
 
-.sl-link-button.secondary:hover {
+.sl-link-button.secondary:hover,
+.tr-button-secondary:hover {
     border-color: var(--tr-muted);
     background-color: var(--tr-surface);
+    color: var(--tr-heading);
 }
 
-/*
- * Landing page: one centered column. The hero holds the headline, the tagline and the actions.
- * Below it are a bordered feature grid, the quickstart code and a list of entry links.
- */
+/* Landing page: one wide column. The hero is a component (src/components/landing/Hero.astro). */
 
 :root[data-has-hero] {
-    --sl-content-width: 64rem;
+    --sl-content-width: 68rem;
 }
 
 [data-has-hero] .sl-container {
     margin-inline: auto;
 }
 
-/* A faint line grid behind the hero, faded toward the edges so it has no hard border. */
-[data-has-hero] .hero {
-    position: relative;
-    isolation: isolate;
-    padding-block: clamp(3rem, 1.5rem + 8vmin, 6.5rem) 3rem;
+[data-has-hero] .sl-markdown-content h2:not(:where(.not-content *)) {
+    font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
 }
 
-[data-has-hero] .hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image:
-        linear-gradient(to right, var(--tr-line) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--tr-line) 1px, transparent 1px);
-    background-size: 48px 48px;
-    background-position: center;
-    mask-image: radial-gradient(ellipse 60% 70% at 50% 40%, #000 20%, transparent 75%);
-    opacity: 0.6;
-}
-
-[data-has-hero] .hero .stack {
-    gap: 1.5rem;
-}
-
-[data-has-hero] .hero .copy {
-    align-items: flex-start;
-    text-align: start;
-}
-
-[data-has-hero] .hero .copy > * {
-    max-width: 44rem;
-}
-
-[data-has-hero] .hero #_top {
-    font-size: clamp(2.25rem, 1.25rem + 4vw, 4rem);
-    font-weight: 600;
-    letter-spacing: -0.04em;
-    line-height: 1.02;
-    text-wrap: balance;
-}
-
-[data-has-hero] .hero .tagline {
-    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.1875rem);
-    line-height: 1.55;
-    text-wrap: pretty;
-    color: var(--tr-muted);
-}
-
-[data-has-hero] .hero .actions {
-    justify-content: flex-start;
-    gap: 0.75rem;
-}
-
-/*
- * Features: cells divided by 1px lines inside one frame. The gap shows the line color behind the cells,
- * so every inner line is exactly 1px, in one or two columns.
- */
-
-.tr-features {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1px;
-    margin: 0;
-    padding: 0;
-    border: 1px solid var(--tr-line);
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: var(--tr-line);
-    list-style: none;
-}
-
-@media (min-width: 45rem) {
-    .tr-features {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-.tr-features li {
-    margin: 0;
-    padding: 1.5rem;
-    background-color: var(--tr-page);
-}
-
-.tr-features .tr-label {
-    display: block;
-    font-family: var(--sl-font-mono);
-    font-size: 0.6875rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--tr-muted);
-}
-
-.tr-features h3 {
-    margin: 0.75rem 0 0;
-    font-size: 1.0625rem;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    line-height: 1.35;
-    color: var(--tr-heading);
-}
-
-.tr-features p {
-    margin: 0.5rem 0 0;
-    font-size: 0.9375rem;
-    line-height: 1.6;
-    color: var(--tr-muted);
-}
-
-.tr-features code {
-    font-size: 0.85em;
-    color: var(--tr-body);
+[data-has-hero] .sl-markdown-content > p {
+    max-width: 40rem;
 }
 
 /*
@@ -565,9 +528,10 @@ starlight-toc a[aria-current='true'] {
 
 .tr-entry-title {
     grid-area: 1 / 1;
-    font-size: 1rem;
-    font-weight: 500;
-    line-height: 1.4;
+    font-family: var(--tr-display);
+    font-size: 1.375rem;
+    font-weight: 750;
+    line-height: 1.2;
     color: var(--tr-heading);
     transition: color 150ms ease;
 }
@@ -606,6 +570,7 @@ starlight-toc a[aria-current='true'] {
 
 @media (prefers-reduced-motion: reduce) {
     .sl-link-button,
+    .tr-button,
     .pagination-links a,
     .tr-entry-title,
     .tr-entries a::after {

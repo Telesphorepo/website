@@ -1,0 +1,194 @@
+---
+/*
+ * The warm cut-over from Nexus as a timeline: add the source, mirror with repeated syncs, cut
+ * over with one final sync, then publish here. Each phase shows its syncs and what a write to a
+ * mapped repo gets.
+ */
+import Figure from './Figure.astro';
+
+// Sync widths in the mirroring phase: the first sync copies everything, later ones only the changes.
+const mirrorSyncs = [46, 7, 5, 8, 5, 6];
+---
+
+<Figure
+    caption="Mirror while Nexus stays live. Cut over when you are ready to publish here."
+    summary="A Nexus cut-over has four phases. Add source: Telesphorepo checks the Nexus login and lists the hosted repos, and you map each one to a target repo. Mirroring: the first sync copies every file, and later syncs run every nexus.sync_interval (15 minutes by default) and copy only new and changed files, because a file with the same SHA-256 is skipped. During mirroring, a write to a mapped repo gets 409, mirrors Nexus source, cut over first. Cut over: you stop publishing to Nexus, and Telesphorepo runs one final sync. Publishing here: the source is cut_over, the mapped repos are writable, and the server deletes the stored Nexus credentials."
+>
+    <ol class="phases">
+        <li class="phase">
+            <p class="head"><span class="dot"></span><span class="name">Add source</span></p>
+            <div class="lane">
+                <p class="lane-name">Syncs</p>
+                <p class="dg-note">None yet. The server checks the Nexus login and lists the hosted repos. You map each one to a target.</p>
+            </div>
+            <div class="lane">
+                <p class="lane-name">Writes to a mapped repo</p>
+                <p class="dg-note">Not mapped yet.</p>
+            </div>
+        </li>
+        <li class="phase">
+            <p class="head"><span class="dot"></span><span class="name">Mirroring</span> <code>mirroring</code></p>
+            <div class="lane">
+                <p class="lane-name">Syncs</p>
+                <div class="syncs" aria-hidden="true">
+                    {mirrorSyncs.map((width) => <span class="sync" style={`flex-basis: ${width}%`}></span>)}
+                </div>
+                <p class="dg-note">The first sync copies everything. Then one every <code>nexus.sync_interval</code> (15 min). Same SHA-256, no copy.</p>
+            </div>
+            <div class="lane">
+                <p class="lane-name">Writes to a mapped repo</p>
+                <p><span class="dg-stamp dg-stamp-bad">409</span></p>
+                <p class="dg-note"><code>mirrors Nexus source &lt;name&gt;; cut over first</code></p>
+            </div>
+        </li>
+        <li class="phase">
+            <p class="head"><span class="dot dot-cut"></span><span class="name">Cut over</span></p>
+            <div class="lane">
+                <p class="lane-name">Syncs</p>
+                <div class="syncs" aria-hidden="true">
+                    <span class="sync sync-final" style="flex-basis: 40%"></span>
+                </div>
+                <p class="dg-note">Stop publishing to Nexus. One final sync runs.</p>
+            </div>
+            <div class="lane">
+                <p class="lane-name">Writes to a mapped repo</p>
+                <p><span class="dg-stamp dg-stamp-bad">409</span></p>
+                <p class="dg-note">Until the final sync ends.</p>
+            </div>
+        </li>
+        <li class="phase">
+            <p class="head"><span class="dot dot-done"></span><span class="name">Publishing here</span> <code>cut_over</code></p>
+            <div class="lane">
+                <p class="lane-name">Syncs</p>
+                <p class="dg-note">None. The server deletes the Nexus credentials. The sync history stays.</p>
+            </div>
+            <div class="lane">
+                <p class="lane-name">Writes to a mapped repo</p>
+                <p><span class="dg-stamp dg-stamp-ok">writable</span></p>
+                <p class="dg-note">Point clients and CI here.</p>
+            </div>
+        </li>
+    </ol>
+</Figure>
+
+<style>
+    .phases {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-rows: auto auto auto;
+        column-gap: 1rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .phase {
+        display: grid;
+        grid-row: span 3;
+        grid-template-rows: subgrid;
+        row-gap: 0.75rem;
+        min-width: 0;
+    }
+
+    /* The phase heads sit on one line: the timeline. */
+    .head {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.25rem 0.5rem;
+        padding-top: 1.125rem;
+    }
+
+    .head::before {
+        content: '';
+        position: absolute;
+        top: 0.3125rem;
+        left: 0;
+        right: -1rem;
+        height: 2px;
+        background-color: var(--tr-line-strong);
+    }
+
+    .phase:last-child .head::before {
+        right: 0;
+    }
+
+    .dot {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0.75rem;
+        height: 0.75rem;
+        border: 2px solid var(--tr-line-strong);
+        border-radius: 50%;
+        background-color: var(--tr-surface);
+    }
+
+    .dot-cut {
+        border-color: var(--tr-accent);
+        background-color: var(--tr-accent);
+    }
+
+    .dot-done {
+        border-color: var(--tr-ok);
+    }
+
+    .name {
+        color: var(--tr-heading);
+        font-family: var(--tr-display);
+        font-size: 1.125rem;
+        font-weight: 750;
+        line-height: 1.1;
+    }
+
+    .lane {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        padding-top: 0.625rem;
+        border-top: 1px solid var(--tr-line);
+    }
+
+    .lane-name {
+        color: var(--tr-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .syncs {
+        display: flex;
+        gap: 4%;
+        height: 0.875rem;
+    }
+
+    .sync {
+        flex-grow: 0;
+        flex-shrink: 0;
+        border-radius: 2px;
+        background-color: var(--tr-line-strong);
+    }
+
+    .sync-final {
+        background-color: var(--tr-accent);
+    }
+
+    /* Narrow panels: the phases run top to bottom. */
+    @container (max-width: 38rem) {
+        .phases {
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: none;
+            row-gap: 1.5rem;
+        }
+
+        .phase {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .head::before {
+            display: none;
+        }
+    }
+</style>

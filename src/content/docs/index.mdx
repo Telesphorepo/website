@@ -1,44 +1,56 @@
 ---
 title: Telesphorepo
-description: A small, fast, self-hosted artifact repository for Maven, Gradle and Debian. One binary with SQLite, short-lived publish credentials, filesystem or S3 storage, and a warm cut-over from Nexus.
+description: A self-hosted repository for Maven, Gradle, Debian and raw files. One binary with SQLite, publish sessions that end after 15 minutes, filesystem or S3 storage, and a warm cut-over from Nexus.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
-  title: A small, fast, self-hosted artifact repository for Maven, Gradle and Debian
-  tagline: Telesphorepo hosts Maven and Gradle artifacts, apt repos and raw files. It runs as one Go binary with a web UI and SQLite, and stores files on local disk or in any S3-compatible bucket.
+  title: Passwords read. Publish sessions write.
+  tagline: Telesphorepo is a self-hosted repository for Maven, Gradle, Debian and raw files. Every upload needs a publish session, a token for one repo that ends after 15 minutes. A leaked password or read token cannot publish anything.
   actions:
     - text: Read the docs
-      link: /getting-started/introduction
-      icon: right-arrow
-    - text: GitHub
+      link: /getting-started/introduction/
+      variant: primary
+    - text: Source on GitHub
       link: https://github.com/Telesphorepo/Telesphorepo
       variant: secondary
-      icon: github
 ---
 
-<ul class="tr-features not-content">
-    <li>
-        <span class="tr-label">Deploy</span>
-        <h3>One binary, one container</h3>
-        <p>The server, the web UI and the SQLite database run in one process. A container with a <code>/data</code> volume is the whole install. Settings change in the UI and apply without a restart.</p>
-    </li>
-    <li>
-        <span class="tr-label">Publish</span>
-        <h3>No long-lived secrets in CI</h3>
-        <p>Every upload needs a publish session: a credential for one repo that ends after 15 minutes by default. GitHub Actions and Jenkins get sessions with their OIDC tokens through trust policies. A laptop approves a device once with a second factor.</p>
-    </li>
-    <li>
-        <span class="tr-label">Store</span>
-        <h3>Filesystem or S3, moved live</h3>
-        <p>Keep blobs on local disk or in any S3-compatible bucket, such as Cloudflare R2, SeaweedFS or AWS. Change the storage in Settings and the server copies every blob in the background. Reads and uploads continue during the move.</p>
-    </li>
-    <li>
-        <span class="tr-label">Migrate</span>
-        <h3>Warm cut-over from Nexus</h3>
-        <p>Add a Nexus 3 server as a source. Telesphorepo mirrors the hosted repos you pick with repeated syncs and keeps them read only. Cut over when you are ready to publish here.</p>
-    </li>
-</ul>
+import Formats from '../../components/landing/Formats.astro';
+import Install from '../../components/landing/Install.astro';
+import ScaleTest from '../../components/landing/ScaleTest.astro';
+import PublishSession from '../../components/diagrams/PublishSession.astro';
+import NexusCutover from '../../components/diagrams/NexusCutover.astro';
+
+<Formats />
+
+## A publish, from proof to close
+
+In many setups, a CI job holds a deploy password that never changes. Here, no long-lived credential can write. The client proves who it is, and the server issues a session for one repo. The Gradle plugin and the Maven extension do this on every publish, so you do not see it. GitHub Actions and Jenkins use their own identity tokens, so a CI job has no secret to leak.
+
+<PublishSession />
+
+Read [how publishing works](/publishing/overview/), then set up the [Gradle plugin](/publishing/gradle-plugin/), the [Maven extension](/publishing/maven-extension/) or [GitHub Actions](/publishing/github-actions/).
+
+## The whole install
+
+There is no database server and no search cluster. Search runs on an SQLite full-text index. The server, the web UI and the database run in one process. Settings live in the database and apply without a restart. To move the files from local disk to a bucket, change the storage on the Settings page. The server copies every blob in the background while reads and uploads continue.
+
+<Install />
+
+## The 1M-asset test
+
+Every query on a request path uses an index, and lists page with keys, not offsets. So a request costs the same with a large repo as with a small one. The scale test checks this on every run of `go tool task test scale`. It seeds 100k synthetic assets, measures, seeds up to 1M, and measures again.
+
+<ScaleTest />
+
+## Leave Nexus without a freeze
+
+Add a Nexus 3 server as a source and pick its hosted repos. Telesphorepo mirrors them with repeated syncs and keeps them read only until you cut over. Telesphorepo only reads from Nexus, so Nexus keeps serving your builds the whole time. When you are ready, cut over: one last sync, and the repos are yours to publish to.
+
+<NexusCutover />
+
+The [Nexus migration guide](/operations/nexus-migration/) has the format mapping and the failure rules.
 
 ## Quickstart
 
@@ -60,19 +72,19 @@ docker logs telesphorepo
 ## Next steps
 
 <nav class="tr-entries not-content" aria-label="Next steps">
-    <a href="/getting-started/install">
+    <a href="/getting-started/install/">
         <span class="tr-entry-title">Install</span>
         <span class="tr-entry-text">Run Telesphorepo in a container or as a binary.</span>
     </a>
-    <a href="/publishing/overview">
+    <a href="/publishing/overview/">
         <span class="tr-entry-title">Publishing</span>
         <span class="tr-entry-text">Publish sessions, the Gradle plugin, the Maven extension and CI.</span>
     </a>
-    <a href="/operations/nexus-migration">
+    <a href="/operations/nexus-migration/">
         <span class="tr-entry-title">Nexus migration</span>
         <span class="tr-entry-text">Mirror your Nexus 3 repos, then cut over.</span>
     </a>
-    <a href="/reference/http-api">
+    <a href="/reference/http-api/">
         <span class="tr-entry-title">HTTP API</span>
         <span class="tr-entry-text">Every route the server answers.</span>
     </a>

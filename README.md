@@ -16,8 +16,11 @@ bun run preview  # serve the production build
 ```
 
 The pages are in `src/content/docs/<section>/<page>.md(x)`. The sidebar is in `astro.config.mjs`.
-The theme is in `src/styles/custom.css`. Every page also has a Markdown copy at its URL with `.md`
-added, and the build writes `llms.txt`.
+The theme is in `src/styles/custom.css`. The logo is in `src/assets/logo-mark.svg`,
+`src/assets/logo-wordmark.svg` and `public/favicon.svg`. The landing page components are in
+`src/components/landing/`. The diagrams are in `src/components/diagrams/`, and any docs page can
+import them. Every page also has a Markdown copy at its URL with `.md` added, and the build writes
+`llms.txt`. A diagram's Markdown copy is its summary.
 
 ## Deploy
 

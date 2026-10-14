@@ -1,19 +1,21 @@
 ---
 /*
- * The Telesphorepo lockup (mark and wordmark) and the header links from starlight-utils.
- * This replaces the starlight-utils SiteTitle override, so it also renders the leading nav links
- * that the starlight-utils route middleware puts in Astro.locals.starlightUtils.navLinks.
+ * The Telesphorepo lockup (the ticket mark and the lettered wordmark) and the header links from
+ * starlight-utils. This replaces the starlight-utils SiteTitle override, so it also renders the
+ * leading nav links that the starlight-utils route middleware puts in Astro.locals.starlightUtils.navLinks.
+ * Below 30rem the header shows only the mark.
  */
-import Mark from '../../assets/tr-mark.svg';
+import Mark from '../../assets/logo-mark.svg';
+import Wordmark from '../../assets/logo-wordmark.svg';
 
-const { siteTitleHref } = Astro.locals.starlightRoute;
+const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
 const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
 ---
 
 <div class="tr-title-bar">
-    <a href={siteTitleHref} class="tr-site-title" translate="no">
-        <Mark class="tr-site-mark" width={22} height={22} aria-hidden="true"/>
-        <span class="tr-wordmark">Telesphorepo</span>
+    <a href={siteTitleHref} class="tr-site-title" translate="no" aria-label={siteTitle}>
+        <Wordmark class="tr-lockup" width={150} height={22} aria-hidden="true"/>
+        <Mark class="tr-mark" width={30} height={30} aria-hidden="true"/>
     </a>
     {navLinks.length > 0 && (
         <ul class="tr-nav-links">
@@ -32,7 +34,7 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
     .tr-title-bar {
         display: flex;
         align-items: center;
-        gap: 1.75rem;
+        gap: 2rem;
         min-width: 0;
     }
 
@@ -40,23 +42,20 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
         display: flex;
         flex: none;
         align-items: center;
-        gap: 0.625rem;
-        font-size: 1rem;
-        line-height: 1;
-        text-decoration: none;
-        white-space: nowrap;
-    }
-
-    .tr-site-mark {
-        flex: none;
-        width: 22px;
-        height: 22px;
-    }
-
-    .tr-wordmark {
-        font-weight: 650;
-        letter-spacing: -0.02em;
         color: var(--tr-heading);
+        text-decoration: none;
+    }
+
+    .tr-lockup {
+        display: block;
+        width: 150px;
+        height: auto;
+    }
+
+    .tr-mark {
+        display: none;
+        width: 30px;
+        height: 30px;
     }
 
     .tr-nav-links {
@@ -81,10 +80,22 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
         color: var(--tr-heading);
     }
 
-    /* Narrow screens: the wordmark needs the room. The sidebar menu holds the same links. */
+    .tr-nav-links a[aria-current='page'] {
+        text-decoration: underline;
+        text-decoration-color: var(--tr-accent);
+        text-decoration-thickness: 2px;
+        text-underline-offset: 0.45em;
+    }
+
+    /* Narrow screens: the mark alone. The sidebar menu holds the same links. */
     @media (max-width: 30rem) {
+        .tr-lockup,
         .tr-nav-links {
             display: none;
+        }
+
+        .tr-mark {
+            display: block;
         }
     }
 

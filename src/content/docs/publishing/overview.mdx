@@ -4,6 +4,7 @@ description: How publish sessions work, and which way to get one.
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import PublishSession from '../../../components/diagrams/PublishSession.astro';
 
 Every write to a Telesphorepo repository needs a **publish session**. A publish session is a random token. The server creates it for one repository. It ends when the publish is done, and it never lives longer than `publish.session_ttl` (15 minutes by default, 1 hour at most).
 
@@ -30,6 +31,8 @@ The server alone makes, stores, scopes, expires and revokes sessions. The caller
 2. The server answers with a token that starts with `trs_`.
 3. The client uses the token as the HTTP Basic password. Any user name works.
 4. The client ends the session when the publish is done. Otherwise the session expires by itself.
+
+<PublishSession />
 
 A session token works only for its own repository. It can also read that repository.
 
