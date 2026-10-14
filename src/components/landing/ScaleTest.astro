@@ -91,13 +91,16 @@ const show = (ms: number) => (ms < 1 ? `${Math.round(ms * 1000)} µs` : `${ms.to
     .key-large {
         width: 0.25rem;
         height: 1rem;
-        background-color: var(--tr-accent);
+        background-color: var(--tr-canary);
     }
 
     .key-limit {
         width: 1rem;
-        background-image: repeating-linear-gradient(-45deg, var(--tr-stamp) 0 1.5px, transparent 1.5px 4px);
-        border-left: 2px solid var(--tr-stamp);
+        background-image:
+            linear-gradient(var(--tr-stamp), var(--tr-stamp)),
+            repeating-linear-gradient(-45deg, var(--tr-stamp) 0 1.5px, transparent 1.5px 4px);
+        background-size: 2px 100%, auto;
+        background-repeat: no-repeat, repeat;
     }
 
     .ops {
@@ -152,8 +155,12 @@ const show = (ms: number) => (ms < 1 ? `${Math.round(ms * 1000)} µs` : `${ms.to
         top: 0;
         bottom: 0;
         right: 0;
-        border-left: 2px solid var(--tr-stamp);
-        background-image: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--tr-stamp) 45%, transparent) 0 1.5px, transparent 1.5px 6px);
+        /* The limit line, then the hatched zone. */
+        background-image:
+            linear-gradient(var(--tr-stamp), var(--tr-stamp)),
+            repeating-linear-gradient(-45deg, color-mix(in srgb, var(--tr-stamp) 45%, transparent) 0 1.5px, transparent 1.5px 6px);
+        background-size: 2px 100%, auto;
+        background-repeat: no-repeat, repeat;
     }
 
     .mark {
@@ -172,13 +179,13 @@ const show = (ms: number) => (ms < 1 ? `${Math.round(ms * 1000)} µs` : `${ms.to
     .mark-large {
         width: 0.25rem;
         height: 1.375rem;
-        background-color: var(--tr-accent);
+        background-color: var(--tr-canary);
     }
 
     .values {
         color: var(--tr-heading);
         font-variant-numeric: tabular-nums;
-        font-variation-settings: 'MONO' 1;
+        font-family: var(--sl-font-mono);
         font-size: 0.8125rem;
         white-space: nowrap;
     }

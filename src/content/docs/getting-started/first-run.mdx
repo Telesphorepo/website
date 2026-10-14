@@ -64,7 +64,7 @@ Set both variables to skip the generated password. The server uses them only whi
 docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
   -e TR_BOOTSTRAP_ADMIN_USER=alice \
   -e TR_BOOTSTRAP_ADMIN_PASSWORD='change-me-now' \
-  telesphorepo:local
+  ghcr.io/telesphorepo/telesphorepo:latest
 ```
 
 The server prints no box in this case. The new admin still has to add a second factor at the first sign-in.

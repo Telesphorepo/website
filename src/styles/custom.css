@@ -3,56 +3,59 @@
  * so Starlight's own components follow both themes. Starlight's styles sit in cascade layers,
  * so these unlayered rules win without extra specificity.
  *
- * The idea: Telesphorepo works like an issuing desk. Nobody writes with a password. The server
- * issues a short ticket (a publish session) for one repo, checks every file, and logs each ticket.
- * The yellow ticket is the brand: the logo, the hero, the session in the diagrams. Its perforation
- * (a row of punched holes) is the one recurring motif. It separates diagram captions and marks
- * horizontal rules. Nothing else uses it.
+ * The idea: a carbonless ticket book. Carbon-blue ink on paper, and a pink copy for every publish.
+ * The pink ticket is the brand: the logo, the publish session in the diagrams, the current page.
+ * Its perforation (a row of punched holes) is the one recurring motif. It separates diagram
+ * captions and marks horizontal rules. Nothing else uses it.
  *
- * Palette: ledger green-black, ticket yellow, stock (the paper color of the text), and two ink
- * colors that only mark state: stamp red for refused or failed, and green for done.
+ * Palette: carbon blue (the page in dark, the ink in light), paper, ticket pink, and a canary
+ * copy that marks the second series in charts. Two state colors only mark state: red for refused
+ * or failed, green for done.
  *
- * Type: Big Shoulders (condensed, signage) for page titles, h2 and sidebar groups. Recursive for
- * everything else. Code uses Recursive with its MONO axis, so text and code are one family.
- * Diagram notes use Recursive's CASL axis, the hand of the clerk.
+ * Type: Archivo for everything. Headings use its wide cut (font-stretch 108% to 125%), body text
+ * its normal width. Code uses JetBrains Mono.
+ *
+ * Interaction: hover and the current item fill the whole element. Nothing uses a side border.
  */
 
 :root {
-    --tr-page: #0f1a16;
-    --tr-surface: #14231d;
-    --tr-raised: #1b2e26;
-    --tr-line: #233a30;
-    --tr-line-strong: #33503f;
-    --tr-tick: #4a6a58;
-    --tr-muted: #8fa396;
-    --tr-body: #c9d3cb;
-    --tr-heading: #f1ebd6;
-    --tr-accent-low: #2f2a14;
-    --tr-accent: #e9b546;
-    --tr-accent-high: #f3cf7c;
-    --tr-link: var(--tr-accent-high);
-    --tr-stamp: #ec6a52;
-    --tr-ok: #8cd3a6;
+    --tr-page: #131838;
+    --tr-surface: #1a2046;
+    --tr-raised: #222956;
+    --tr-hover: #2b3366;
+    --tr-line: #2a3163;
+    --tr-line-strong: #3c4682;
+    --tr-muted: #a0a8d4;
+    --tr-body: #d4d8f0;
+    --tr-heading: #f7f5ff;
+    --tr-accent-low: #3d2850;
+    --tr-accent: #ff9bb5;
+    --tr-accent-high: #ffc4d3;
+    --tr-link: #ffb3c7;
+    --tr-canary: #f5d66b;
+    --tr-stamp: #ff7461;
+    --tr-ok: #7ee0b6;
 
-    /* The ticket: the same yellow card with dark ink in both themes. */
-    --tr-ticket: #e9b546;
-    --tr-ticket-edge: #c99429;
-    --tr-ticket-ink: #1c2219;
-    --tr-ticket-faint: #574718;
-    --tr-ticket-stamp: #8e2014;
+    /* The ticket: the same pink card with dark ink in both themes. Its stamp is carbon blue. */
+    --tr-ticket: #ff9bb5;
+    --tr-ticket-hover: #ffb8ca;
+    --tr-ticket-ink: #2a0f27;
+    --tr-ticket-faint: #662a45;
+    --tr-ticket-stamp: #2236a8;
     --tr-logo-mark: var(--tr-ticket);
 
-    --tr-display: 'Big Shoulders Variable', 'Arial Narrow', sans-serif;
+    --tr-display: 'Archivo Variable', 'Arial', sans-serif;
+    --tr-display-stretch: 118%;
 
     --sl-color-accent-low: var(--tr-accent-low);
     --sl-color-accent: var(--tr-accent);
     --sl-color-accent-high: var(--tr-accent-high);
 
     --sl-color-white: var(--tr-heading);
-    --sl-color-gray-1: #e2e6df;
+    --sl-color-gray-1: #e6e8f7;
     --sl-color-gray-2: var(--tr-body);
     --sl-color-gray-3: var(--tr-muted);
-    --sl-color-gray-4: #52685b;
+    --sl-color-gray-4: #5b6499;
     --sl-color-gray-5: var(--tr-line-strong);
     --sl-color-gray-6: var(--tr-surface);
     --sl-color-black: var(--tr-page);
@@ -68,40 +71,62 @@
     --sl-color-hairline: var(--tr-line);
     --sl-color-hairline-shade: var(--tr-line);
 
-    --sl-font: 'Recursive Variable', system-ui, sans-serif;
-    --sl-font-mono: 'Recursive Variable', ui-monospace, monospace;
+    /* Aside fills: one tint per kind. The title takes the matching strong color. */
+    --tr-aside-note: #1f2c5e;
+    --tr-aside-note-title: #a9c0ff;
+    --tr-aside-tip: #2b2459;
+    --tr-aside-tip-title: #d0b8ff;
+    --tr-aside-caution: #3a2c3a;
+    --tr-aside-caution-title: var(--tr-canary);
+    --tr-aside-danger: #40233f;
+    --tr-aside-danger-title: #ff9c8f;
 
-    --sl-text-h1: clamp(2.5rem, 2rem + 2vw, 3.5rem);
-    --sl-text-h2: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+    --sl-font: 'Archivo Variable', system-ui, sans-serif;
+    --sl-font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+
+    --sl-text-h1: clamp(2.125rem, 1.75rem + 1.6vw, 3rem);
+    --sl-text-h2: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
     --sl-text-h3: 1.1875rem;
     --sl-text-h4: 1rem;
-    --sl-line-height: 1.7;
+    --sl-line-height: 1.65;
     --sl-content-width: 46rem;
-    --sl-sidebar-width: 16.5rem;
+    --sl-sidebar-width: 17rem;
     --sl-nav-height: 3.75rem;
 
     color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-    --tr-page: #eef1e8;
-    --tr-surface: #e4e9dc;
-    --tr-raised: #d9e0cf;
-    --tr-line: #cdd5c3;
-    --tr-line-strong: #aebba6;
-    --tr-tick: #8b9a85;
-    --tr-muted: #55665b;
-    --tr-body: #26352d;
-    --tr-heading: #0f1e17;
-    --tr-accent-low: #f3e3b3;
-    --tr-accent: #a07000;
-    --tr-accent-high: #7a5200;
-    --tr-link: var(--tr-accent-high);
-    --tr-stamp: #b3301c;
-    --tr-ok: #18693b;
+    --tr-page: #f6f7fc;
+    --tr-surface: #eceef8;
+    --tr-raised: #e2e5f4;
+    --tr-hover: #d8dcf0;
+    --tr-line: #d6daee;
+    --tr-line-strong: #b4bbdc;
+    --tr-muted: #4c5589;
+    --tr-body: #1e2766;
+    --tr-heading: #0d1450;
+    --tr-accent-low: #ffdde6;
+    --tr-accent: #c21e58;
+    --tr-accent-high: #9c1445;
+    --tr-link: #b3184f;
+    --tr-canary: #8f6b00;
+    --tr-stamp: #c0352a;
+    --tr-ok: #0f7048;
+    /* The mark takes a deeper pink on paper, so it keeps 4:1 against the page. */
+    --tr-logo-mark: #d9386d;
 
-    --sl-color-gray-1: #1b2a22;
-    --sl-color-gray-4: #8b9a85;
+    --tr-aside-note: #e1e8ff;
+    --tr-aside-note-title: #23399c;
+    --tr-aside-tip: #ece4ff;
+    --tr-aside-tip-title: #5a2fb0;
+    --tr-aside-caution: #fdf1cf;
+    --tr-aside-caution-title: #7a5a00;
+    --tr-aside-danger: #fde2e0;
+    --tr-aside-danger-title: #a22a20;
+
+    --sl-color-gray-1: #141c5a;
+    --sl-color-gray-4: #8a92bf;
     --sl-color-gray-7: var(--tr-surface);
 
     color-scheme: light;
@@ -153,17 +178,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Code in Recursive's monospace cut. */
-code,
-kbd,
-pre,
-samp,
-.expressive-code pre {
-    font-variation-settings: 'MONO' 1;
-}
-
 ::selection {
-    background-color: var(--tr-accent);
+    background-color: var(--tr-ticket);
     color: var(--tr-ticket-ink);
 }
 
@@ -183,9 +199,10 @@ samp,
 #_top {
     font-family: var(--tr-display);
     font-size: var(--sl-text-h1);
+    font-stretch: 125%;
     font-weight: 800;
-    letter-spacing: 0.005em;
-    line-height: 1;
+    letter-spacing: -0.015em;
+    line-height: 1.04;
     color: var(--tr-heading);
     overflow-wrap: break-word;
 }
@@ -196,19 +213,21 @@ samp,
     padding-top: 0;
 }
 
-/* Headings: the condensed face for h2, Recursive for the levels under it. */
+/* Headings: the wide cut for h2, a narrower one for the levels under it. */
 
 .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
     color: var(--tr-heading);
-    font-weight: 650;
-    letter-spacing: -0.01em;
+    font-stretch: 108%;
+    font-weight: 700;
+    letter-spacing: -0.005em;
 }
 
 .sl-markdown-content h2:not(:where(.not-content *)) {
     font-family: var(--tr-display);
-    font-weight: 750;
-    letter-spacing: 0.005em;
-    line-height: 1.05;
+    font-stretch: var(--tr-display-stretch);
+    font-weight: 780;
+    letter-spacing: -0.012em;
+    line-height: 1.12;
 }
 
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
@@ -237,7 +256,7 @@ samp,
     text-decoration-line: underline;
     text-decoration-thickness: 1px;
     text-underline-offset: 0.2em;
-    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
 }
 
 .sl-markdown-content a:hover:not(:where(.not-content *)) {
@@ -254,9 +273,9 @@ samp,
 
 .sl-markdown-content code:not(:where(.not-content *)) {
     padding: 0.125em 0.375em;
-    border-radius: 3px;
+    border-radius: 4px;
     color: var(--tr-heading);
-    font-size: 0.85em;
+    font-size: 0.84em;
 }
 
 .sl-markdown-content a code:not(:where(.not-content *)) {
@@ -270,8 +289,8 @@ samp,
 }
 
 /*
- * Tables: a heavier rule under the header, light rules between the rows. Every cell has the same
- * padding, so the first column does not touch the edge.
+ * Tables: a filled header, light rules between the rows, and a whole-row fill on hover. Every
+ * cell has the same padding, so the first column does not touch the edge.
  */
 
 .sl-markdown-content table:not(:where(.not-content *)) {
@@ -282,20 +301,33 @@ samp,
 .sl-markdown-content :is(th, td):not(:where(.not-content *)),
 .sl-markdown-content :is(th, td):is(:first-child, :last-child):not(:where(.not-content *)) {
     padding: 0.625rem 0.875rem;
+    border: 0;
     border-bottom: 1px solid var(--tr-line);
     vertical-align: top;
 }
 
 .sl-markdown-content th:not(:where(.not-content *)) {
-    border-bottom: 2px solid var(--tr-line-strong);
-    background-color: var(--tr-surface);
+    border-bottom: 0;
+    background-color: var(--tr-raised);
     font-size: 0.8125rem;
     font-weight: 650;
     color: var(--tr-heading);
 }
 
+.sl-markdown-content th:first-child:not(:where(.not-content *)) {
+    border-start-start-radius: 6px;
+}
+
+.sl-markdown-content th:last-child:not(:where(.not-content *)) {
+    border-start-end-radius: 6px;
+}
+
 .sl-markdown-content td:not(:where(.not-content *)) {
     color: var(--tr-body);
+}
+
+.sl-markdown-content tbody tr:hover > td:not(:where(.not-content *)) {
+    background-color: var(--tr-surface);
 }
 
 .sl-markdown-content tr:last-child > td:not(:where(.not-content *)) {
@@ -318,47 +350,98 @@ samp,
     background-position: center;
 }
 
+/* Quotes and details: a filled block, no side rule. */
+
 .sl-markdown-content blockquote:not(:where(.not-content *)) {
-    border-inline-start-color: var(--tr-line-strong);
+    border: 0;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    background-color: var(--tr-surface);
     color: var(--tr-muted);
 }
 
-/* Asides: a slip on the surface color. The type color marks the left edge and the title. */
+.sl-markdown-content details:not(:where(.not-content *)) {
+    border: 0;
+    border-radius: 6px;
+    padding: 0.625rem 1rem;
+    background-color: var(--tr-surface);
+}
+
+.sl-markdown-content details:not([open]):hover:not(:where(.not-content *)),
+.sl-markdown-content details:has(> summary:hover):not(:where(.not-content *)) {
+    background-color: var(--tr-hover);
+}
+
+/* Asides: a tinted block. The kind sets the fill and the title color. */
 
 .starlight-aside {
-    border: 1px solid var(--tr-line);
-    border-inline-start: 3px solid var(--sl-color-asides-border);
-    border-radius: 3px;
+    border: 0;
+    border-radius: 6px;
     padding: 0.875rem 1.125rem;
-    background-color: var(--tr-surface);
     color: var(--tr-body);
+}
+
+.starlight-aside--note {
+    --sl-color-asides-text-accent: var(--tr-aside-note-title);
+    background-color: var(--tr-aside-note);
+}
+
+.starlight-aside--tip {
+    --sl-color-asides-text-accent: var(--tr-aside-tip-title);
+    background-color: var(--tr-aside-tip);
+}
+
+.starlight-aside--caution {
+    --sl-color-asides-text-accent: var(--tr-aside-caution-title);
+    background-color: var(--tr-aside-caution);
+}
+
+.starlight-aside--danger {
+    --sl-color-asides-text-accent: var(--tr-aside-danger-title);
+    background-color: var(--tr-aside-danger);
 }
 
 .starlight-aside__title {
     font-family: var(--tr-display);
-    font-size: 1.125rem;
+    font-size: 1rem;
+    font-stretch: 112%;
     font-weight: 750;
-    letter-spacing: 0.01em;
 }
 
-/* Sidebar: condensed group names, quiet links, and the current page with a ticket-yellow edge. */
+/* File trees: nested folders indent with no side rule. */
+
+starlight-file-tree ul {
+    border: 0;
+}
+
+/* Sidebar: wide group names, quiet links. Hover and the current page fill the whole row. */
+
+#starlight__sidebar ul ul li {
+    border: 0;
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+}
 
 #starlight__sidebar summary .large {
     font-family: var(--tr-display);
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
+    font-stretch: 118%;
     font-weight: 750;
-    letter-spacing: 0.01em;
     color: var(--tr-heading);
 }
 
 #starlight__sidebar a {
-    border-radius: 0 3px 3px 0;
+    margin-block: 1px;
+    border-radius: 6px;
+    padding-inline: 0.625rem;
     color: var(--tr-muted);
     font-size: 0.875rem;
+    transition: background-color 120ms ease, color 120ms ease;
 }
 
-#starlight__sidebar a:hover {
-    background-color: var(--tr-surface);
+#starlight__sidebar a:hover,
+#starlight__sidebar a:focus-visible {
+    background-color: var(--tr-hover);
     color: var(--tr-heading);
 }
 
@@ -367,118 +450,190 @@ samp,
 }
 
 #starlight__sidebar a[aria-current='page'],
-#starlight__sidebar a[aria-current='page']:hover,
 #starlight__sidebar a[aria-current='page']:focus {
-    background-color: var(--tr-raised);
-    box-shadow: inset 3px 0 0 var(--tr-accent);
-    color: var(--tr-heading);
-    font-weight: 600;
+    background-color: var(--tr-ticket);
+    box-shadow: none;
+    color: var(--tr-ticket-ink);
+    font-weight: 650;
 }
 
-/* Table of contents */
+#starlight__sidebar a[aria-current='page']:hover {
+    background-color: var(--tr-ticket-hover);
+    color: var(--tr-ticket-ink);
+}
+
+/* Table of contents: no column rule. Hover and the current heading fill the whole row. */
+
+.right-sidebar {
+    border-inline-start: 0;
+}
 
 starlight-toc h2 {
     font-family: var(--tr-display);
-    font-size: 1.0625rem;
+    font-size: 0.9375rem;
+    font-stretch: 118%;
     font-weight: 750;
-    letter-spacing: 0.01em;
     color: var(--tr-heading);
 }
 
 starlight-toc a {
-    --pad-inline: 1rem;
+    --pad-inline: 0.75rem;
+    margin-inline-end: 0.75rem;
+    border-radius: 6px;
     font-size: 0.8125rem;
     line-height: 1.35;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+starlight-toc a:hover {
+    background-color: var(--tr-hover);
+    color: var(--tr-heading);
 }
 
 starlight-toc a[aria-current='true'],
 starlight-toc a[aria-current='true']:hover {
+    background-color: var(--tr-raised);
+    box-shadow: none;
+    color: var(--tr-heading);
+    font-weight: 600;
+}
+
+mobile-starlight-toc .dropdown a:hover {
+    background-color: var(--tr-hover);
     color: var(--tr-heading);
 }
 
-starlight-toc a[aria-current='true'] {
-    box-shadow: inset 2px 0 0 var(--tr-accent);
+mobile-starlight-toc .dropdown a[aria-current='true'],
+mobile-starlight-toc .dropdown a[aria-current='true']:hover {
+    background-color: var(--tr-raised);
+    color: var(--tr-heading);
 }
 
-/* Previous and next links */
+mobile-starlight-toc .toggle {
+    border-color: transparent;
+    background-color: var(--tr-raised);
+    transition: background-color 120ms ease;
+}
+
+mobile-starlight-toc details .toggle:hover,
+mobile-starlight-toc details[open] .toggle {
+    border-color: transparent;
+    background-color: var(--tr-hover);
+    color: var(--tr-heading);
+}
+
+/* Steps: filled numbers with no line down the side. */
+
+.sl-steps > li::before {
+    background-color: var(--tr-raised);
+    box-shadow: none;
+    color: var(--tr-heading);
+    font-weight: 700;
+}
+
+.sl-steps > li::after {
+    display: none;
+}
+
+/* Tabs: a row of pills. Hover and the selected tab fill the whole tab. */
+
+starlight-tabs [role='tablist'] {
+    gap: 0.25rem;
+    border-bottom: 0;
+}
+
+starlight-tabs .tab > [role='tab'] {
+    border-radius: 999px;
+    padding: 0.375rem 1rem;
+    box-shadow: none;
+    color: var(--tr-muted);
+    font-size: 0.875rem;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+starlight-tabs .tab > [role='tab']:hover {
+    background-color: var(--tr-hover);
+    color: var(--tr-heading);
+}
+
+starlight-tabs .tab > [role='tab'][aria-selected='true'] {
+    background-color: var(--tr-raised);
+    color: var(--tr-heading);
+}
+
+/* Previous and next links: the whole box fills on hover. */
 
 .pagination-links {
     margin-top: 3rem;
 }
 
 .pagination-links a {
-    border: 1px solid var(--tr-line);
-    border-radius: 4px;
+    border: 0;
+    border-radius: 8px;
+    background-color: var(--tr-surface);
     box-shadow: none;
     color: var(--tr-muted);
-    transition: border-color 150ms ease, background-color 150ms ease;
+    transition: background-color 150ms ease;
 }
 
 .pagination-links a:hover {
-    border-color: var(--tr-line-strong);
-    background-color: var(--tr-surface);
+    background-color: var(--tr-hover);
 }
 
 .pagination-links .link-title {
     font-family: var(--tr-display);
-    font-size: 1.375rem;
+    font-size: 1.25rem;
+    font-stretch: 115%;
     font-weight: 750;
     color: var(--tr-heading);
 }
 
-/* Buttons: the primary is the ticket, the secondary is a rule. */
+/* Buttons: the primary is the ticket, the secondary a filled block. Hover changes the fill. */
 
 .sl-link-button,
 .tr-button {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    padding: 0.625rem 1.125rem;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.75rem 1.375rem;
     font-size: 0.9375rem;
-    font-weight: 600;
+    font-stretch: 110%;
+    font-weight: 650;
     line-height: 1.2;
     text-decoration: none;
-    transition: background-color 150ms ease, border-color 150ms ease;
+    transition: background-color 150ms ease;
 }
 
 .sl-link-button.primary,
 .tr-button-primary {
     background-color: var(--tr-ticket);
-    border-color: var(--tr-ticket);
     color: var(--tr-ticket-ink);
 }
 
 .sl-link-button.primary:hover,
 .tr-button-primary:hover {
-    background-color: var(--tr-accent-high);
-    border-color: var(--tr-accent-high);
+    background-color: var(--tr-ticket-hover);
     color: var(--tr-ticket-ink);
-}
-
-:root[data-theme='light'] :is(.sl-link-button.primary, .tr-button-primary):hover {
-    background-color: var(--tr-ticket-edge);
-    border-color: var(--tr-ticket-edge);
 }
 
 .sl-link-button.secondary,
 .tr-button-secondary {
-    border-color: var(--tr-line-strong);
+    background-color: var(--tr-raised);
     color: var(--tr-heading);
 }
 
 .sl-link-button.secondary:hover,
 .tr-button-secondary:hover {
-    border-color: var(--tr-muted);
-    background-color: var(--tr-surface);
+    background-color: var(--tr-hover);
     color: var(--tr-heading);
 }
 
 /* Landing page: one wide column. The hero is a component (src/components/landing/Hero.astro). */
 
 :root[data-has-hero] {
-    --sl-content-width: 68rem;
+    --sl-content-width: 72rem;
 }
 
 [data-has-hero] .sl-container {
@@ -486,21 +641,73 @@ starlight-toc a[aria-current='true'] {
 }
 
 [data-has-hero] .sl-markdown-content h2:not(:where(.not-content *)) {
-    font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+    max-width: 24ch;
+    font-size: clamp(1.75rem, 1.25rem + 2.2vw, 2.75rem);
+    font-stretch: 122%;
+    font-weight: 800;
+    line-height: 1.06;
+    text-wrap: balance;
+}
+
+[data-has-hero] .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
+    margin-top: clamp(4rem, 3rem + 4vw, 6.5rem);
 }
 
 [data-has-hero] .sl-markdown-content > p {
     max-width: 40rem;
+    font-size: 1.0625rem;
+}
+
+/* A text column next to a picture, as in the publishing section. */
+
+.tr-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    align-items: center;
+}
+
+@media (min-width: 56rem) {
+    .tr-split {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 4rem;
+    }
+}
+
+.tr-split > * {
+    margin-top: 0;
+}
+
+.tr-split > div > p {
+    max-width: 36rem;
+    font-size: 1.0625rem;
+}
+
+.tr-ticket-figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    margin: 0;
+    padding-block: 1rem;
+}
+
+.tr-ticket-figure figcaption {
+    max-width: 24rem;
+    color: var(--tr-muted);
+    font-size: var(--sl-text-sm);
+    text-align: center;
 }
 
 /*
- * Entry points: rows separated by one line between items. Each row puts the title, the text and the
- * arrow in columns across the full width from 48rem.
+ * Entry points: rows that fill on hover. Each row puts the title, the text and the arrow in
+ * columns across the full width from 48rem.
  */
 
 .tr-entries {
-    border-top: 1px solid var(--tr-line);
-    border-bottom: 1px solid var(--tr-line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .tr-entries a {
@@ -508,12 +715,15 @@ starlight-toc a[aria-current='true'] {
     grid-template-columns: minmax(0, 1fr) auto;
     column-gap: 1.5rem;
     align-items: center;
-    padding-block: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    background-color: var(--tr-surface);
     text-decoration: none;
+    transition: background-color 150ms ease;
 }
 
-.tr-entries a + a {
-    border-top: 1px solid var(--tr-line);
+.tr-entries a:hover {
+    background-color: var(--tr-hover);
 }
 
 .tr-entries a::after {
@@ -529,11 +739,11 @@ starlight-toc a[aria-current='true'] {
 .tr-entry-title {
     grid-area: 1 / 1;
     font-family: var(--tr-display);
-    font-size: 1.375rem;
+    font-size: 1.125rem;
+    font-stretch: 118%;
     font-weight: 750;
     line-height: 1.2;
     color: var(--tr-heading);
-    transition: color 150ms ease;
 }
 
 .tr-entry-text {
@@ -543,18 +753,14 @@ starlight-toc a[aria-current='true'] {
     color: var(--tr-muted);
 }
 
-.tr-entries a:hover .tr-entry-title {
-    color: var(--tr-link);
-}
-
 .tr-entries a:hover::after {
-    background-color: var(--tr-link);
+    background-color: var(--tr-heading);
     transform: translateX(0.25rem);
 }
 
 @media (min-width: 48rem) {
     .tr-entries a {
-        grid-template-columns: 12rem minmax(0, 1fr) auto;
+        grid-template-columns: 14rem minmax(0, 1fr) auto;
         column-gap: 2rem;
     }
 
@@ -572,8 +778,12 @@ starlight-toc a[aria-current='true'] {
     .sl-link-button,
     .tr-button,
     .pagination-links a,
-    .tr-entry-title,
-    .tr-entries a::after {
+    .tr-entries a,
+    .tr-entries a::after,
+    #starlight__sidebar a,
+    starlight-toc a,
+    starlight-tabs .tab > [role='tab'],
+    mobile-starlight-toc .toggle {
         transition: none;
     }
 }

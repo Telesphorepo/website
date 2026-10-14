@@ -1,0 +1,210 @@
+---
+/*
+ * The pink ticket: a card with a notch on each side and a stub behind a row of punched holes.
+ * The landing page shows an example publish session with it. The 404 page shows a void ticket.
+ * The stamp lands once, when the ticket first scrolls into view.
+ */
+interface Props {
+    kind: string;
+    token: string;
+    rows: string[][];
+    stub: string[];
+    stamp: string;
+    tilt?: number;
+}
+
+const { kind, token, rows, stub, stamp, tilt = -2 } = Astro.props;
+---
+
+<div class="tr-ticket-lift" style={`--tilt: ${tilt}deg`}>
+    <div class="tr-ticket">
+        <div class="main">
+            <p class="kind">{kind}</p>
+            <p class="token"><code>{token}</code></p>
+            <dl>
+                {rows.map(([name, value]) => (
+                    <>
+                        <dt>{name}</dt>
+                        <dd>{value}</dd>
+                    </>
+                ))}
+            </dl>
+        </div>
+        <div class="stub">{stub.map((line) => <span>{line}</span>)}</div>
+        <span class="stamp" data-stamp>{stamp}</span>
+    </div>
+</div>
+
+<script>
+    // Mark each ticket when it first shows, so its stamp lands then. Without the observer, the stamp is already down.
+    const tickets = document.querySelectorAll<HTMLElement>('.tr-ticket-lift');
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                entry.target.setAttribute('data-shown', '');
+                observer.unobserve(entry.target);
+            }
+        }, { threshold: 0.6 });
+        tickets.forEach((ticket) => {
+            ticket.setAttribute('data-waiting', '');
+            observer.observe(ticket);
+        });
+    }
+</script>
+
+<style>
+    /* The shadow sits on a wrapper: a mask on the ticket would cut it off. */
+    .tr-ticket-lift {
+        width: min(100%, 27rem);
+        rotate: var(--tilt);
+        filter: drop-shadow(0 18px 26px rgb(4 6 30 / 0.45));
+    }
+
+    :global(:root[data-theme='light']) .tr-ticket-lift {
+        filter: drop-shadow(0 14px 20px rgb(13 20 80 / 0.18));
+    }
+
+    .tr-ticket {
+        --notch: 13px;
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 5.5rem;
+        border-radius: 10px;
+        background-color: var(--tr-ticket);
+        color: var(--tr-ticket-ink);
+        mask:
+            radial-gradient(circle var(--notch) at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
+            radial-gradient(circle var(--notch) at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+    }
+
+    .main {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        /* The bottom padding keeps a clear space for the stamp, so it never covers a value. */
+        padding: 1.5rem 1.25rem 4.25rem 2rem;
+    }
+
+    p {
+        margin: 0;
+    }
+
+    .kind {
+        font-family: var(--tr-display);
+        font-size: 1.375rem;
+        font-stretch: 125%;
+        font-weight: 850;
+        line-height: 1;
+        letter-spacing: -0.01em;
+    }
+
+    .token {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .token code {
+        color: inherit;
+        font-family: var(--sl-font-mono);
+        font-size: inherit;
+    }
+
+    dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.125rem 1rem;
+        margin: 0.25rem 0 0;
+        font-size: 0.875rem;
+    }
+
+    dt {
+        color: var(--tr-ticket-faint);
+    }
+
+    dd {
+        margin: 0;
+        font-weight: 650;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* The stub, behind a row of punched holes in the page color. */
+    .stub {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.375rem;
+        padding: 1rem 1.25rem 1rem 0.75rem;
+        background-image: radial-gradient(circle, var(--tr-page) 2.5px, transparent 3px);
+        background-size: 8px 12px;
+        background-repeat: repeat-y;
+        background-position: left center;
+        font-family: var(--tr-display);
+        font-size: 0.9375rem;
+        font-stretch: 112%;
+        font-weight: 800;
+        line-height: 1.1;
+        text-align: center;
+    }
+
+    /* A carbon-blue rubber stamp. */
+    .stamp {
+        position: absolute;
+        right: 6.5rem;
+        bottom: 1.125rem;
+        padding: 0.25rem 0.625rem;
+        border: 3px solid var(--tr-ticket-stamp);
+        border-radius: 5px;
+        color: var(--tr-ticket-stamp);
+        font-family: var(--tr-display);
+        font-size: 0.9375rem;
+        font-stretch: 125%;
+        font-weight: 850;
+        rotate: -8deg;
+        opacity: 0.85;
+        mix-blend-mode: multiply;
+    }
+
+    [data-waiting] .stamp {
+        opacity: 0;
+    }
+
+    [data-shown] .stamp {
+        animation: tr-stamp 360ms cubic-bezier(0.2, 0.9, 0.3, 1.15) 250ms both;
+    }
+
+    @keyframes tr-stamp {
+        from {
+            opacity: 0;
+            scale: 1.7;
+        }
+        to {
+            opacity: 0.85;
+            scale: 1;
+        }
+    }
+
+    @media (max-width: 30rem) {
+        .tr-ticket {
+            grid-template-columns: minmax(0, 1fr) 4.5rem;
+        }
+
+        .main {
+            padding-left: 1.5rem;
+        }
+
+        .stamp {
+            right: 5rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        [data-waiting] .stamp,
+        [data-shown] .stamp {
+            opacity: 0.85;
+            animation: none;
+        }
+    }
+</style>

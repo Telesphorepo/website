@@ -7,20 +7,15 @@ import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 Telesphorepo needs no database server and no required environment variable. You can run it in a container or as a single binary.
 
-<Aside type="note">
-There is no published container image yet. Build the image from a clone of the [source repository](https://github.com/Telesphorepo/Telesphorepo). The Dockerfile is multi-stage, so Docker or Podman is the only build tool you need.
-</Aside>
-
 ## Run in a container
+
+The image is `ghcr.io/telesphorepo/telesphorepo`. It supports `linux/amd64` and `linux/arm64`. The `latest` tag follows the newest release, and each release also has `X.Y.Z` and `X.Y` tags.
 
 <Tabs syncKey="container-engine">
 <TabItem label="Docker">
 
 ```sh
-git clone https://github.com/Telesphorepo/Telesphorepo.git
-cd Telesphorepo
-docker build -t telesphorepo:local .
-docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data telesphorepo:local
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
 docker logs telesphorepo
 ```
 
@@ -28,10 +23,7 @@ docker logs telesphorepo
 <TabItem label="Podman">
 
 ```sh
-git clone https://github.com/Telesphorepo/Telesphorepo.git
-cd Telesphorepo
-podman build -t telesphorepo:local .
-podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data telesphorepo:local
+podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
 podman logs telesphorepo
 ```
 
@@ -44,24 +36,25 @@ The container keeps all state in `/data`. Always mount a volume there. Without a
 
 The image runs as a non-root user (UID 65532). A named volume works as is. If you mount a host directory, make it writable for that UID.
 
+To build the image yourself from a clone of the [source repository](https://github.com/Telesphorepo/Telesphorepo), run `go tool task build image`. It builds `telesphorepo:local`.
+
 ## Run the binary
 
-Build the binary from a clone. You need [Go](https://go.dev/dl/), [bun](https://bun.sh) and Node 26.
+Download the archive for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases). There are binaries for Linux, macOS and Windows, on amd64 and arm64. Check the download against `SHA256SUMS`, unpack it, and start the server:
 
 ```sh
-go tool task build
-./bin/telesphorepo
+./telesphorepo serve
 ```
-
-`go tool task build` builds the web UI first and then embeds it in `bin/telesphorepo`. The build works the same on Windows, macOS and Linux.
 
 The binary stores its state in `./data` by default. Set `TR_DATA_DIR` to put it elsewhere:
 
 ```sh
-TR_DATA_DIR=/srv/telesphorepo ./bin/telesphorepo
+TR_DATA_DIR=/srv/telesphorepo ./telesphorepo serve
 ```
 
 Run the binary under a service manager, such as systemd, so that it restarts after a reboot.
+
+To build the binary from a clone, you need [Go](https://go.dev/dl/), [bun](https://bun.sh) and Node 26. Run `go tool task build`. It builds the web UI first and then embeds it in `bin/telesphorepo`. The build works the same on Windows, macOS and Linux.
 
 ## Environment variables
 
@@ -91,7 +84,7 @@ openssl rand -base64 32
 docker run -d --name telesphorepo -p 8080:8080 \
   -v telesphorepo-data:/data \
   -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
-  telesphorepo:local
+  ghcr.io/telesphorepo/telesphorepo:latest
 ```
 
 Set `TR_MASTER_KEY` before the first start. See [Lost master key](/getting-started/configuration/#lost-master-key) for what happens if the key changes later.

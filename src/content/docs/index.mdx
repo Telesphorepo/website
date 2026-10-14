@@ -1,12 +1,12 @@
 ---
 title: Telesphorepo
-description: A self-hosted repository for Maven, Gradle, Debian and raw files. One binary with SQLite, publish sessions that end after 15 minutes, filesystem or S3 storage, and a warm cut-over from Nexus.
+description: A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Debian packages and raw files. One binary with SQLite inside, the same speed at a million files, and a short-lived publish session for every upload.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
-  title: Passwords read. Publish sessions write.
-  tagline: Telesphorepo is a self-hosted repository for Maven, Gradle, Debian and raw files. Every upload needs a publish session, a token for one repo that ends after 15 minutes. A leaked password or read token cannot publish anything.
+  title: The lean, fast artifact repository that guards every publish.
+  tagline: Telesphorepo is a new self-hosted home for Maven artifacts, Gradle plugins, Debian packages and raw files. One binary with SQLite inside runs all of it. It keeps its speed from 100k to a million files, and nothing publishes without a short-lived publish session.
   actions:
     - text: Read the docs
       link: /getting-started/introduction/
@@ -16,51 +16,62 @@ hero:
       variant: secondary
 ---
 
+import Benefits from '../../components/landing/Benefits.astro';
 import Formats from '../../components/landing/Formats.astro';
 import Install from '../../components/landing/Install.astro';
 import ScaleTest from '../../components/landing/ScaleTest.astro';
+import Ticket from '../../components/landing/Ticket.astro';
 import PublishSession from '../../components/diagrams/PublishSession.astro';
 import NexusCutover from '../../components/diagrams/NexusCutover.astro';
 
-<Formats />
+## What you get
 
-## A publish, from proof to close
+A repository should hold your builds and stay out of your way. These are the parts that make it do that.
 
-In many setups, a CI job holds a deploy password that never changes. Here, no long-lived credential can write. The client proves who it is, and the server issues a session for one repo. The Gradle plugin and the Maven extension do this on every publish, so you do not see it. GitHub Actions and Jenkins use their own identity tokens, so a CI job has no secret to leak.
+<Benefits />
+
+## Every publish gets its own ticket
+
+<div class="tr-split">
+<div>
+
+In many setups, a CI job holds a deploy password that never changes. Here, no long-lived credential can write. The client proves who it is, and the server issues a publish session: a token for one repo that ends after 15 minutes.
+
+The Gradle plugin and the Maven extension do this on every publish, so you do not see it. GitHub Actions and Jenkins use their own identity tokens, so a CI job has no secret to leak. The publish log keeps every session for 30 days after it ends.
+
+</div>
+<figure class="tr-ticket-figure not-content">
+    <Ticket
+        kind="Publish session"
+        token="trs_9c1e4b7a02f3_..."
+        rows={[['repo', 'releases'], ['via', 'device, Gradle'], ['opened', '14:02:11'], ['expires', '14:17:11']]}
+        stub={['One repo', '15 min']}
+        stamp="Closed 14:03:41"
+    />
+    <figcaption>An example session. The Gradle plugin closed it after a 90-second publish.</figcaption>
+</figure>
+</div>
 
 <PublishSession />
 
 Read [how publishing works](/publishing/overview/), then set up the [Gradle plugin](/publishing/gradle-plugin/), the [Maven extension](/publishing/maven-extension/) or [GitHub Actions](/publishing/github-actions/).
 
-## The whole install
+## As fast at a million files as at a hundred thousand
 
-There is no database server and no search cluster. Search runs on an SQLite full-text index. The server, the web UI and the database run in one process. Settings live in the database and apply without a restart. To move the files from local disk to a bucket, change the storage on the Settings page. The server copies every blob in the background while reads and uploads continue.
-
-<Install />
-
-## The 1M-asset test
-
-Every query on a request path uses an index, and lists page with keys, not offsets. So a request costs the same with a large repo as with a small one. The scale test checks this on every run of `go tool task test scale`. It seeds 100k synthetic assets, measures, seeds up to 1M, and measures again.
+Every query on a request path uses an index, and lists page with keys, not offsets. So a request costs the same in a large repo as in a small one. The scale test checks this on every run of `go tool task test scale`. It seeds 100k synthetic assets, measures, seeds up to 1M, and measures again.
 
 <ScaleTest />
 
-## Leave Nexus without a freeze
+## One image. Nothing else to run.
 
-Add a Nexus 3 server as a source and pick its hosted repos. Telesphorepo mirrors them with repeated syncs and keeps them read only until you cut over. Telesphorepo only reads from Nexus, so Nexus keeps serving your builds the whole time. When you are ready, cut over: one last sync, and the repos are yours to publish to.
+There is no database server and no search cluster. Search runs on an SQLite full-text index. The server, the web UI and the database run in one process. Settings live in the database and apply without a restart. To move the files from local disk to a bucket, change the storage on the Settings page. The server copies every file in the background while reads and uploads continue.
 
-<NexusCutover />
+<Install />
 
-The [Nexus migration guide](/operations/nexus-migration/) has the format mapping and the failure rules.
-
-## Quickstart
-
-Build the image from the source and start it with a volume for `/data`. The build runs in Docker, so you need only Docker or Podman.
+Start the image with a volume for `/data`:
 
 ```sh
-git clone https://github.com/Telesphorepo/Telesphorepo
-cd Telesphorepo
-docker build -t telesphorepo:local .
-docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data telesphorepo:local
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
 ```
 
 On the first start, the server prints a generated `admin` password once to the container log. Read it, then open `http://localhost:8080` and sign in.
@@ -69,9 +80,27 @@ On the first start, the server prints a generated `admin` password once to the c
 docker logs telesphorepo
 ```
 
-## Next steps
+Binaries for Linux, macOS and Windows are on the [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases) page. The [install guide](/getting-started/install/) has the other ways to run it.
 
-<nav class="tr-entries not-content" aria-label="Next steps">
+## Maven, Gradle plugins, Debian and raw today
+
+Each format is a plugin with its own routes and its own rules. More formats will come over time.
+
+<Formats />
+
+## Leaving Nexus? Bring your repos with you.
+
+Nexus 3 needs a JVM and a database to run, and some of its upgrades are projects of their own. The move from OrientDB to H2 is one example: [its issue](https://github.com/sonatype/nexus-public/issues/449) was opened in 2024 and is still open.
+
+To move, add your Nexus 3 server as a source and pick its hosted repos. Telesphorepo mirrors them with repeated syncs and keeps them read only until you cut over. It only reads from Nexus, so Nexus keeps serving your builds the whole time. When you are ready, cut over: one last sync, and the repos are yours to publish to.
+
+<NexusCutover />
+
+The [Nexus migration guide](/operations/nexus-migration/) has the format mapping and the failure rules.
+
+## Read the docs
+
+<nav class="tr-entries not-content" aria-label="Read the docs">
     <a href="/getting-started/install/">
         <span class="tr-entry-title">Install</span>
         <span class="tr-entry-text">Run Telesphorepo in a container or as a binary.</span>
@@ -79,6 +108,10 @@ docker logs telesphorepo
     <a href="/publishing/overview/">
         <span class="tr-entry-title">Publishing</span>
         <span class="tr-entry-text">Publish sessions, the Gradle plugin, the Maven extension and CI.</span>
+    </a>
+    <a href="/security/trust-policies/">
+        <span class="tr-entry-title">Trust policies</span>
+        <span class="tr-entry-text">Let GitHub Actions and Jenkins publish with no stored secret.</span>
     </a>
     <a href="/operations/nexus-migration/">
         <span class="tr-entry-title">Nexus migration</span>

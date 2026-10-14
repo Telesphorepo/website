@@ -20,17 +20,16 @@ Take a backup before every upgrade. See [Backups and data](/operations/backups-a
 
 ## Upgrade the container
 
-Telesphorepo has no published image yet. You build the image from a clone of the [source](https://github.com/Telesphorepo/Telesphorepo).
+Each release pushes the image to `ghcr.io/telesphorepo/telesphorepo`. To stay on one release line, use an `X.Y` tag in place of `latest`.
 
 <Steps>
 
 1. Back up the data volume.
 
-2. Get the new source and build the image:
+2. Pull the new image:
 
    ```sh
-   git pull
-   docker build -t telesphorepo:local .
+   docker pull ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 3. Stop and remove the old container. The volume stays:
@@ -43,7 +42,7 @@ Telesphorepo has no published image yet. You build the image from a clone of the
 4. Start a new container on the same volume:
 
    ```sh
-   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data telesphorepo:local
+   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 5. Check the log and the health route:
@@ -61,7 +60,7 @@ Use the same `-v` volume and the same `TR_*` environment variables as before. If
 
 ## Upgrade the binary
 
-`go tool task build` in a clone writes `bin/telesphorepo` with the web UI embedded.
+Download the new archive from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases) and check it against `SHA256SUMS`.
 
 <Steps>
 

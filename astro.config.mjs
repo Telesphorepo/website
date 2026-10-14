@@ -86,7 +86,7 @@ export default defineConfig({
     site: 'https://telesphorepo.com',
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'A self-hosted repository for Maven, Gradle, Debian and raw files. One Go binary with SQLite.',
+        description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
@@ -99,16 +99,16 @@ export default defineConfig({
             ThemeSelect: './src/components/overrides/ThemeSelect.astro',
         },
         customCss: [
-            '@fontsource-variable/big-shoulders/standard.css',
-            '@fontsource-variable/recursive/full.css',
+            '@fontsource-variable/archivo/wdth.css',
+            '@fontsource-variable/jetbrains-mono',
             './src/styles/custom.css',
         ],
         expressiveCode: {
             themes: ['github-dark-default', 'github-light'],
             styleOverrides: {
-                codeFontFamily: "'Recursive Variable', ui-monospace, monospace",
-                uiFontFamily: "'Recursive Variable', system-ui, sans-serif",
-                borderRadius: '4px',
+                codeFontFamily: "'JetBrains Mono Variable', ui-monospace, monospace",
+                uiFontFamily: "'Archivo Variable', system-ui, sans-serif",
+                borderRadius: '8px',
                 borderColor: 'var(--tr-line)',
                 codeBackground: 'var(--tr-surface)',
                 frames: {

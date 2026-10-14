@@ -6,9 +6,9 @@
  *
  * It also holds the shared pieces, so the diagrams look alike:
  *   .dg-node    a step or a thing, on the page color with a rule
- *   .dg-ticket  a publish session, drawn as the yellow ticket with its two notches
+ *   .dg-ticket  a publish session, drawn as the pink ticket with its two notches
  *   .dg-stamp   a state, in stamp ink: .dg-stamp-ok, .dg-stamp-bad, .dg-stamp-muted
- *   .dg-note    a short note in Recursive's casual cut
+ *   .dg-note    a short note in the muted color
  *   .dg-arrow   the arrow from Arrow.astro
  */
 interface Props {
@@ -31,8 +31,7 @@ const { caption, summary } = Astro.props;
 <style>
     .tr-figure {
         margin-block: 2rem;
-        border: 1px solid var(--tr-line);
-        border-radius: 4px;
+        border-radius: 14px;
         background-color: var(--tr-surface);
     }
 
@@ -81,8 +80,7 @@ const { caption, summary } = Astro.props;
 
     .tr-figure :global(.dg-node) {
         padding: 0.625rem 0.75rem;
-        border: 1px solid var(--tr-line-strong);
-        border-radius: 3px;
+        border-radius: 8px;
         background-color: var(--tr-page);
         color: var(--tr-body);
     }
@@ -92,7 +90,7 @@ const { caption, summary } = Astro.props;
         font-weight: 650;
     }
 
-    /* The ticket: a yellow card with a notch on each side. */
+    /* The ticket: a pink card with a notch on each side. */
     .tr-figure :global(.dg-ticket) {
         --notch: 6px;
         position: relative;
@@ -113,10 +111,11 @@ const { caption, summary } = Astro.props;
         display: inline-block;
         padding: 0.0625rem 0.5rem;
         border: 2px solid currentColor;
-        border-radius: 3px;
+        border-radius: 4px;
+        font-family: var(--tr-display);
         font-size: 0.75rem;
-        font-weight: 750;
-        font-variation-settings: 'MONO' 1;
+        font-stretch: 122%;
+        font-weight: 820;
         line-height: 1.5;
         white-space: nowrap;
         rotate: -3deg;
@@ -137,7 +136,6 @@ const { caption, summary } = Astro.props;
     .tr-figure :global(.dg-note) {
         color: var(--tr-muted);
         font-size: 0.8125rem;
-        font-variation-settings: 'CASL' 1;
     }
 
     .tr-figure :global(.dg-arrow) {
@@ -145,6 +143,6 @@ const { caption, summary } = Astro.props;
         align-self: center;
         width: 1.5rem;
         height: 1rem;
-        color: var(--tr-accent);
+        color: var(--tr-link);
     }
 </style>

@@ -39,9 +39,9 @@ const href = markdownPath(id);
     button {
         display: block;
         width: 100%;
-        padding: 0.25rem 1rem;
+        padding: 0.25rem 0.75rem;
         border: 0;
-        border-radius: 0;
+        border-radius: 6px;
         background: none;
         font: inherit;
         font-size: var(--sl-text-sm);
@@ -54,6 +54,7 @@ const href = markdownPath(id);
 
     a:hover,
     button:hover {
+        background-color: var(--tr-hover);
         color: var(--tr-heading);
     }
 
@@ -74,6 +75,8 @@ const href = markdownPath(id);
     .isMobile a,
     .isMobile button {
         padding-block: 0.5rem;
+        padding-inline: 1rem;
+        border-radius: 0;
         outline-offset: var(--sl-outline-offset-inside);
     }
 </style>

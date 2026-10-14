@@ -41,7 +41,7 @@ You can force any setting from the environment. The variable name is `TR_` plus 
 docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
   -e TR_BASE_URL=https://packages.example.com \
   -e TR_TRUSTED_PROXIES=172.17.0.0/16 \
-  telesphorepo:local
+  ghcr.io/telesphorepo/telesphorepo:latest
 ```
 
 The order of precedence is: environment, then the database row, then the default.

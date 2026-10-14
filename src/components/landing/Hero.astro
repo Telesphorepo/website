@@ -1,74 +1,105 @@
 ---
 /*
- * Replaces Starlight's Hero. The landing page shows its title, tagline and actions next to an
- * example publish session, drawn as the yellow ticket. The 404 page shows a void ticket.
+ * Replaces Starlight's Hero. The landing page shows its title across the page, then the tagline,
+ * the actions and the one command that runs the server. The 404 page shows a void ticket.
  */
+import Ticket from './Ticket.astro';
+
 const { entry } = Astro.locals.starlightRoute;
 const { data } = entry;
 const { title = data.title, tagline, actions = [] } = data.hero || {};
 const notFound = entry.id === '404';
+const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest';
 ---
 
 <div class="tr-hero">
-    <div class="copy">
-        <h1 id="_top" data-page-title set:html={title}/>
-        {tagline && <div class="tagline" set:html={tagline}/>}
-        {actions.length > 0 && (
-            <div class="actions">
-                {actions.map(({ link, text, variant }) => (
-                    <a href={link} class:list={['tr-button', variant === 'primary' ? 'tr-button-primary' : 'tr-button-secondary']}>{text}</a>
-                ))}
+    <h1 id="_top" data-page-title set:html={title}/>
+
+    <div class="lower">
+        <div class="copy">
+            {tagline && <div class="tagline" set:html={tagline}/>}
+            {actions.length > 0 && (
+                <div class="actions">
+                    {actions.map(({ link, text, variant }) => (
+                        <a href={link} class:list={['tr-button', variant === 'primary' ? 'tr-button-primary' : 'tr-button-secondary']}>{text}</a>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        {notFound ? (
+            <div class="void" aria-hidden="true">
+                <Ticket kind="Page" token="404" rows={[['path', 'not on any shelf']]} stub={['No', 'entry']} stamp="Void" tilt={3}/>
+            </div>
+        ) : (
+            <div class="run">
+                <p class="run-title">Run it</p>
+                <div class="run-line">
+                    <code>{command}</code>
+                    <button type="button" class="copy-button" data-copy-command={command}>
+                        <span data-copy-label aria-live="polite">Copy</span>
+                    </button>
+                </div>
+                <p class="run-note">
+                    Then open port 8080. The first start prints the <code>admin</code> password to the
+                    container log. The image runs on <code>linux/amd64</code> and <code>linux/arm64</code>.
+                </p>
             </div>
         )}
     </div>
-
-    {notFound ? (
-        <div class="desk" aria-hidden="true">
-            <div class="lift"><div class="ticket">
-                <div class="main">
-                    <p class="kind">Page</p>
-                    <p class="token">404</p>
-                    <dl>
-                        <dt>path</dt><dd>not on any shelf</dd>
-                    </dl>
-                </div>
-                <div class="stub"><span>No entry</span></div>
-                <span class="stamp">Void</span>
-            </div></div>
-        </div>
-    ) : (
-        <figure class="desk">
-            <div class="lift"><div class="ticket">
-                <div class="main">
-                    <p class="kind">Publish session</p>
-                    <p class="token"><code>trs_9c1e4b7a02f3_...</code></p>
-                    <dl>
-                        <dt>repo</dt><dd>releases</dd>
-                        <dt>via</dt><dd>device, Gradle</dd>
-                        <dt>opened</dt><dd>14:02:11</dd>
-                        <dt>expires</dt><dd>14:17:11</dd>
-                    </dl>
-                </div>
-                <div class="stub"><span>One repo</span><span>15 min</span></div>
-                <span class="stamp">Closed 14:03:41</span>
-            </div></div>
-            <figcaption>An example session. The Gradle plugin closed it after a 90-second publish.</figcaption>
-        </figure>
-    )}
 </div>
+
+<script>
+    for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy-command]')) {
+        const label = button.querySelector('[data-copy-label]')!;
+        let reset: number | undefined;
+        button.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(button.dataset.copyCommand!);
+                label.textContent = 'Copied';
+            } catch {
+                label.textContent = 'Copy failed';
+            }
+            button.dataset.state = 'done';
+            window.clearTimeout(reset);
+            reset = window.setTimeout(() => {
+                label.textContent = 'Copy';
+                delete button.dataset.state;
+            }, 2000);
+        });
+    }
+</script>
 
 <style>
     .tr-hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 3rem;
-        align-items: center;
-        padding-block: clamp(2.5rem, 1rem + 7vmin, 5.5rem) 3rem;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(2rem, 1.5rem + 2vw, 3rem);
+        padding-block: clamp(2.5rem, 1rem + 7vmin, 5.5rem) 2rem;
     }
 
-    @media (min-width: 52rem) {
-        .tr-hero {
-            grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    /* The headline: Archivo at its widest, the loudest thing on the site. */
+    .tr-hero #_top {
+        max-width: 17ch;
+        margin: 0;
+        font-size: clamp(2.375rem, 1.25rem + 5vw, 5.25rem);
+        font-stretch: 125%;
+        font-weight: 850;
+        line-height: 0.98;
+        letter-spacing: -0.025em;
+        text-wrap: balance;
+    }
+
+    .lower {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2.5rem;
+        align-items: start;
+    }
+
+    @media (min-width: 56rem) {
+        .lower {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
             gap: 4rem;
         }
     }
@@ -76,23 +107,13 @@ const notFound = entry.id === '404';
     .copy {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .copy #_top {
-        max-width: 12ch;
-        margin: 0;
-        font-size: clamp(3.25rem, 2rem + 5.5vw, 6rem);
-        font-weight: 850;
-        line-height: 0.92;
-        letter-spacing: 0;
-        text-wrap: balance;
+        gap: 1.75rem;
     }
 
     .tagline {
-        max-width: 34rem;
+        max-width: 36rem;
         color: var(--tr-body);
-        font-size: clamp(1rem, 0.925rem + 0.4vw, 1.1875rem);
+        font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
         line-height: 1.6;
         text-wrap: pretty;
     }
@@ -103,160 +124,89 @@ const notFound = entry.id === '404';
         gap: 0.75rem;
     }
 
-    /* The ticket. */
-
-    .desk {
+    /* The run slip: the whole install, one line. */
+    .run {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 1.25rem;
+        gap: 0.875rem;
+        padding: 1.25rem;
+        border-radius: 12px;
+        background-color: var(--tr-surface);
+    }
+
+    .run p {
         margin: 0;
     }
 
-    /* The shadow sits on a wrapper: a mask on the ticket would cut it off. */
-    .lift {
-        width: min(100%, 26rem);
-        rotate: -2deg;
-        filter: drop-shadow(0 18px 24px rgb(0 0 0 / 0.35));
-    }
-
-    :root[data-theme='light'] .lift {
-        filter: drop-shadow(0 14px 18px rgb(15 30 23 / 0.2));
-    }
-
-    .ticket {
-        --notch: 12px;
-        position: relative;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 5.5rem;
-        border-radius: 8px;
-        background-color: var(--tr-ticket);
-        color: var(--tr-ticket-ink);
-        mask:
-            radial-gradient(circle var(--notch) at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
-            radial-gradient(circle var(--notch) at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
-    }
-
-
-    .main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        /* The bottom padding keeps a clear space for the stamp, so it never covers a value. */
-        padding: 1.5rem 1.25rem 4rem 2rem;
-    }
-
-    .kind {
-        margin: 0;
+    .run-title {
+        color: var(--tr-heading);
         font-family: var(--tr-display);
-        font-size: 1.5rem;
-        font-weight: 800;
-        line-height: 1;
+        font-size: 1.0625rem;
+        font-stretch: 118%;
+        font-weight: 780;
     }
 
-    .token {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 650;
-        font-variation-settings: 'MONO' 1;
+    .run-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        align-items: start;
+        padding: 0.875rem 0.875rem 0.875rem 1rem;
+        border-radius: 8px;
+        background-color: var(--tr-page);
+    }
+
+    .run-line code {
+        color: var(--tr-heading);
+        font-family: var(--sl-font-mono);
+        font-size: 0.875rem;
+        line-height: 1.6;
         overflow-wrap: anywhere;
     }
 
-    .token code {
-        color: inherit;
-        font-size: inherit;
-    }
-
-    dl {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 0.125rem 1rem;
-        margin: 0.25rem 0 0;
-        font-size: 0.875rem;
-    }
-
-    dt {
-        color: var(--tr-ticket-faint);
-    }
-
-    dd {
-        margin: 0;
+    .copy-button {
+        padding: 0.375rem 0.75rem;
+        border: 0;
+        border-radius: 999px;
+        background-color: var(--tr-raised);
+        color: var(--tr-heading);
+        font: inherit;
+        font-size: 0.8125rem;
         font-weight: 600;
-        font-variant-numeric: tabular-nums;
+        cursor: pointer;
+        transition: background-color 150ms ease;
     }
 
-    /* The stub, behind a row of punched holes. */
-    .stub {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.25rem;
-        padding: 1rem 1.25rem 1rem 0.75rem;
-        background-image: radial-gradient(circle, var(--tr-page) 2.5px, transparent 3px);
-        background-size: 8px 12px;
-        background-repeat: repeat-y;
-        background-position: left center;
-        font-family: var(--tr-display);
-        font-size: 1.125rem;
-        font-weight: 800;
-        line-height: 1.1;
-        text-align: center;
+    .copy-button:hover {
+        background-color: var(--tr-hover);
     }
 
-    .stamp {
-        position: absolute;
-        right: 6.5rem;
-        bottom: 1.125rem;
-        padding: 0.25rem 0.625rem;
-        border: 3px solid var(--tr-ticket-stamp);
-        border-radius: 4px;
-        color: var(--tr-ticket-stamp);
-        font-size: 1rem;
-        font-weight: 800;
-        font-variation-settings: 'MONO' 1, 'CASL' 1;
-        rotate: -9deg;
-        opacity: 0.88;
-        mix-blend-mode: multiply;
-        animation: tr-stamp 380ms cubic-bezier(0.2, 0.9, 0.3, 1.15) 600ms both;
+    .copy-button[data-state='done'] {
+        background-color: var(--tr-ticket);
+        color: var(--tr-ticket-ink);
     }
 
-    @keyframes tr-stamp {
-        from {
-            opacity: 0;
-            scale: 1.6;
-        }
-        to {
-            opacity: 0.88;
-            scale: 1;
-        }
-    }
-
-    .desk figcaption {
-        max-width: 24rem;
+    .run-note {
         color: var(--tr-muted);
-        font-size: var(--sl-text-sm);
-        font-variation-settings: 'CASL' 1;
-        text-align: center;
+        font-size: 0.875rem;
+        line-height: 1.55;
     }
 
-    @media (max-width: 30rem) {
-        .ticket {
-            grid-template-columns: minmax(0, 1fr) 4.5rem;
-        }
+    .run-note code {
+        color: var(--tr-body);
+        font-family: var(--sl-font-mono);
+        font-size: 0.8125rem;
+    }
 
-        .main {
-            padding-left: 1.5rem;
-        }
-
-        .stamp {
-            right: 5rem;
-        }
+    .void {
+        display: flex;
+        justify-content: center;
+        padding-block: 1rem;
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .stamp {
-            animation: none;
+        .copy-button {
+            transition: none;
         }
     }
 </style>

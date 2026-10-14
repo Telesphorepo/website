@@ -297,7 +297,7 @@ const options = [
         margin: 0;
         padding: 0.25rem;
         border: 1px solid var(--tr-line);
-        border-radius: 6px;
+        border-radius: 10px;
         background-color: var(--tr-surface);
         box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.45);
         color: var(--tr-body);
@@ -327,7 +327,7 @@ const options = [
         }
     }
 
-    /* An option: the margin tick marks the current theme, as in the sidebar and the contents list. */
+    /* An option: hover fills the row, and the current theme keeps a fill. */
     [role='option'] {
         display: flex;
         align-items: center;
@@ -340,18 +340,9 @@ const options = [
         user-select: none;
     }
 
-    [role='option']::before {
-        content: '';
-        flex: none;
-        width: 6px;
-        height: 6px;
-        background-color: var(--tr-tick);
-        visibility: hidden;
-    }
-
     [role='option']:hover,
     [role='option']:focus {
-        background-color: var(--tr-line);
+        background-color: var(--tr-hover);
         color: var(--tr-heading);
     }
 
@@ -360,12 +351,9 @@ const options = [
     }
 
     [role='option'][aria-selected='true'] {
+        background-color: var(--tr-raised);
         color: var(--tr-heading);
         font-weight: 600;
-    }
-
-    [role='option'][aria-selected='true']::before {
-        visibility: visible;
     }
 
     .option-icon {
