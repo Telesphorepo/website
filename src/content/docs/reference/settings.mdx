@@ -1,0 +1,148 @@
+---
+title: Settings
+description: Every Telesphorepo setting with its type, default, environment override and meaning, plus the three boot variables.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Telesphorepo has three boot variables and a set of settings. The settings live in the database. You edit them in the admin **Settings** page or through `PATCH /api/settings` (see the [HTTP API](/reference/http-api/)).
+
+## How a setting gets its value
+
+The server picks the first value it finds:
+
+1. The environment override `TR_<KEY>`. The key is upper-cased and dots become `_`. For example, `s3.bucket` becomes `TR_S3_BUCKET`.
+2. The value in the database.
+3. The default.
+
+A setting that the environment sets is read-only in the UI. It shows as "set by environment". A `PATCH` that tries to change it to a different value gets 409.
+
+The server checks every environment value at startup. If a value is invalid, the server refuses to start. For example, `TR_STORAGE=s3` without a bucket, endpoint or keys is a startup error. If a value in the database is invalid or cannot be decrypted, the server logs it and ignores it. A `TR_*` variable that matches no setting is logged as a warning and ignored.
+
+Changes apply live. The server rebuilds its settings snapshot on every write, so you do not restart it. The exceptions are the boot variables.
+
+### Value types
+
+| Type | Format |
+|---|---|
+| string | Plain text. |
+| bool | `true` or `false`. |
+| int | A positive integer. |
+| duration | A positive Go duration, such as `300ms`, `5m` or `168h`. Go has no `d` unit, so write 90 days as `2160h`. |
+| list | Comma-separated in the environment (`10.0.0.0/8,192.168.0.0/16`). A JSON array of strings in the API. |
+
+### Secrets
+
+Settings marked **secret** are encrypted with AES-256-GCM. The key comes from the master key. The API never returns a secret. It reports only `{"set": true}` or `{"set": false}`. In a `PATCH`, an empty string for a secret means "unchanged". The server never logs secrets.
+
+<Aside type="caution">
+If you lose the master key, the server cannot decrypt secret settings. Enter them again.
+</Aside>
+
+## Boot variables
+
+These are read at startup. A change needs a restart. They are not in the settings table.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TR_DATA_DIR` | `./data` (`/data` in the container image) | Directory for the database, master key, upload spool and default blob root. |
+| `TR_LISTEN` | `:8080` | Listen address. |
+| `TR_MASTER_KEY` | `<data dir>/master.key` | Base64 key of 32 bytes. When unset, the server generates the file on the first start. |
+| `TR_BOOTSTRAP_ADMIN_USER`, `TR_BOOTSTRAP_ADMIN_PASSWORD` | unset | Set both to create the first admin with a known password. The server uses them only when there are no users. |
+
+## General
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `base_url` | string | empty | `TR_BASE_URL` | The URL that clients use to reach the server, such as `https://repo.example.com`. It must start with `http://` or `https://`. A trailing slash is removed. The UI shows it in client snippets, passkeys use its host, and the OIDC redirect URL falls back to it. In `telesphorepo dev` the default is `http://localhost:8080`. |
+| `log.level` | string | `info` | `TR_LOG_LEVEL` | Minimum log level. One of `debug`, `info`, `warn`, `error`. |
+| `max_upload_bytes` | int | `2147483648` (2 GiB) | `TR_MAX_UPLOAD_BYTES` | Largest artifact or package upload. A bigger upload gets 413. |
+| `max_json_bytes` | int | `1048576` (1 MiB) | `TR_MAX_JSON_BYTES` | Largest JSON API request body. |
+| `nexus.sync_interval` | duration | `15m` | `TR_NEXUS_SYNC_INTERVAL` | Time between two syncs of a mirroring Nexus source. The minimum is `1m`. See [Nexus migration](/operations/nexus-migration/). |
+
+## Storage
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `storage` | string | `fs` | `TR_STORAGE` | The blob backend. `fs` stores blobs on disk. `s3` uses any S3-compatible store. `r2` is an alias for `s3`. |
+| `fs.root` | string | empty | `TR_FS_ROOT` | Directory for blobs when `storage` is `fs`. Empty means `blobs/` in the data directory. |
+| `s3.endpoint` | string | empty | `TR_S3_ENDPOINT` | The S3 endpoint URL, such as `https://<account>.r2.cloudflarestorage.com` or `http://seaweedfs:8333`. |
+| `s3.region` | string | `auto` | `TR_S3_REGION` | The region name. R2 uses `auto`. |
+| `s3.bucket` | string | empty | `TR_S3_BUCKET` | The bucket name. |
+| `s3.access_key_id` | string | empty | `TR_S3_ACCESS_KEY_ID` | The access key ID. |
+| `s3.secret_access_key` | string, secret | empty | `TR_S3_SECRET_ACCESS_KEY` | The secret access key. |
+| `s3.prefix` | string | empty | `TR_S3_PREFIX` | Optional prefix for every object key, such as `telesphorepo/`. Slashes at the ends are trimmed. It cannot contain `..`. |
+| `s3.path_style` | bool | `false` | `TR_S3_PATH_STYLE` | Path-style addressing. SeaweedFS and MinIO need it. R2 and AWS do not. |
+| `s3.redirect` | bool | `true` | `TR_S3_REDIRECT` | On S3, a `GET` download answers 302 with a presigned URL. When `false`, the server streams the file. `HEAD` is never redirected. |
+| `presign_ttl` | duration | `5m` | `TR_PRESIGN_TTL` | How long a presigned download URL is valid. |
+
+When you change a backend setting, the server first runs a probe against the new store. It puts, heads, gets and deletes a file named `_telesphorepo/probe-<hex>`. If the probe fails, nothing is saved.
+
+If the new settings point to another location and the server already holds files, the server copies all blobs in the background. The `PATCH` returns 202 with the move. A change of only credentials, region, path style or redirect saves at once. See [Moving storage](/operations/moving-storage/) and [Storage](/operations/storage/).
+
+## Security
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `cookie.secure` | bool | `true` | `TR_COOKIE_SECURE` | Send the session cookie only over HTTPS. Turn it off only for plain-HTTP setups. `telesphorepo dev` sets it to `false`. |
+| `session_ttl` | duration | `168h` (7 days) | `TR_SESSION_TTL` | Absolute lifetime of a UI sign-in. |
+| `trusted_proxies` | list | empty | `TR_TRUSTED_PROXIES` | CIDRs whose `X-Forwarded-For` header the server trusts for the client IP, such as `10.0.0.0/8`. The rate limiter uses the client IP. |
+
+<Aside type="tip">
+Behind a reverse proxy, set `trusted_proxies` to the proxy address. Without it, the rate limiter sees the proxy IP for every request.
+</Aside>
+
+## Publishing
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `publish.session_ttl` | duration | `15m` | `TR_PUBLISH_SESSION_TTL` | The longest life of a publish session. The maximum is `1h`. A client closes its session when the publish ends. |
+| `publish.device_ttl` | duration | `2160h` (90 days) | `TR_PUBLISH_DEVICE_TTL` | How long an enrolled device key can start publish sessions. After that the developer enrolls the device again. |
+
+See [Publishing](/publishing/overview/).
+
+## Single sign-on
+
+SSO is on when `oidc.issuer` is set. It is for admins only. SSO also needs `oidc.client_id`, `oidc.client_secret` and at least one of `oidc.admin_values` or `oidc.admin_emails`. A redirect URL must come from `oidc.redirect_url` or from `base_url`.
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `oidc.issuer` | string | empty | `TR_OIDC_ISSUER` | The issuer URL of your identity provider, such as `https://kc.example.com/realms/ops`. The server trims only whitespace, so a trailing slash must match the provider. |
+| `oidc.client_id` | string | empty | `TR_OIDC_CLIENT_ID` | The ID of the confidential client that you registered. |
+| `oidc.client_secret` | string, secret | empty | `TR_OIDC_CLIENT_SECRET` | The client secret. |
+| `oidc.redirect_url` | string | empty | `TR_OIDC_REDIRECT_URL` | The callback URL registered at the provider. When empty, it is `base_url` + `/api/auth/oidc/callback`. |
+| `oidc.scopes` | string | `openid profile email` | `TR_OIDC_SCOPES` | Space-separated scopes. `openid` is always included. |
+| `oidc.admin_claim` | string | `groups` | `TR_OIDC_ADMIN_CLAIM` | The ID token claim that is checked for admin rights. Dotted paths work, such as `realm_access.roles`. |
+| `oidc.admin_values` | list | empty | `TR_OIDC_ADMIN_VALUES` | The admin claim must contain one of these values. |
+| `oidc.admin_emails` | list | empty | `TR_OIDC_ADMIN_EMAILS` | Extra allowlist of admin emails. It matches only when the provider marks the email as verified. |
+| `oidc.session_ttl` | duration | `12h` | `TR_OIDC_SESSION_TTL` | Absolute lifetime of an SSO sign-in. |
+| `admin_password_login` | bool | `true` | `TR_ADMIN_PASSWORD_LOGIN` | When `false`, local admins cannot sign in to the UI with a password. Publishers still can. It needs SSO. |
+
+When you change the issuer, client ID, client secret, redirect URL or scopes, the server fetches the discovery document first. If that fails, nothing is saved. You can test without saving through `POST /api/settings/oidc/test`.
+
+<Aside type="caution">
+If SSO breaks and you turned off `admin_password_login`, set `TR_ADMIN_PASSWORD_LOGIN=true` and restart. That restores password sign-in for local admins.
+</Aside>
+
+See [Single sign-on](/security/sso/).
+
+## Signing
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `signing.key` | string, secret | generated | none | The armored OpenPGP private key that signs repository indexes. The server generates it on the first start. You cannot set it through `PATCH /api/settings`. Use `GET/POST /api/settings/signing-key` or the Settings page. |
+| `gpg.key_file` | string | empty | `TR_GPG_KEY_FILE` | Path of a mounted armored private key. When set, it replaces the stored key, and the file must exist. |
+| `gpg.passphrase_file` | string | empty | `TR_GPG_PASSPHRASE_FILE` | Path of a file with the passphrase, only for encrypted keys. |
+
+When the signing key changes, the Debian plugin rebuilds and signs `Release`, `InRelease` and `Release.gpg` again for every distribution. Clients that trust the old public key must fetch the new one from `/keys/debian.asc`.
+
+## Debian
+
+These settings come from the Debian format. Maven and raw repos have no settings of their own.
+
+| Key | Type | Default | Env | Meaning |
+|---|---|---|---|---|
+| `deb.debounce` | duration | `2s` | `TR_DEB_DEBOUNCE` | The quiet period after an upload before the indexes are rebuilt. `telesphorepo dev` uses `300ms`. |
+| `deb.max_delay` | duration | `30s` | `TR_DEB_MAX_DELAY` | The longest a rebuild waits under continuous uploads. |
+
+Poll `GET /api/repos/{repo}/status` for `pending: 0` to know when the indexes are current.

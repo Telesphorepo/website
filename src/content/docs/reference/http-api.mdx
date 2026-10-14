@@ -1,0 +1,258 @@
+---
+title: HTTP API
+description: Every route of the Telesphorepo server, grouped by area, with the auth each one needs. Covers format routes, the JSON API, publishing, settings, storage moves and Nexus sources.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+The server has two kinds of routes. **Format routes** are what Maven, Gradle, apt and curl use. The **JSON API** under `/api/` is what the web UI uses. You can call it from scripts too.
+
+## Conventions
+
+- **Errors** are `{"error": "..."}`. Settings validation adds `fields`, a map from key to message.
+- **Request bodies** are capped at `max_json_bytes` (1 MiB by default).
+- **Lists** return `{items, next}`. Pass `?after=<next>&limit=<n>` to get the next page. The default `limit` is 50 and the maximum is 200. `next` is empty on the last page. Lists use keyset paging, so there is no offset.
+- **CSRF.** The JSON API refuses cross-origin browser writes.
+- **Rate limit.** Failed attempts are limited per IP and per user name. The burst is 10, then 1 every 6 seconds. Over the limit you get 429 with `Retry-After`.
+
+### Credentials
+
+| Credential | Looks like | Accepted on |
+|---|---|---|
+| Password | your password | HTTP Basic on format routes and `/api/`. Reads only. SSO users have no password. |
+| Read token | `trp_<id>_<secret>` | HTTP Basic password (any user name) and `/api/`. Reads only. |
+| UI session | cookie `tr_session` | `/api/` only. |
+| Publish session token | `trs_<id>_<secret>` | HTTP Basic password (any user name) on the format routes of its one repo, and `/api/publish/...`. This is the only credential that can write. |
+
+A publish session token gets 403 on every other `/api/` route, even for an admin user. See [Publishing overview](/publishing/overview/) and [Read tokens](/security/read-tokens/).
+
+In the tables below, "read" and "write" mean the rules in [Repo access](#repo-access). "Session" means a UI session or HTTP Basic with a password. "Admin" means an admin user.
+
+<Aside type="note">
+A user who has no second factor can sign in, but the session is setup-only. It reaches only `/api/me`, `/api/auth/logout` and `/api/security/...`. Every other `/api/` route answers 403 `{"error":"second_factor_required"}`.
+</Aside>
+
+## Format routes
+
+| Route | Auth | Notes |
+|---|---|---|
+| `GET /healthz` | none | Returns `ok` when the database answers. |
+| `GET, HEAD, PUT /maven/{repo}/{path...}` | read, write | `PUT` returns 201 for a new file, 200 for an overwrite or an identical retry, 409 for a changed release file, 413 over `max_upload_bytes`. Mutable paths are `maven-metadata.xml*` and anything under a `-SNAPSHOT` directory. |
+| `PUT, POST /debian/{repo}/upload/{dist}/{component}` | write | The body is a raw `.deb`. Returns 201 `{package, version, architecture, filename, sha256}`, 200 for an identical package, 409 for a conflict. |
+| `GET, HEAD /debian/{repo}/{path...}` | read | Serves `dists/...` and `pool/...`. |
+| `GET, HEAD, PUT /raw/{repo}/{path...}` | read, write | `PUT` returns 201 for a new path. It returns 200 for identical bytes, or for a replace when the repo `overwrite` is `allow`. It returns 409 for different bytes when `overwrite` is `deny` (the default), and 413 over `max_upload_bytes`. |
+| `GET /keys/debian.asc` | none | The public signing key. |
+| `GET /` | none | The embedded web UI. |
+
+On S3 storage with `s3.redirect` on, a `GET` download answers 302 with a presigned URL. `HEAD` is never redirected.
+
+### Repo access
+
+- A repo with `anonymous_read` on allows reads without credentials.
+- Otherwise, no credentials or bad credentials get 401 with a Basic challenge. Valid credentials without permission get 403.
+- An unknown repo gets 404. For anonymous callers it gets 401, so repo names do not leak.
+- A write to a repo that mirrors a Nexus source gets 409 until cut-over.
+- A write without an open publish session for that repo gets 401 with `{"error":"publishing needs a publish session: <base_url>/#/publishing"}`.
+- A device session or manual session writes only while its user still has `write` permission on the repo. Otherwise it gets 403.
+
+<Tabs>
+  <TabItem label="Read (curl)">
+```sh
+curl -fL -u anything:trp_abc123def456_SECRET \
+  -O https://repo.example.com/raw/files/tools/app.tar.gz
+```
+  </TabItem>
+  <TabItem label="Write (curl)">
+```sh
+curl -f -u publish:trs_abc123def456_SECRET \
+  -T app.tar.gz https://repo.example.com/raw/files/tools/app.tar.gz
+```
+  </TabItem>
+  <TabItem label="Upload a .deb">
+```sh
+curl -f -u publish:trs_abc123def456_SECRET \
+  -T mytool_1.0_amd64.deb \
+  https://repo.example.com/debian/apt/upload/stable/main
+```
+  </TabItem>
+</Tabs>
+
+See [Maven and Gradle](/repositories/maven-gradle/), [Debian](/repositories/debian/) and [Raw files](/repositories/raw/).
+
+## Sign-in and account
+
+| Method and path | Auth | Notes |
+|---|---|---|
+| `POST /api/auth/login` | none | Body `{username, password}`. A user with a second factor gets `{second_factor: true, methods: [...]}` and the cookie `tr_login`. A user without one gets the user object with `second_factor_required: true` and a setup-only session. 401 for SSO users. 403 for a local admin when `admin_password_login` is off. |
+| `POST /api/auth/logout` | session | Ends the local session only. |
+| `POST /api/auth/login/passkey` | `tr_login` cookie | Returns `{publicKey: {...}}`, the WebAuthn options for the pending sign-in. |
+| `POST /api/auth/login/second` | `tr_login` cookie | Body `{totp_code}`, `{passkey: <assertion>}` or `{recovery_code}`. 200 sets `tr_session`. 401 for a wrong proof (the sign-in stays pending) or an expired sign-in. 429 after too many failures. |
+| `GET /api/auth/config` | none | `{password_login, oidc, admin_password_login}`. The UI uses it to draw the login page. |
+| `GET /api/auth/oidc/login` | none | Starts SSO. 404 when SSO is off, 503 when discovery fails, otherwise 302 to the identity provider. |
+| `GET /api/auth/oidc/callback` | none | The SSO return URL. On success it sets the session and redirects to `/`. On failure it redirects to `/#/login?error=<reason>`. |
+| `GET /api/me` | any | The current user, with `kind` (`local` or `oidc`), `email` and `second_factor_required`. |
+| `GET, POST /api/tokens` | any | Lists or creates read tokens. The token is shown once. A token cannot create tokens. 403 for SSO users. |
+| `DELETE /api/tokens/{id}` | any | Deletes a read token. |
+| `GET, POST /api/users` | admin | Lists (paginated) or creates users. |
+| `PATCH /api/users/{username}` | admin; a user may change their own password | Updates a user. |
+
+The `reason` values after a failed SSO sign-in are `not_authorized`, `username_conflict`, `invalid_username`, `account_disabled` and `sso_failed`. See [Single sign-on](/security/sso/).
+
+## Second factors
+
+All routes here need a UI session. Basic auth and tokens get 403. See [Accounts and 2FA](/security/accounts-and-2fa/).
+
+| Method and path | Notes |
+|---|---|
+| `GET /api/security` | Returns `{totp: [...], passkeys: [...], recovery_codes: <unused count>, second_factor: bool}`. |
+| `POST /api/security/totp/begin` | Body `{name}`. Returns `{setup_id, secret, otpauth_url}`. The secret is shown once and the setup lasts 10 minutes. |
+| `POST /api/security/totp/confirm` | Body `{setup_id, code}`. Returns 201 `{id, name, created_at}`. |
+| `DELETE /api/security/totp/{id}` | Returns 204. |
+| `POST /api/security/passkeys/begin` | Returns `{publicKey}` creation options. |
+| `POST /api/security/passkeys/finish` | Body `{name, credential}`. Returns 201. |
+| `POST /api/security/passkeys/assert` | Returns options for a fresh check before an approval or a manual session. |
+| `DELETE /api/security/passkeys/{id}` | Returns 204. |
+| `POST /api/security/recovery-codes` | Returns 201 `{codes: [...]}` with 10 one-time codes. It replaces the old set. The codes are shown once. |
+
+Passkey routes return 409 when `base_url` is empty.
+
+## Repos, search and usage
+
+| Method and path | Auth | Notes |
+|---|---|---|
+| `GET /api/formats` | none | `[{name, title, default_config, settings_group?}]` for every registered format. |
+| `GET /api/repos` | any or anonymous | Lists only repos the caller can see. |
+| `POST /api/repos` | admin | Creates a repo. `format` must be a registered format name. `config` must be a JSON object that the format accepts (400 otherwise). An empty config becomes the format default. |
+| `GET /api/repos/{name}` | any or anonymous | One repo. The JSON has `locked_by`, which is `""` when the repo is not locked. |
+| `PATCH /api/repos/{name}` | admin | Changes a repo. A PATCH with `config` lets the format react to the change. |
+| `GET /api/repos/{name}/permissions` | admin | Lists permissions. |
+| `PUT, DELETE /api/repos/{name}/permissions/{username}` | admin | `PUT` takes `{level: "read" \| "write"}`. `write` includes `read`. |
+| `GET /api/repos/{name}/assets?prefix=&after=&limit=` | read | Files in path order. The prefix is a range scan. |
+| `GET /api/search?q=&repo=&after=&limit=` | any or anonymous | Substring search on paths. `q` needs at least 3 characters. Only readable repos are searched. |
+| `GET /api/repos/{name}/status` | read | The format status, or `{}`. For Debian it is `{pending}`, the number of index units still to rebuild. |
+| `GET /api/repos/{name}/usage` | read | `{base_url, snippets: [{title, lang, code}]}`. The web UI shows these client snippets. |
+
+See [Browsing and search](/repositories/browsing-and-search/).
+
+## Publishing
+
+All publishing routes are described in [Publishing overview](/publishing/overview/). Lists use `?after=&limit=`.
+
+### Devices
+
+| Method and path | Auth | Notes |
+|---|---|---|
+| `POST /api/devices/enroll` | none | Body `{name, kind: "gradle" \| "maven", public_key}`. `public_key` is the raw 32-byte Ed25519 key in base64url without padding. Returns `{device_code, user_code, verification_url, expires_in: 600, interval: 5}`. Each IP gets a burst of 10, then 1 per 30 seconds. |
+| `POST /api/devices/enroll/poll` | none | Body `{device_code}`. 200 `{device_id}` once approved (once only). Otherwise 400 with `authorization_pending`, `slow_down` or `expired_token`. |
+| `GET /api/devices/enroll?user_code=` | session | Shows the pending enrollment, for the approval page. 404 for an unknown or expired code. |
+| `POST /api/devices/approve` | session | Body `{user_code, totp_code \| passkey}`. Returns 201 with the device. 401 for a wrong second factor, 404 for an unknown code, 409 for a used code. |
+| `GET /api/devices` | session | Your devices, newest first. An admin sees all devices. |
+| `DELETE /api/devices/{id}` | session | Returns 204. It revokes the device and ends its open sessions. An admin may revoke any device. |
+
+Approve refuses read tokens and publish session tokens.
+
+### Publish sessions
+
+| Method and path | Auth | Notes |
+|---|---|---|
+| `POST /api/publish/challenge` | none | Body `{device_id}`. Returns `{nonce}`. The nonce is single use and lives 60 seconds. |
+| `POST /api/publish/sessions` | none | Body `{device_id, repo, nonce, signature}`. Returns 201 `{id, token, repo, expires_at}`. The signature is Ed25519 over `"telesphorepo publish v1\n" + nonce + "\n" + device_id + "\n" + repo`, in base64url without padding. |
+| `POST /api/publish/sessions/oidc` | none | Body `{token, repo}`. `token` is the CI identity token. Same answer as above. |
+| `POST /api/publish/sessions/manual` | session | Body `{repo, totp_code \| passkey}`. Same answer. It needs a fresh check. Recovery codes do not work here. 401 for a wrong proof. 429 with `Retry-After` when limited. |
+| `GET /api/publish/sessions` | session | Your own sessions. |
+| `DELETE /api/publish/sessions/{id}` | the session's own token | Returns 204. Send the token as the Basic password or as a Bearer token. |
+| `GET /api/publish/log` | admin | Every session, newest first. |
+
+### Trust policies
+
+| Method and path | Auth | Notes |
+|---|---|---|
+| `GET, POST /api/publish/trusts` | admin | The list is in name order. |
+| `GET, PATCH, DELETE /api/publish/trusts/{id}` | admin | `PATCH` changes only the fields you send. A change of issuer, audience, claims, `jwks` or repos, a disable and a delete end the open sessions of the policy. |
+
+A trust input is `{name, issuer, audience, claims: {claim: [value...]}, jwks, repos: [name...], disabled}`. See [Trust policies](/security/trust-policies/).
+
+<Tabs>
+  <TabItem label="CI exchange (curl)">
+```sh
+curl -fsS -X POST https://repo.example.com/api/publish/sessions/oidc \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"'"$CI_ID_TOKEN"'","repo":"releases"}'
+```
+  </TabItem>
+  <TabItem label="Close a session">
+```sh
+curl -fsS -X DELETE -u publish:trs_abc123def456_SECRET \
+  https://repo.example.com/api/publish/sessions/42
+```
+  </TabItem>
+</Tabs>
+
+## Settings and signing
+
+All routes are admin only. See [Settings](/reference/settings/).
+
+| Method and path | Notes |
+|---|---|
+| `GET /api/settings` | Returns `{groups: [{name, label, settings: [Item]}]}`. An item has `key`, `env`, `group`, `label`, `help`, `type`, `options`, `secret`, `value`, `default`, `source` (`db`, `env` or `default`), `locked` and `read_only`. Secrets show only `{"set": bool}`. |
+| `PATCH /api/settings` | Body `{key: value}`. `null` resets a key. `""` for a secret means unchanged. Returns 400 `{error, fields}` for invalid values, and 409 for an env-locked key. A change of backend runs the storage probe first. A change that starts a storage move saves the other keys and returns 202 `{move}`. It returns 409 while a move runs. |
+| `POST /api/settings/storage/test` | Same body as the PATCH, merged over the current values and not saved. Returns `{ok: true}`, or 400 `{ok: false, error}`. |
+| `POST /api/settings/oidc/test` | The same, for SSO discovery. |
+| `GET /api/settings/signing-key` | Returns `{public_key, fingerprint}`. |
+| `POST /api/settings/signing-key` | Body `{armored?}`. An empty value generates a new key. 409 when the key comes from `gpg.key_file`. |
+
+<Tabs>
+  <TabItem label="Change a setting">
+```sh
+curl -fsS -X PATCH -u admin:PASSWORD https://repo.example.com/api/settings \
+  -H 'Content-Type: application/json' \
+  -d '{"log.level":"debug","trusted_proxies":["10.0.0.0/8"]}'
+```
+  </TabItem>
+  <TabItem label="Test S3 settings">
+```sh
+curl -fsS -X POST -u admin:PASSWORD https://repo.example.com/api/settings/storage/test \
+  -H 'Content-Type: application/json' \
+  -d '{"storage":"s3","s3.bucket":"artifacts"}'
+```
+  </TabItem>
+</Tabs>
+
+## Storage moves
+
+All routes are admin only. See [Moving storage](/operations/moving-storage/).
+
+| Method and path | Notes |
+|---|---|
+| `GET /api/storage/moves/current` | The newest move, running or ended. 404 when there has been none. |
+| `GET /api/storage/moves/{id}` | A move: `{id, state, total, copied, skipped, failed, error, started_at, finished_at, target}`. `state` is `copying`, `done`, `failed` or `cancelled`. It never holds secrets. |
+| `GET /api/storage/moves/{id}/failures?after=&limit=` | `{items: [{asset_id, key, reason}], next}`. |
+| `DELETE /api/storage/moves/{id}` | Cancels the move and returns it. 409 when it has ended. |
+
+## Nexus sources
+
+All routes are admin only. See [Nexus migration](/operations/nexus-migration/). Errors are 400 for invalid input or refused credentials, 404, 409 (exists, running, not running, cut over, still mapped) and 502 when Nexus is unreachable.
+
+| Method and path | Notes |
+|---|---|
+| `POST /api/nexus/sources` | Body `{name, base_url, username, password}`. Checks the connection. Returns 201 with the source. |
+| `GET /api/nexus/sources?after=&limit=` | Sources in name order. |
+| `GET /api/nexus/sources/{id}` | The source with its Nexus repos. After cut-over, or when Nexus is unreachable, it lists only the mapped repos and `nexus_error` says why. |
+| `PATCH /api/nexus/sources/{id}` | Body `{base_url?, username?, password?}`. Checks the connection. 409 after cut-over. |
+| `PUT /api/nexus/sources/{id}/repos` | Body `[{source_repo, target, create}]`. Replaces the whole mapping. |
+| `POST /api/nexus/sources/{id}/sync` | Starts a sync. Returns 202. 400 without mapped repos. 409 while a sync runs or after cut-over. |
+| `POST /api/nexus/sources/{id}/cutover` | Runs a final sync and cuts over. Returns 202. |
+| `GET /api/nexus/sources/{id}/syncs?after=&limit=` | Sync history, newest first. |
+| `GET /api/nexus/syncs/{id}` | One sync with per-repo counters. |
+| `GET /api/nexus/syncs/{id}/failures?after=&limit=` | Files that a sync did not import. |
+| `DELETE /api/nexus/syncs/{id}` | Cancels a running sync. 409 when it has ended. |
+| `DELETE /api/nexus/sources/{id}` | Returns 204. 409 while a sync runs or while the source still mirrors repos. |
+
+The server never returns the Nexus password.
+
+## Gotchas
+
+- **Write with the right credential.** A password or read token cannot publish. Use a publish session token (`trs_...`) as the Basic password. The user name does not matter.
+- **Tokens are shown once.** Read tokens, publish session tokens, TOTP secrets and recovery codes cannot be fetched again.
+- **Pass `next` back unchanged.** Treat `next` as an opaque cursor. For sync history it is a sync ID, and for Nexus sources it is a source name, but do not build your own.
+- **Use `limit` up to 200.** A larger value is capped.

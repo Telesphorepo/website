@@ -1,0 +1,44 @@
+---
+title: Overview
+description: How publish sessions work, and which way to get one.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Every write to a Telesphorepo repository needs a **publish session**. A publish session is a random token. The server creates it for one repository. It ends when the publish is done, and it never lives longer than `publish.session_ttl` (15 minutes by default, 1 hour at most).
+
+A password or a read token cannot write. If one leaks, nobody can use it to publish. This rule covers Maven uploads, Debian uploads and raw uploads.
+
+<Aside type="note">
+The Nexus sync and the [storage move](/operations/moving-storage/) write inside the server. They do not use publish sessions.
+</Aside>
+
+## You prove who you are
+
+The server alone makes, stores, scopes, expires and revokes sessions. The caller only proves its identity. The server accepts these proofs:
+
+| Who publishes | Proof | One-time setup | Each publish |
+|---|---|---|---|
+| Developer with Gradle | Enrolled device key | `./gradlew telesphorepoLogin`, then approve in a browser | Automatic. See [Gradle plugin](/publishing/gradle-plugin/) |
+| Developer with Maven | Enrolled device key | `mvn telesphorepo:login`, then approve in a browser | Automatic. See [Maven extension](/publishing/maven-extension/) |
+| GitHub Actions, Jenkins, any OIDC CI | The identity token of the CI, plus a trust policy | An admin adds a [trust policy](/security/trust-policies/) | Automatic with the plugin or extension, or two `curl` calls. See [GitHub Actions](/publishing/github-actions/) and [Jenkins](/publishing/jenkins/) |
+| Anyone, by hand | Web UI sign-in with password and second factor | None | Press "New publish session" and copy the token. See [Manual sessions](/publishing/manual-sessions/) |
+
+## How a session works
+
+1. The client proves its identity to the server and names one repository.
+2. The server answers with a token that starts with `trs_`.
+3. The client uses the token as the HTTP Basic password. Any user name works.
+4. The client ends the session when the publish is done. Otherwise the session expires by itself.
+
+A session token works only for its own repository. It can also read that repository.
+
+Every session shows in the **Publish log** page (admins only). The log keeps expired sessions for 30 days.
+
+## Gotchas
+
+- A local account needs a second factor before it can publish. Set one up on the **Security** page. See [Accounts and 2FA](/security/accounts-and-2fa/).
+- A device or manual session also needs the `write` permission of the user on the repository. A CI session writes outright, because the trust policy lists the repository.
+- A bad, closed or expired token gets 401. Failed attempts count toward the rate limit.
+- Single sign-on (SSO) users have no second factor and no device. They cannot publish by device or by hand. CI publishes with a trust policy instead.
+- The Gradle plugin and the Maven extension are MIT-licensed. The server is AGPL-3.0. See [Licensing](/reference/licensing/).

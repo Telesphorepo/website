@@ -1,0 +1,614 @@
+/*
+ * Telesphorepo theme. The --tr-* tokens hold the palette. The --sl-* tokens map it onto Starlight,
+ * so Starlight's own components follow both themes. Starlight's styles sit in cascade layers,
+ * so these unlayered rules win without extra specificity.
+ *
+ * Dark is the primary theme: near-black surfaces, 1px hairlines, one violet accent.
+ * The accent marks links, the current location, focus rings and selection. Nothing else.
+ *
+ * Spacing scale: 0.25rem, 0.5rem, 0.75rem, 1rem, 1.5rem, 2rem, 3rem, 4rem.
+ * JetBrains Mono is for code and for small labels (sidebar groups, table headers, feature labels, the contents heading).
+ */
+
+:root {
+    --tr-page: #08090a;
+    --tr-surface: #0f1012;
+    --tr-raised: #16171a;
+    --tr-line: #1e2024;
+    --tr-line-strong: #2b2d32;
+    --tr-muted: #8a8f98;
+    --tr-body: #c9ced6;
+    --tr-heading: #f7f8f8;
+    --tr-accent-low: #1c1a3d;
+    --tr-accent: #8b85ff;
+    --tr-accent-high: #b3afff;
+    /* Links in running text. */
+    --tr-link: var(--tr-accent-high);
+
+    --sl-color-accent-low: var(--tr-accent-low);
+    --sl-color-accent: var(--tr-accent);
+    --sl-color-accent-high: var(--tr-accent-high);
+
+    --sl-color-white: var(--tr-heading);
+    --sl-color-gray-1: #e6e8eb;
+    --sl-color-gray-2: var(--tr-body);
+    --sl-color-gray-3: var(--tr-muted);
+    --sl-color-gray-4: #4d5158;
+    --sl-color-gray-5: var(--tr-line-strong);
+    --sl-color-gray-6: var(--tr-surface);
+    --sl-color-black: var(--tr-page);
+
+    --sl-color-text: var(--tr-body);
+    --sl-color-text-accent: var(--tr-link);
+    --sl-color-bg: var(--tr-page);
+    --sl-color-bg-nav: var(--tr-page);
+    --sl-color-bg-sidebar: var(--tr-page);
+    --sl-color-bg-inline-code: var(--tr-raised);
+    --sl-color-hairline-light: var(--tr-line);
+    --sl-color-hairline: var(--tr-line);
+    --sl-color-hairline-shade: var(--tr-line);
+
+    --sl-font: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+    --sl-font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+    --sl-text-h1: clamp(2rem, 1.5rem + 2vw, 2.75rem);
+    --sl-text-h2: clamp(1.375rem, 1.25rem + 0.5vw, 1.625rem);
+    --sl-text-h3: 1.1875rem;
+    --sl-text-h4: 1rem;
+    --sl-line-height: 1.7;
+    --sl-content-width: 46rem;
+    --sl-sidebar-width: 16.5rem;
+    --sl-nav-height: 3.5rem;
+
+    color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+    --tr-page: #ffffff;
+    --tr-surface: #f7f7f8;
+    --tr-raised: #f0f0f2;
+    --tr-line: #e7e7eb;
+    --tr-line-strong: #d5d5db;
+    --tr-muted: #6b6f76;
+    --tr-body: #2b2d31;
+    --tr-heading: #0d0e10;
+    --tr-accent-low: #ecebff;
+    --tr-accent: #5b50e6;
+    --tr-accent-high: #4338ca;
+    --tr-link: var(--tr-accent);
+
+    --sl-color-gray-1: #1d1f23;
+    --sl-color-gray-4: #a3a6ad;
+    --sl-color-gray-7: var(--tr-surface);
+
+    color-scheme: light;
+}
+
+/* Base */
+
+/* Keep the layout still between short and long pages. */
+html {
+    scrollbar-gutter: stable;
+}
+
+/*
+ * Scrollbars, the same on every box that scrolls: no rail and no arrows, a thin rounded thumb.
+ * Chromium and Safari draw them from ::-webkit-scrollbar. Only a browser without it (Firefox)
+ * gets the standard properties.
+ */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 4px solid transparent;
+    border-radius: 999px;
+    background-color: var(--tr-line-strong);
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--tr-muted);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-color: var(--tr-line-strong) transparent;
+    }
+}
+
+body {
+    background-color: var(--tr-page);
+    color: var(--tr-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+    background-color: var(--tr-accent-low);
+    color: var(--tr-heading);
+}
+
+:focus-visible {
+    outline: 2px solid var(--tr-accent);
+    outline-offset: 2px;
+}
+
+/* Page titles, including the landing title */
+
+#_top {
+    font-size: var(--sl-text-h1);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--tr-heading);
+    overflow-wrap: break-word;
+}
+
+/* The title panel and the content panel read as one column. */
+.content-panel + .content-panel {
+    border-top: 0;
+    padding-top: 0;
+}
+
+/* Headings: weight and size set the hierarchy; space above separates the sections. */
+
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
+    color: var(--tr-heading);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
+    margin-top: 3rem;
+}
+
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h3 {
+    margin-top: 2rem;
+}
+
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + :is(.sl-heading-wrapper.level-h4, .sl-heading-wrapper.level-h5, .sl-heading-wrapper.level-h6) {
+    margin-top: 1.5rem;
+}
+
+.sl-markdown-content .sl-anchor-link {
+    color: var(--tr-muted);
+}
+
+.sl-markdown-content .sl-anchor-link:hover {
+    color: var(--tr-link);
+}
+
+/* Links keep an underline: their color alone is too close to the body text. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+    color: var(--tr-link);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.sl-markdown-content a:hover:not(:where(.not-content *)) {
+    color: var(--tr-heading);
+    text-decoration-color: currentColor;
+}
+
+.sl-markdown-content strong:not(:where(.not-content *)) {
+    color: var(--tr-heading);
+    font-weight: 600;
+}
+
+/* Inline code: a raised chip with a hairline. */
+
+.sl-markdown-content code:not(:where(.not-content *)) {
+    padding: 0.125em 0.375em;
+    border: 1px solid var(--tr-line);
+    border-radius: 4px;
+    color: var(--tr-heading);
+    font-size: 0.85em;
+}
+
+.sl-markdown-content a code:not(:where(.not-content *)) {
+    color: inherit;
+}
+
+/*
+ * Tables: one rule system. The line under the header and the lines between rows have the same
+ * weight and color. No frame above the header or below the last row.
+ */
+
+.sl-markdown-content table:not(:where(.not-content *)) {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.sl-markdown-content :is(th, td):not(:where(.not-content *)) {
+    padding-block: 0.625rem;
+    border-bottom: 1px solid var(--tr-line);
+}
+
+.sl-markdown-content th:not(:where(.not-content *)) {
+    font-family: var(--sl-font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--tr-muted);
+}
+
+.sl-markdown-content td:not(:where(.not-content *)) {
+    color: var(--tr-body);
+}
+
+.sl-markdown-content tr:last-child > td:not(:where(.not-content *)) {
+    border-bottom: 0;
+}
+
+.sl-markdown-content td code:not(:where(.not-content *)) {
+    white-space: nowrap;
+}
+
+/* Rules and quotes */
+
+.sl-markdown-content hr:not(:where(.not-content *)) {
+    margin-block: 2rem;
+    border-bottom-color: var(--tr-line);
+}
+
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+    border-inline-start-color: var(--tr-line-strong);
+    color: var(--tr-muted);
+}
+
+/* Asides: the surface color, a hairline, and the type color only on the left edge. */
+
+.starlight-aside {
+    border: 1px solid var(--tr-line);
+    border-inline-start: 2px solid var(--sl-color-asides-border);
+    border-radius: 6px;
+    padding: 0.875rem 1.125rem;
+    background-color: var(--tr-surface);
+    color: var(--tr-body);
+}
+
+.starlight-aside__title {
+    font-size: var(--sl-text-sm);
+    font-weight: 600;
+}
+
+/* Sidebar: mono group labels, muted links, the current page in the heading color on a raised row */
+
+#starlight__sidebar summary .large {
+    font-family: var(--sl-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tr-muted);
+}
+
+#starlight__sidebar summary:hover .large {
+    color: var(--tr-heading);
+}
+
+#starlight__sidebar a {
+    border-radius: 4px;
+    color: var(--tr-muted);
+    font-size: 0.875rem;
+}
+
+#starlight__sidebar a:hover {
+    background-color: var(--tr-surface);
+    color: var(--tr-heading);
+}
+
+#starlight__sidebar a.large {
+    font-weight: 400;
+}
+
+#starlight__sidebar a[aria-current='page'],
+#starlight__sidebar a[aria-current='page']:hover,
+#starlight__sidebar a[aria-current='page']:focus {
+    background-color: var(--tr-raised);
+    color: var(--tr-heading);
+    font-weight: 500;
+}
+
+/* Table of contents */
+
+starlight-toc h2 {
+    font-family: var(--sl-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tr-muted);
+}
+
+starlight-toc a {
+    --pad-inline: 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+}
+
+starlight-toc a[aria-current='true'],
+starlight-toc a[aria-current='true']:hover {
+    color: var(--tr-heading);
+}
+
+starlight-toc a[aria-current='true'] {
+    box-shadow: inset 1px 0 0 var(--tr-accent);
+}
+
+/* Previous and next links */
+
+.pagination-links {
+    margin-top: 3rem;
+}
+
+.pagination-links a {
+    border: 1px solid var(--tr-line);
+    border-radius: 6px;
+    box-shadow: none;
+    color: var(--tr-muted);
+    transition: border-color 150ms ease, background-color 150ms ease;
+}
+
+.pagination-links a:hover {
+    border-color: var(--tr-line-strong);
+    background-color: var(--tr-surface);
+}
+
+.pagination-links .link-title {
+    font-size: var(--sl-text-lg);
+    font-weight: 600;
+    color: var(--tr-heading);
+}
+
+/* Buttons: the primary is the heading color on the page, the secondary is a hairline. */
+
+.sl-link-button {
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.sl-link-button.primary {
+    background-color: var(--tr-heading);
+    border-color: var(--tr-heading);
+    color: var(--tr-page);
+}
+
+.sl-link-button.primary:hover {
+    background-color: var(--tr-body);
+    border-color: var(--tr-body);
+    color: var(--tr-page);
+}
+
+.sl-link-button.secondary {
+    border-color: var(--tr-line-strong);
+    color: var(--tr-heading);
+}
+
+.sl-link-button.secondary:hover {
+    border-color: var(--tr-muted);
+    background-color: var(--tr-surface);
+}
+
+/*
+ * Landing page: one centered column. The hero holds the headline, the tagline and the actions.
+ * Below it are a bordered feature grid, the quickstart code and a list of entry links.
+ */
+
+:root[data-has-hero] {
+    --sl-content-width: 64rem;
+}
+
+[data-has-hero] .sl-container {
+    margin-inline: auto;
+}
+
+/* A faint line grid behind the hero, faded toward the edges so it has no hard border. */
+[data-has-hero] .hero {
+    position: relative;
+    isolation: isolate;
+    padding-block: clamp(3rem, 1.5rem + 8vmin, 6.5rem) 3rem;
+}
+
+[data-has-hero] .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image:
+        linear-gradient(to right, var(--tr-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--tr-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    background-position: center;
+    mask-image: radial-gradient(ellipse 60% 70% at 50% 40%, #000 20%, transparent 75%);
+    opacity: 0.6;
+}
+
+[data-has-hero] .hero .stack {
+    gap: 1.5rem;
+}
+
+[data-has-hero] .hero .copy {
+    align-items: flex-start;
+    text-align: start;
+}
+
+[data-has-hero] .hero .copy > * {
+    max-width: 44rem;
+}
+
+[data-has-hero] .hero #_top {
+    font-size: clamp(2.25rem, 1.25rem + 4vw, 4rem);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.02;
+    text-wrap: balance;
+}
+
+[data-has-hero] .hero .tagline {
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.1875rem);
+    line-height: 1.55;
+    text-wrap: pretty;
+    color: var(--tr-muted);
+}
+
+[data-has-hero] .hero .actions {
+    justify-content: flex-start;
+    gap: 0.75rem;
+}
+
+/*
+ * Features: cells divided by 1px lines inside one frame. The gap shows the line color behind the cells,
+ * so every inner line is exactly 1px, in one or two columns.
+ */
+
+.tr-features {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--tr-line);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--tr-line);
+    list-style: none;
+}
+
+@media (min-width: 45rem) {
+    .tr-features {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.tr-features li {
+    margin: 0;
+    padding: 1.5rem;
+    background-color: var(--tr-page);
+}
+
+.tr-features .tr-label {
+    display: block;
+    font-family: var(--sl-font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tr-muted);
+}
+
+.tr-features h3 {
+    margin: 0.75rem 0 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.35;
+    color: var(--tr-heading);
+}
+
+.tr-features p {
+    margin: 0.5rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--tr-muted);
+}
+
+.tr-features code {
+    font-size: 0.85em;
+    color: var(--tr-body);
+}
+
+/*
+ * Entry points: rows separated by one line between items. Each row puts the title, the text and the
+ * arrow in columns across the full width from 48rem.
+ */
+
+.tr-entries {
+    border-top: 1px solid var(--tr-line);
+    border-bottom: 1px solid var(--tr-line);
+}
+
+.tr-entries a {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1.5rem;
+    align-items: center;
+    padding-block: 1rem;
+    text-decoration: none;
+}
+
+.tr-entries a + a {
+    border-top: 1px solid var(--tr-line);
+}
+
+.tr-entries a::after {
+    content: '';
+    grid-area: 1 / 2 / 3 / 3;
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: var(--tr-muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M17.92 11.62a1 1 0 0 0-.21-.33l-5-5a1 1 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1 1 0 1 0 1.42 1.42l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: background-color 150ms ease, transform 150ms ease;
+}
+
+.tr-entry-title {
+    grid-area: 1 / 1;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--tr-heading);
+    transition: color 150ms ease;
+}
+
+.tr-entry-text {
+    grid-area: 2 / 1;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--tr-muted);
+}
+
+.tr-entries a:hover .tr-entry-title {
+    color: var(--tr-link);
+}
+
+.tr-entries a:hover::after {
+    background-color: var(--tr-link);
+    transform: translateX(0.25rem);
+}
+
+@media (min-width: 48rem) {
+    .tr-entries a {
+        grid-template-columns: 12rem minmax(0, 1fr) auto;
+        column-gap: 2rem;
+    }
+
+    .tr-entries a::after {
+        grid-area: 1 / 3;
+    }
+
+    .tr-entry-text {
+        grid-area: 1 / 2;
+        margin-top: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sl-link-button,
+    .pagination-links a,
+    .tr-entry-title,
+    .tr-entries a::after {
+        transition: none;
+    }
+}

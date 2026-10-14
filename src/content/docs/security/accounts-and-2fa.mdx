@@ -1,0 +1,114 @@
+---
+title: Accounts and 2FA
+description: Manage local accounts, authenticator apps and passkeys.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+Telesphorepo has two kinds of account.
+
+| Kind | Who uses it | How it signs in |
+|---|---|---|
+| `local` | Publishers, and the break-glass `admin` | Username and password, then a second factor |
+| `oidc` | Admins who sign in through [single sign-on](/security/sso/) | The identity provider. No password, no second factor in Telesphorepo |
+
+This page covers local accounts. A local user may register more than one second factor.
+
+## Create a local account
+
+On first start with no users, the server creates `admin` with a random password. It prints the password once to stderr, outside the JSON log stream. Copy it from the console.
+
+To add more users, use the CLI:
+
+```sh
+telesphorepo user add alice            # asks for the password twice
+telesphorepo user add bob --admin      # an admin account
+telesphorepo user passwd alice         # reset a password and sign out all sessions of alice
+```
+
+`user passwd` is refused for SSO users. A user can also change their own password through the API.
+
+## Second factors
+
+A local user may register any mix of these:
+
+- **TOTP**: an authenticator app. SHA-1, 6 digits, 30 seconds, one step of clock drift allowed. The server refuses a code that a factor already accepted.
+- **Passkeys**: WebAuthn. The relying party ID is the host of `base_url`. The only accepted origin is the scheme and host of `base_url`.
+- **Recovery codes**: 10 one-time codes of 80 bits each, in the form `abcd-efgh-ijkl-mnop`. They work at sign-in only.
+
+You manage all factors on the **Security** page (`#/security`).
+
+<Aside type="caution">
+Passkeys need the `base_url` setting. Without it, the passkey routes answer 409. Set `base_url` to the public URL of the server before you register a passkey.
+</Aside>
+
+### Set up an authenticator app
+
+<Steps>
+
+1. Sign in with your password. A user with no second factor lands on the **Security** page in a setup-only session (see below).
+
+2. Add an authenticator app and enter a name for it.
+
+3. Scan the QR code, or copy the secret into your app. The server shows the secret once. The setup lasts 10 minutes.
+
+4. Enter the 6-digit code from the app to confirm. The server saves the factor only after this check.
+
+</Steps>
+
+### Register a passkey
+
+On the **Security** page, add a passkey, enter a name, and follow the browser prompt. If the authenticator reports a clone warning (a sign count that goes backwards), the check fails.
+
+### Generate recovery codes
+
+On the **Security** page, generate recovery codes. The server shows 10 codes once. Store them in a password manager.
+
+A new set replaces the old set. The server stores only argon2id hashes, so it cannot show the codes again.
+
+## Sign in with a second factor
+
+1. You send your username and password. The server answers with the available methods and sets the `tr_login` cookie. The cookie lasts 5 minutes. The state is stored in the database, so a restart does not lose it.
+2. You send one proof: a TOTP code, a passkey assertion, or a recovery code.
+3. On success, the server sets the `tr_session` cookie.
+
+A wrong code keeps the sign-in pending, so you can try again. Failed checks count against the rate limit for the username. After too many failures, the server answers 429 with a `Retry-After` header.
+
+A recovery code works once. Use it to get in, then register a new factor.
+
+## Setup-only state
+
+A local user with no second factor gets a setup-only session. This includes the break-glass `admin`.
+
+In this state the session reaches only:
+
+- `/api/me`
+- `/api/auth/logout`
+- `/api/security...`
+
+Every other `/api` route answers 403 with `{"error":"second_factor_required"}`. The web UI shows only the **Security** page.
+
+The `/api/security` routes need a UI session. Basic auth and tokens get 403. A password alone cannot add a factor through a script, and a password alone cannot [publish](/publishing/overview/).
+
+<Aside>
+Package clients (Maven, Gradle, apt) use Basic auth with a [read token](/security/read-tokens/) or a publish session. The setup-only state does not apply to them.
+</Aside>
+
+## Lost factors
+
+If a user loses every factor and every recovery code, an operator with access to the server runs:
+
+```sh
+telesphorepo user reset-2fa alice
+```
+
+The command removes all TOTP factors, passkeys and recovery codes of the user. At the next sign-in, the user is in the setup-only state and registers a new factor.
+
+Run the command with the same `TR_DATA_DIR` as the running server, because it changes the database in that directory.
+
+## Gotchas
+
+- Device approval and manual publish sessions need a fresh TOTP code or passkey check. Recovery codes do not count for these.
+- SSO users have no second factor in Telesphorepo. Enforce it at the identity provider.
+- If `admin_password_login` is `false`, local admins cannot sign in to the UI with a password. Publishers still can. See [single sign-on](/security/sso/).
+- The server limits failed attempts per IP address and per username: a burst of 10, then one every 6 seconds. Behind a reverse proxy, set `trusted_proxies` so the server sees the real client IP.

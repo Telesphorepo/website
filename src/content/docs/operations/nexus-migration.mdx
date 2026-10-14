@@ -1,0 +1,114 @@
+---
+title: Nexus migration
+description: Mirror hosted repositories from Nexus 3 into Telesphorepo, then cut over.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+You can move hosted repositories from a Sonatype Nexus 3 server. An admin adds Nexus as a **source**. Telesphorepo then mirrors the repos you pick with repeated syncs. The mirrored repos are read only. When you are ready, you **cut over**: the mirroring ends and the repos become writable. Clients then publish to Telesphorepo.
+
+Telesphorepo reads Nexus only through its REST API. It never writes to Nexus. It does not offer a Nexus-compatible API.
+
+## What it imports
+
+Only **hosted** repos are supported. Proxy and group repos are not. Each Nexus format maps to a Telesphorepo format:
+
+| Nexus format | Telesphorepo format | What is imported |
+|---|---|---|
+| `maven2` | `maven` | Every file at its path, with the normal Maven overwrite rules |
+| `raw` | `raw` | Every file at its path |
+| `apt` | `debian` | `pool/**/*.deb`, through the normal upload pipeline into component `main` |
+
+Details:
+
+- **Maven.** Identical bytes are skipped. A different release file fails and shows in the failure list. `maven-metadata.xml*` and SNAPSHOT files are replaced.
+- **Raw.** Different bytes for an existing path fail when the target repo denies overwrite.
+- **Debian.** Other files, such as the Nexus index files, are ignored. Telesphorepo builds its own indexes. The target repo needs a `distribution` in its config. A new target gets the distribution of the Nexus repo. An existing Debian target without one gets it from the Nexus repo too.
+- Imported files have no uploader.
+
+## Add a source
+
+<Steps>
+
+1. Open the admin-only **Nexus** page and fill in the add form: a name, the Nexus base URL, and a Nexus username and password.
+
+2. Save. Telesphorepo checks the connection first. It refuses a wrong password.
+
+3. Open the source. The page lists the Nexus repos. Repos that Telesphorepo cannot import are marked unsupported, with a reason.
+
+4. For each repo you want, tick the checkbox and enter a target repo name. A target that does not exist is created with the default config of the format.
+
+5. Click **Save mapping**.
+
+6. Click **Sync now**, or wait for the next scheduled sync.
+
+</Steps>
+
+The Nexus account needs read access to the repos you want. Telesphorepo stores the credentials encrypted and never returns or logs them.
+
+### The mapping
+
+The mapping says which Nexus repo goes to which Telesphorepo repo. Rules:
+
+- Saving the mapping replaces the whole mapping.
+- A target repo mirrors at most one Nexus repo.
+- A target that already exists must accept the same format.
+- You cannot change the mapping while a sync runs.
+
+When a repo is in the mapping, Telesphorepo locks it. A write (a Maven `PUT`, a raw `PUT` or a Debian upload) answers `409` with the text `mirrors Nexus source <name>; cut over first`. The UI shows a "mirrors Nexus" badge on the repo list and the repo page. A repo that you remove from the mapping is unlocked.
+
+## Syncs
+
+A sync copies new and changed files from Nexus. It pages through the files of each mapped repo. Before it downloads a file, it compares the SHA-256 from Nexus with the file it already holds. A file that is already present with the same bytes is skipped, so a later sync copies only new and changed files.
+
+- Only one sync runs per source.
+- A failed page is retried 3 times, after 2, 4 and 8 seconds. A `401` or `403` is not retried.
+- A sync is `done` when every repo finishes, even if some files failed. It is `failed` when a whole repo failed. It is `cancelled` after you cancel it.
+- The page shows per-repo counters (`imported`, `skipped`, `ignored`, `failed`) and the list of failed files with a reason.
+- A shutdown leaves a running sync in place. It continues from the last saved page at the next start.
+
+### Sync interval
+
+The scheduler starts a sync for each mirroring source whose last sync ended longer ago than `nexus.sync_interval`. The default is `15m` and the minimum is `1m`. Change it on the **Settings** page, group **General**, or with `TR_NEXUS_SYNC_INTERVAL`. The server reads the new value without a restart.
+
+Click **Sync now** to start a sync at any time. You can cancel a running sync from its detail view.
+
+## Cut over
+
+Cut-over is the step where Telesphorepo becomes the place you publish to.
+
+<Steps>
+
+1. Stop publishing to Nexus. A sync cannot copy a file that you upload after the final sync starts.
+
+2. Open the source and click **Cut over**. A confirm card shows how many files failed in the latest sync.
+
+3. Confirm. Telesphorepo runs one final sync.
+
+4. When the final sync succeeds, the source changes to `cut_over`. The mapped repos are unlocked and writable. The server deletes the stored Nexus credentials.
+
+5. Point your clients and CI at Telesphorepo. See [Publishing](/publishing/overview/).
+
+</Steps>
+
+A cut-over succeeds when no whole repo failed. It also succeeds when some files failed.
+
+<Aside type="caution" title="Failed files at cut-over">
+A cut-over can finish even though some files did not import. The source page then shows a warning with the number of failed files and a link to the failure list of the cut-over sync. After cut-over, the server no longer holds the Nexus credentials, so you cannot sync again. Read the failure list, and fix each failure while Nexus is still available if you can. Look at the confirm card before you cut over.
+</Aside>
+
+If a whole repo fails during the final sync (Nexus is unreachable, or a listing error), the sync is `failed`. The source stays `mirroring` and the source error says `cut-over stopped: ...; the source stays mirroring`. Fix the cause and cut over again. If you cancel a cut-over, the source stays mirroring. A restart continues a cut-over that the shutdown interrupted.
+
+After cut-over, the source is read only history. Edit, mapping, sync and cut-over answer `409`. The sync history and the failure lists stay.
+
+## Remove a source
+
+Delete the source from its page. This removes the source, its mapping and its sync history. The repos and their files stay. You cannot delete a source while a sync runs, or while it still mirrors mapped repos. After cut-over, you can delete it.
+
+## Gotchas
+
+- **Backup first.** Take a backup of the data directory before the first sync. See [Backups and data](/operations/backups-and-data/).
+- **Storage.** The imported files use the storage backend you set. Choose it before you sync a large source, so you do not need to [move it](/operations/moving-storage/) later.
+- **Updated credentials.** If the Nexus password changes during mirroring, use **Update credentials** on the source page.
+- **Same name, different bytes.** A release file with the same path but different bytes does not overwrite the Telesphorepo copy. It fails and shows in the failure list.
+- **Time.** The first sync copies everything. Later syncs are short.

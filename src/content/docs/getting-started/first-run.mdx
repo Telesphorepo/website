@@ -1,0 +1,94 @@
+---
+title: First run
+description: Sign in as the bootstrap admin, set up a second factor and create your first repositories.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+On the first start, the server creates one admin account. This page shows how to sign in, secure the account and create a repository.
+
+<Steps>
+
+1. **Read the generated password.**
+
+   When the users table is empty, the server creates an admin named `admin` with a random 20-character password. It prints the password once to stderr, in a box outside the JSON log stream:
+
+   ```sh
+   docker logs telesphorepo
+   ```
+
+   Copy the password now. The server does not show it again.
+
+2. **Sign in.**
+
+   Open `http://localhost:8080` (or your public address) and sign in as `admin` with the printed password.
+
+3. **Set up a second factor.**
+
+   A local account with no second factor can reach only the **Security** page. Every other page answers "second factor required". Add one of these:
+
+   - an authenticator app (TOTP): scan the QR code and enter the first code;
+   - a passkey (needs [`base_url`](/getting-started/install/#set-the-public-url) to be set).
+
+   Then create recovery codes. The server shows the 10 codes once. Store them somewhere safe.
+
+4. **Change the password if you want to.**
+
+   Run the command against the server's data directory. In a container:
+
+   ```sh
+   docker exec -it telesphorepo /telesphorepo user passwd admin
+   ```
+
+5. **Create a repository.**
+
+   Open **Admin**, find **Create repository**, and fill in the form:
+
+   - **Name.** Lowercase letters, digits, `.`, `_` and `-`. It must start with a letter or digit and has at most 64 characters.
+   - **Format.** Maven, Debian or Raw.
+   - **Anonymous read.** Tick it to let anyone read without credentials. Leave it off for a private repository.
+
+   Click **Create**. The repository page shows copy-ready client snippets for that repository.
+
+6. **Add users and permissions.**
+
+   Under **Admin**, create users and give each one `read` or `write` on a repository. `write` includes `read`. A user needs `write` to publish.
+
+</Steps>
+
+## Choose the first admin yourself
+
+Set both variables to skip the generated password. The server uses them only while the users table is empty:
+
+```sh
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
+  -e TR_BOOTSTRAP_ADMIN_USER=alice \
+  -e TR_BOOTSTRAP_ADMIN_PASSWORD='change-me-now' \
+  telesphorepo:local
+```
+
+The server prints no box in this case. The new admin still has to add a second factor at the first sign-in.
+
+Remove the password from your deployment files after the first start. The server ignores it once a user exists, but the value stays in your configuration.
+
+## Add more users from the command line
+
+```sh
+telesphorepo user add alice            # prompts for the password
+telesphorepo user add bob --admin      # an admin
+docker exec -it telesphorepo /telesphorepo user add alice
+```
+
+Every new local user sets up a second factor at the first sign-in.
+
+## Gotchas
+
+- **Publishing needs more than a password.** A password or a read token only reads. To upload, a client needs a publish session. See the [publishing overview](/publishing/overview/).
+- **A user who loses every factor** can be reset with `telesphorepo user reset-2fa NAME`. The user sets up a new factor at the next sign-in.
+- **The admin account is a break-glass account.** If you add [single sign-on](/security/sso/), you can turn off admin password login. Do that only after you check that SSO works.
+- **The password box prints once.** If you lose the password before you sign in, run `telesphorepo user passwd admin` against the same data directory.
+
+## Next
+
+Read [Configuration](/getting-started/configuration/) to set storage, the public URL and the Debian signing key. Then continue with [Repositories](/repositories/maven-gradle/) or [Publishing](/publishing/overview/).
+

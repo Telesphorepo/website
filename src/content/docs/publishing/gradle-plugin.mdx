@@ -1,0 +1,120 @@
+---
+title: Gradle plugin
+description: Publish from Gradle with the com.telesphorepo settings plugin and no stored password.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+`com.telesphorepo` is a Gradle settings plugin. When a task publishes to a Maven repository on your Telesphorepo server, the plugin gets a [publish session](/publishing/overview/) for that repository. It closes the session when the build ends. You store no password.
+
+The plugin needs Java 17. The source is in the [clients repository](https://github.com/Telesphorepo/clients).
+
+## Install
+
+The Gradle Plugin Portal does not have the plugin yet (coming soon). Until then, add the Nexus repository to `pluginManagement` in `settings.gradle.kts`. Put the block before the `plugins` block.
+
+<Tabs>
+  <TabItem label="Release">
+```kotlin title="settings.gradle.kts"
+pluginManagement {
+    repositories {
+        maven { url = uri("https://nexus.telesphoreo.me/repository/gradle-plugins-releases/") }
+        gradlePluginPortal()
+    }
+}
+
+plugins {
+    id("com.telesphorepo") version "<version>"
+}
+
+telesphorepo {
+    url = "https://repo.acme.com"
+}
+```
+  </TabItem>
+  <TabItem label="Snapshot">
+```kotlin title="settings.gradle.kts"
+pluginManagement {
+    repositories {
+        maven { url = uri("https://nexus.telesphoreo.me/repository/gradle-plugins-snapshots/") }
+        gradlePluginPortal()
+    }
+}
+```
+  </TabItem>
+</Tabs>
+
+Replace `<version>` with the latest version in the repository. Replace `https://repo.acme.com` with the URL of your server.
+
+Declare the repository in `build.gradle.kts` as usual. Do not add credentials.
+
+```kotlin title="build.gradle.kts"
+publishing {
+    repositories {
+        maven {
+            name = "acme"
+            url = uri("https://repo.acme.com/maven/releases")
+        }
+    }
+}
+```
+
+This works for libraries (`maven-publish`) and for Gradle plugins (`java-gradle-plugin` with `maven-publish`).
+
+## Enroll your machine
+
+<Steps>
+1. Run the login task once on each machine:
+
+   ```sh
+   ./gradlew telesphorepoLogin
+   ```
+
+2. The task prints a line like this:
+
+   ```text
+   Open https://repo.acme.com/#/device?code=ABCD-EFGH and approve code ABCD-EFGH
+   ```
+
+3. Open the URL in any browser. A phone works. Sign in and approve the code with a fresh TOTP code or passkey.
+4. The task saves an Ed25519 key in `~/.telesphorepo/<host>/device.json`. Only you can read the file.
+</Steps>
+
+The device stays valid for 90 days by default (`publish.device_ttl`). After that, run the login task again. You can revoke a device at any time on the **Devices** page. See [Devices](/security/devices/).
+
+The Maven extension uses the same key file. One enrollment covers both tools.
+
+## Publish
+
+```sh
+./gradlew publish
+```
+
+For each repository under `<url>/maven/`, the plugin asks the server for a session just before the publish task runs. It sets the user name `telesphorepo` and the session token as the password. It mints one session per repository. A build service closes all sessions at the end of the build.
+
+## Proof of identity
+
+For each repository, the plugin uses the first proof that it finds:
+
+1. **GitHub Actions.** The plugin finds `ACTIONS_ID_TOKEN_REQUEST_URL` and asks for a token with the server URL as audience. See [GitHub Actions](/publishing/github-actions/).
+2. **Another CI with OIDC.** Set `oidcTokenEnv` to the name of the environment variable that holds the identity token:
+
+   ```kotlin
+   telesphorepo {
+       url = "https://repo.acme.com"
+       oidcTokenEnv = "OIDC_TOKEN"
+   }
+   ```
+
+   See [Jenkins](/publishing/jenkins/).
+3. **The device key** from `telesphorepoLogin`.
+
+With no proof, the build fails and tells you to run `./gradlew telesphorepoLogin`.
+
+## Gotchas
+
+- The plugin sets credentials only on repositories under `<url>/maven/`. It does not change other repositories.
+- A build that publishes to the server does not use the Gradle configuration cache. The plugin sets the credentials when the task runs. Other builds and other tasks keep the cache.
+- In CI, an admin must add a [trust policy](/security/trust-policies/) that lists the repository. Without it the exchange fails.
+- The session lives at most `publish.session_ttl` (15 minutes by default). A very long build can run past it.
+- Use `isAllowInsecureProtocol = true` on the repository only for a plain `http` server.

@@ -1,0 +1,69 @@
+---
+title: Raw files
+description: Store and serve any file at a path you choose.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A `raw` repository stores any file at any path. Use it for tarballs, installers, configuration bundles and other files that have no package format.
+
+## Repository URL
+
+```
+https://repo.example.com/raw/<repo>/<path>
+```
+
+The path can have any depth. The server keeps the path as you write it.
+
+## Upload
+
+An upload is a `PUT` with a publish session token as the password. Get a token from the UI or from CI. See [Publishing overview](/publishing/overview/).
+
+```sh
+curl -f -u publish:SESSION_TOKEN \
+  -T app-1.2.0.tar.gz \
+  https://repo.example.com/raw/downloads/app/app-1.2.0.tar.gz
+```
+
+Use `-f` so that `curl` fails on an HTTP error.
+
+## Download
+
+```sh
+curl -fL -O https://repo.example.com/raw/downloads/app/app-1.2.0.tar.gz
+```
+
+For a private repository, add a [read token](/security/read-tokens/):
+
+```sh
+curl -fL -u ci:READ_TOKEN -O https://repo.example.com/raw/downloads/app/app-1.2.0.tar.gz
+```
+
+`HEAD` works too. On S3 storage with `s3.redirect` on, a `GET` answers `302` to a presigned URL, so use `-L`.
+
+## Overwrite policy
+
+Each raw repository has one policy in its config:
+
+```json
+{"overwrite": "deny"}
+```
+
+| Policy | New path | Same bytes | Different bytes |
+|---|---|---|---|
+| `deny` (default) | `201` | `200` | `409` |
+| `allow` | `201` | `200` | `200`, the file is replaced |
+
+A `PUT` with identical bytes always succeeds, so a retry is safe. A file larger than `max_upload_bytes` gets `413`.
+
+An admin sets the policy in the repository config when they create the repository. They can change it later with `PATCH /api/repos/<repo>` and a new `config`. See [HTTP API](/reference/http-api/).
+
+<Aside type="tip">
+Keep `deny` for versioned file names such as `app-1.2.0.tar.gz`. Use `allow` for a path that you replace on purpose, such as `latest/app.tar.gz`.
+</Aside>
+
+## Gotchas
+
+- **Writes need a publish session.** A password or a read token on a `PUT` gets `401`.
+- **No directory listing over HTTP.** Use the [web UI](/repositories/browsing-and-search/) to list files by path prefix.
+- **A mirrored repository is read only** until you cut over from Nexus. See [Nexus migration](/operations/nexus-migration/).

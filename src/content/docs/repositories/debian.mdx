@@ -1,0 +1,113 @@
+---
+title: Debian
+description: Host signed apt repositories and install packages from them with apt.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+A `debian` repository serves a signed apt archive. You upload `.deb` files. The server builds the `Packages` files and a signed `Release` for you. You do not run `reprepro` or `aptly`.
+
+## Add the repository to apt
+
+<Steps>
+
+1. Download the public signing key. The key URL needs no login.
+
+   ```sh
+   sudo mkdir -p /etc/apt/keyrings
+   sudo curl -fsSL https://repo.example.com/keys/debian.asc \
+     -o /etc/apt/keyrings/telesphorepo.asc
+   ```
+
+2. Add the source line. `<repo>` is the repository name. `<dist>` and `<component>` are the values that you use when you upload.
+
+   ```sh
+   echo "deb [signed-by=/etc/apt/keyrings/telesphorepo.asc] https://repo.example.com/debian/<repo> <dist> <component>" \
+     | sudo tee /etc/apt/sources.list.d/telesphorepo.list
+   ```
+
+   For example: `deb [signed-by=/etc/apt/keyrings/telesphorepo.asc] https://repo.example.com/debian/apps stable main`
+
+3. Update and install.
+
+   ```sh
+   sudo apt update
+   sudo apt install my-package
+   ```
+
+</Steps>
+
+`signed-by` limits the key to this one source. Do not copy the key into `/etc/apt/trusted.gpg.d/`.
+
+## Private repositories
+
+If the repository does not allow anonymous reads, apt must send credentials. Put them in `/etc/apt/auth.conf.d/`. Use any user name and a [read token](/security/read-tokens/) as the password.
+
+```sh
+sudo tee /etc/apt/auth.conf.d/telesphorepo.conf >/dev/null <<'EOF'
+machine repo.example.com login ci password READ_TOKEN
+EOF
+sudo chmod 600 /etc/apt/auth.conf.d/telesphorepo.conf
+```
+
+`machine` is the host name only: no `https://` and no path. Keep the file mode at `600` because the file holds a secret.
+
+<Aside type="note">
+The public key at `/keys/debian.asc` stays open even when the repository is private. Only `/debian/<repo>/...` needs credentials.
+</Aside>
+
+## Upload a .deb
+
+An upload is a `PUT` or `POST` of the raw `.deb` file. It needs a publish session token as the password. Get one from the UI or from CI. See [Manual sessions](/publishing/manual-sessions/), [GitHub Actions](/publishing/github-actions/) and [Jenkins](/publishing/jenkins/).
+
+```sh
+curl -f -u publish:SESSION_TOKEN \
+  -T my-package_1.0.0_amd64.deb \
+  https://repo.example.com/debian/apps/upload/stable/main
+```
+
+The path is `/debian/<repo>/upload/<dist>/<component>`.
+
+The server answers:
+
+| Status | Meaning |
+|---|---|
+| `201` | New package. The body is JSON with `package`, `version`, `architecture`, `filename` and `sha256`. |
+| `200` | The same package with the same bytes is already stored. |
+| `409` | A conflict, for example the same package and version with different bytes. |
+| `413` | The file is larger than `max_upload_bytes`. |
+
+The server reads only the control data of the package. It checks `Package`, `Version` and `Architecture`. The architecture must be `all` or one of the architectures of the repository (default `amd64` and `arm64`). An `all` package appears in every configured architecture.
+
+## When indexes appear
+
+The upload returns before the indexes are ready. The server waits `deb.debounce` (default 2 seconds) so that a batch of uploads makes one rebuild. It never waits more than `deb.max_delay` (default 30 seconds).
+
+To wait for the rebuild in a script, poll the status until `pending` is `0`:
+
+```sh
+curl -fs -u ci:READ_TOKEN https://repo.example.com/api/repos/apps/status
+# {"pending":0}
+```
+
+Then run `apt update`.
+
+## Indexes, signing and by-hash
+
+For each distribution the server writes:
+
+- `Packages` and `Packages.gz` for each component and architecture
+- `Release`, with `Acquire-By-Hash: yes`
+- `Release.gpg` and `InRelease`, signed with the server signing key
+
+Every index file also exists under `by-hash/SHA256/`. apt fetches indexes by hash, so an `apt update` during a rebuild never sees a half-written index. The server writes the by-hash files first and signs `Release` last.
+
+An admin can generate a new signing key or import one on the Settings page. After a key change the server signs all `Release` files again. Clients must download the new public key.
+
+## Gotchas
+
+- **Architecture not listed.** An upload with an architecture outside the repository list fails. Add the architecture to the `architectures` list in the repository config first. The names are lowercase letters, digits and `-`. `all` is not allowed in the list.
+- **You cannot delete packages yet.** The UI and the API have no delete for `.deb` files. Upload a higher version to replace a package.
+- **Old by-hash files stay.** The server does not delete them yet.
+- **Same version, different bytes.** This conflicts. Raise the package version.
+- **Nexus apt repositories.** The Nexus import writes `.deb` files into component `main` of the `distribution` named in the repository config. See [Nexus migration](/operations/nexus-migration/).

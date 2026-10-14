@@ -1,0 +1,103 @@
+---
+title: Configuration
+description: Change settings in the UI, and force them from the environment when you need to.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Telesphorepo has three layers of configuration. Know which layer a value comes from before you debug it.
+
+| Layer | What | Where | Change needs restart |
+|---|---|---|---|
+| Boot environment | `TR_DATA_DIR`, `TR_LISTEN`, `TR_MASTER_KEY` | Environment | Yes |
+| Bootstrap admin | `TR_BOOTSTRAP_ADMIN_USER`, `TR_BOOTSTRAP_ADMIN_PASSWORD` | Environment | Used only on first start |
+| Settings | Everything else | The **Settings** page, stored in the database | No |
+
+## Change a setting in the UI
+
+Sign in as an admin and open **Settings**. The page groups the settings: general, storage, security, publishing, single sign-on, signing, and one group for each format that has its own settings (Debian has one).
+
+Edit a value and click **Save** for the group. The change applies at once, with no restart. The server keeps the effective settings in memory, and request paths never read the settings table.
+
+Some changes are checked before the server saves them:
+
+- **Storage.** The server writes, reads and deletes a small probe object on the new backend. If the probe fails, nothing is saved. Click **Test connection** to try the values first. If the new settings point to a different location and files exist, the server [moves them](/operations/moving-storage/) in the background.
+- **Single sign-on.** The server fetches the issuer's discovery document. If that fails, nothing is saved. Click **Test discovery** to try it first.
+
+The full list of keys, types and defaults is in the [settings reference](/reference/settings/). You can also read and change settings with `GET` and `PATCH /api/settings` (see the [HTTP API](/reference/http-api/)).
+
+## Override a setting from the environment
+
+You can force any setting from the environment. The variable name is `TR_` plus the key, upper-cased, with dots replaced by `_`:
+
+| Setting key | Environment variable |
+|---|---|
+| `base_url` | `TR_BASE_URL` |
+| `cookie.secure` | `TR_COOKIE_SECURE` |
+| `s3.bucket` | `TR_S3_BUCKET` |
+| `oidc.client_secret` | `TR_OIDC_CLIENT_SECRET` |
+
+```sh
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
+  -e TR_BASE_URL=https://packages.example.com \
+  -e TR_TRUSTED_PROXIES=172.17.0.0/16 \
+  telesphorepo:local
+```
+
+The order of precedence is: environment, then the database row, then the default.
+
+- **Locked in the UI.** A setting forced by the environment shows as read-only, "set by environment". A `PATCH` that sets it to a different value answers 409.
+- **Checked at start.** The server validates every environment value at startup. An invalid value stops the server. For example, `TR_STORAGE=s3` without a bucket, an endpoint and keys is a startup error.
+- **Typos are logged.** The server logs a `TR_*` variable that matches no setting or boot variable as a warning, by name, and ignores it.
+- **Lists.** A setting of the list type, such as `trusted_proxies`, takes comma-separated values.
+
+Use the environment for values that you manage as code and for secrets that you must keep out of the database. Use the UI for everything else.
+
+## Secrets are encrypted
+
+Some settings are secret: for example `s3.secret_access_key`, `oidc.client_secret` and `signing.key`. The server stores them in the database, encrypted with AES-256-GCM. The encryption key comes from the master key.
+
+- The API never returns a secret. It reports only whether the value is set.
+- In the UI, leave a secret field empty to keep the current value.
+- The server never writes secrets to its logs.
+- The server seals TOTP secrets and saved Nexus credentials with the same key.
+
+### Where the master key lives
+
+| Source | When |
+|---|---|
+| `TR_MASTER_KEY` | If set. Base64 text that decodes to 32 bytes. Generate one with `openssl rand -base64 32` |
+| `$TR_DATA_DIR/master.key` | Otherwise. The server creates the file on first start with mode 0600 |
+
+The server logs a notice when it generates the file. Back it up, or move the key to `TR_MASTER_KEY`.
+
+### Lost master key
+
+Nobody can recover the master key. Without it, the server cannot decrypt the secret settings.
+
+- The server logs each value that it cannot decrypt and ignores it. It starts, but the S3 secret key, the SSO client secret and the signing key are missing.
+- Enter the secret settings again on the **Settings** page. After that the server works as before.
+- The TOTP secrets are sealed with the same key, so the TOTP factors stop working. Reset a user with `telesphorepo user reset-2fa NAME`. The user then sets up a new factor.
+
+To avoid this, store the key with your other secrets. A backup of the data directory contains `master.key` unless you use `TR_MASTER_KEY`. See [Backups and data](/operations/backups-and-data/).
+
+<Aside type="caution">
+Do not change `TR_MASTER_KEY` on a running installation to rotate it. The server cannot read the secrets that the old key sealed.
+</Aside>
+
+## Data directory layout
+
+| Path | Contents |
+|---|---|
+| `telesphorepo.db` | The SQLite database (WAL mode) |
+| `master.key` | The master key, unless `TR_MASTER_KEY` is set |
+| `tmp/` | The upload spool. It sits on the data volume, not in tmpfs |
+| `blobs/` | Local file storage, the default for the `fs.root` setting |
+
+Keep `TR_DATA_DIR` on a persistent volume with enough space for uploads in flight.
+
+## Next
+
+- [Storage](/operations/storage/) explains local disk and S3.
+- [Single sign-on](/security/sso/) explains how to add an identity provider.
+- [Settings reference](/reference/settings/) lists every key.

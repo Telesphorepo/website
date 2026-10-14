@@ -1,0 +1,96 @@
+---
+/*
+ * The Telesphorepo lockup (mark and wordmark) and the header links from starlight-utils.
+ * This replaces the starlight-utils SiteTitle override, so it also renders the leading nav links
+ * that the starlight-utils route middleware puts in Astro.locals.starlightUtils.navLinks.
+ */
+import Mark from '../../assets/tr-mark.svg';
+
+const { siteTitleHref } = Astro.locals.starlightRoute;
+const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
+---
+
+<div class="tr-title-bar">
+    <a href={siteTitleHref} class="tr-site-title" translate="no">
+        <Mark class="tr-site-mark" width={22} height={22} aria-hidden="true"/>
+        <span class="tr-wordmark">Telesphorepo</span>
+    </a>
+    {navLinks.length > 0 && (
+        <ul class="tr-nav-links">
+            {navLinks.map((entry) => (
+                <li>
+                    <a href={entry.href} {...entry.attrs} aria-current={entry.isCurrent ? 'page' : undefined}>
+                        {entry.label}
+                    </a>
+                </li>
+            ))}
+        </ul>
+    )}
+</div>
+
+<style>
+    .tr-title-bar {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        min-width: 0;
+    }
+
+    .tr-site-title {
+        display: flex;
+        flex: none;
+        align-items: center;
+        gap: 0.625rem;
+        font-size: 1rem;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .tr-site-mark {
+        flex: none;
+        width: 22px;
+        height: 22px;
+    }
+
+    .tr-wordmark {
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        color: var(--tr-heading);
+    }
+
+    .tr-nav-links {
+        display: flex;
+        gap: 1.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        white-space: nowrap;
+    }
+
+    .tr-nav-links a {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--tr-muted);
+        text-decoration: none;
+        transition: color 150ms ease;
+    }
+
+    .tr-nav-links a:hover,
+    .tr-nav-links a[aria-current='page'] {
+        color: var(--tr-heading);
+    }
+
+    /* Narrow screens: the wordmark needs the room. The sidebar menu holds the same links. */
+    @media (max-width: 30rem) {
+        .tr-nav-links {
+            display: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tr-nav-links a {
+            transition: none;
+        }
+    }
+</style>

@@ -1,0 +1,42 @@
+---
+title: Browsing and search
+description: Find artifacts and packages in the web UI.
+---
+
+The web UI is part of the server binary. Open the server URL in a browser. You see the repositories that your account can read. Visitors who are not logged in see the repositories that allow anonymous reads.
+
+## Browse a repository
+
+Click a repository name to open its page. The page shows:
+
+- the format, with badges for anonymous reads and Nexus mirrors
+- for a Debian repository, the number of index rebuilds that wait (`pending`)
+- a **Usage** section with copy-ready snippets for the format (Maven, Gradle, apt, curl), filled with the real server URL
+- a table of files with path, size, type and update time
+
+Type in **Filter by path prefix** to narrow the table. The filter matches the start of the path. For example, `com/acme/` lists everything under that group. Click a path to download the file. The table loads 100 rows at a time. Click **Load more** to continue.
+
+## Search
+
+Open **Search** in the navigation. Type at least 3 characters and press Enter.
+
+- Search matches any part of a path, not only the start. `acme-core` finds `com/acme/acme-core/1.0/acme-core-1.0.jar`.
+- Search covers every repository that you can read.
+- Each result shows the repository and the path. Click the repository name to open it.
+- Results load 50 at a time. Click **Load more** for the next page.
+
+The same search is available as an API call:
+
+```sh
+curl -fs -u ci:READ_TOKEN \
+  'https://repo.example.com/api/search?q=acme-core&limit=20'
+```
+
+Add `repo=<name>` to search one repository. The response is `{"items": [...], "next": "..."}`. Pass `next` as `after` to get the next page. See [HTTP API](/reference/http-api/).
+
+## Gotchas
+
+- **Fewer than 3 characters.** The search button stays off, and the API refuses the query. The search index works on groups of 3 characters.
+- **Private repositories.** Search never shows files from a repository that you cannot read.
+- **Debian index files.** Search lists packages in the `pool/` tree. It does not list the generated index files (`Packages`, `Release`). See [Debian](/repositories/debian/).
+- **Prefix filter is not search.** The filter on a repository page cannot match the middle of a path. Use Search for that.

@@ -1,0 +1,138 @@
+---
+title: Trust policies
+description: Decide which CI jobs may publish to which repositories.
+---
+
+import { Aside, Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+A **trust policy** tells the server which CI identity tokens it accepts, and which repositories those jobs may publish to. A CI job sends its OIDC identity token. The server finds a matching policy and opens a [publish session](/publishing/overview/). The job needs no stored password.
+
+Only admins manage policies. Open the **Trust policies** page (`#/trusts`).
+
+## Fields of a policy
+
+| Field | Meaning |
+|---|---|
+| Name | A unique name for the policy |
+| Issuer | The `iss` value of the token. It must match exactly |
+| Audience | The `aud` value the token must carry. Empty means the `base_url` of the server |
+| Claims | One or more claims, each with a list of allowed values |
+| Repositories | The repos that a matching job may publish to |
+| JWKS | Optional. Pasted signing keys, used instead of key discovery |
+| Disabled | Keeps the policy but stops it from matching |
+
+### Claims and globs
+
+A policy needs at least one claim. Each claim needs at least one allowed value. The UI refuses to save a policy without a claim, because it would match every token of the issuer.
+
+A value is either exact, or a glob with `*`. The `*` matches any text, and it also matches `/`. A token must match **every** listed claim. For one claim, one matching value is enough.
+
+Example, for GitHub Actions:
+
+```json
+{
+  "repository": ["acme/app", "acme/lib-*"],
+  "ref": ["refs/heads/main", "refs/tags/v*"]
+}
+```
+
+This accepts a job from `acme/app` or `acme/lib-*` that runs on `main` or on a tag that starts with `v`.
+
+<Aside type="caution">
+Be strict. `repository: ["acme/*"]` lets every repository of the organization publish. Pin `ref` too, so that a pull request branch cannot publish a release.
+</Aside>
+
+### Audience
+
+The token audience must match the policy audience. If the field is empty, the server uses the current `base_url` at exchange time. The Gradle plugin asks GitHub for a token with the server URL as audience, so an empty audience works for it.
+
+### JWKS
+
+By default, the server fetches the issuer's signing keys and caches them. If the server cannot reach the issuer (for example, a Jenkins behind a firewall), paste the JWKS into the policy. The server checks a pasted JWKS when you save. It replaces key discovery.
+
+Accepted algorithms: RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512 and EdDSA.
+
+## Create a policy
+
+<Steps>
+
+1. Open **Trust policies** and choose a preset (**GitHub Actions** or **Jenkins**), or fill in the form.
+
+2. Enter a name and the claim values. The presets leave the values empty, so you must set them.
+
+3. Select the repositories that the policy may publish to.
+
+4. Save.
+
+</Steps>
+
+## Presets
+
+<Tabs>
+  <TabItem label="GitHub Actions">
+    The preset fills in:
+
+    - Issuer: `https://token.actions.githubusercontent.com`
+    - Claims: `repository`, `ref` and `workflow_ref`
+
+    Example claims for a release workflow:
+
+    ```json
+    {
+      "repository": ["acme/app"],
+      "ref": ["refs/tags/v*"],
+      "workflow_ref": ["acme/app/.github/workflows/release.yml@*"]
+    }
+    ```
+
+    The job needs the permission `id-token: write` in the workflow:
+
+    ```yaml
+    permissions:
+      id-token: write
+      contents: read
+    ```
+
+    The [Gradle plugin](/publishing/gradle-plugin/) and the [Maven extension](/publishing/maven-extension/) read the token for you. See [GitHub Actions](/publishing/github-actions/) for the full setup.
+  </TabItem>
+  <TabItem label="Jenkins">
+    The preset fills in:
+
+    - Issuer: `https://JENKINS_URL/oidc` (replace `JENKINS_URL`)
+    - Claims: `sub`
+
+    The Jenkins OpenID Connect Provider plugin issues the token. Paste the JWKS if the server cannot reach Jenkins. See [Jenkins](/publishing/jenkins/) for the full setup.
+  </TabItem>
+</Tabs>
+
+Any other OIDC issuer works. Fill in the fields without a preset.
+
+## What the server checks
+
+On a token exchange (`POST /api/publish/sessions/oidc`), the server checks:
+
+1. The signature, against the issuer's keys.
+2. The issuer, the audience and `exp`.
+3. `iat`: the token must be at most 10 minutes old, and at most 1 minute in the future.
+4. An enabled policy exists that matches the issuer, the audience and every claim, and lists the requested repo.
+5. The token was not used before.
+
+### Replay protection
+
+The server stores a SHA-256 hash of `<issuer>\n<jti>` for each accepted token, until the token expires. If the token has no `jti`, the server hashes the whole token. A second exchange with the same token fails. The server writes the replay record and the session in one transaction.
+
+A CI job therefore needs a fresh token for each session. The clients do this for you. If you use `curl`, request a new token each time.
+
+## Sessions from a policy
+
+- A session lives for `publish.session_ttl`. The default is 15 minutes. The maximum is 1 hour.
+- A CI session writes without a user permission check. The policy is the permission.
+- The `subject` of the session is the `sub` of the token. It shows in the **Publish log**.
+- When you change the issuer, audience, claims, JWKS or repositories, disable the policy, or delete it, the server ends the open sessions of that policy.
+
+## Gotchas
+
+- The policy matches on token claims, not on the content of the workflow file. Anyone who can change a workflow in an allowed repository and ref can publish. Protect your branches and tags.
+- GitHub `sub` values contain `/` and `:`. A `*` crosses them, so a value such as `repo:acme/*` also matches `repo:acme/other/x`.
+- A policy with an empty audience follows `base_url`. If you change `base_url`, tokens must carry the new value.
+- If an exchange fails, compare the claims of the token with the policy. The **Publish log** lists the sessions that succeeded.

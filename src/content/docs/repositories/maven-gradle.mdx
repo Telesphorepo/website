@@ -1,0 +1,170 @@
+---
+title: Maven and Gradle
+description: Host Maven artifacts and Gradle plugins, and read them from Maven and Gradle builds.
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+A `maven` repository stores artifacts in the standard Maven 2 layout. Maven, Gradle and any other Maven-compatible client can read from it. Gradle plugins use the same repository: a plugin and its marker artifact are ordinary Maven files.
+
+## Repository URL
+
+Every `maven` repository has one URL:
+
+```
+https://repo.example.com/maven/<repo>
+```
+
+Replace `repo.example.com` with the server URL and `<repo>` with the repository name. The examples below use the repository name `releases`.
+
+The server answers `GET` and `HEAD` for reads and `PUT` for uploads. You do not call `PUT` yourself. The [Gradle plugin](/publishing/gradle-plugin/) and the [Maven extension](/publishing/maven-extension/) open a publish session and add the credentials for you. See [Publishing overview](/publishing/overview/).
+
+## Read credentials
+
+A repository can allow anonymous reads. If it does not, send HTTP Basic credentials:
+
+- a user name and password, or
+- any user name with a [read token](/security/read-tokens/) as the password.
+
+Use a read token in builds. A read token cannot publish. A password cannot publish either: every write needs a publish session.
+
+## Read from Maven
+
+<Tabs>
+  <TabItem label="Dependencies">
+```xml title="pom.xml"
+<repositories>
+  <repository>
+    <id>telesphorepo</id>
+    <url>https://repo.example.com/maven/releases</url>
+  </repository>
+</repositories>
+```
+  </TabItem>
+  <TabItem label="Private repository">
+Add a `<server>` with the same `<id>` to `~/.m2/settings.xml`:
+
+```xml title="~/.m2/settings.xml"
+<settings>
+  <servers>
+    <server>
+      <id>telesphorepo</id>
+      <username>ci</username>
+      <password>READ_TOKEN</password>
+    </server>
+  </servers>
+</settings>
+```
+  </TabItem>
+  <TabItem label="Deploy target">
+```xml title="pom.xml"
+<distributionManagement>
+  <repository>
+    <id>telesphorepo</id>
+    <url>https://repo.example.com/maven/releases</url>
+  </repository>
+</distributionManagement>
+```
+
+Deploys need the Telesphorepo extension. See [Maven extension](/publishing/maven-extension/).
+  </TabItem>
+</Tabs>
+
+<Aside type="caution">
+Maven 3.8.1 and later block `http://` repositories on hosts other than localhost. Serve the repository over HTTPS.
+</Aside>
+
+## Read from Gradle
+
+<Tabs>
+  <TabItem label="Dependencies">
+```kotlin title="build.gradle.kts"
+repositories {
+    maven {
+        url = uri("https://repo.example.com/maven/releases")
+    }
+}
+```
+  </TabItem>
+  <TabItem label="Plugins">
+Add the repository to `pluginManagement` to resolve plugins from it:
+
+```kotlin title="settings.gradle.kts"
+pluginManagement {
+    repositories {
+        maven {
+            url = uri("https://repo.example.com/maven/releases")
+        }
+        gradlePluginPortal()
+    }
+}
+```
+  </TabItem>
+  <TabItem label="Private repository">
+Add `credentials` to the `maven` block, in `repositories` or in `pluginManagement.repositories`:
+
+```kotlin title="build.gradle.kts"
+repositories {
+    maven {
+        url = uri("https://repo.example.com/maven/releases")
+        credentials {
+            username = "ci"
+            password = providers.environmentVariable("TELESPHOREPO_READ_TOKEN").get()
+        }
+    }
+}
+```
+
+The user name can be any value when the password is a read token.
+  </TabItem>
+  <TabItem label="Publishing">
+```kotlin title="build.gradle.kts"
+publishing {
+    repositories {
+        maven {
+            name = "telesphorepo"
+            url = uri("https://repo.example.com/maven/releases")
+        }
+    }
+}
+```
+
+Do not add credentials. The settings plugin adds them. See [Gradle plugin](/publishing/gradle-plugin/).
+  </TabItem>
+</Tabs>
+
+<Aside>
+Set `isAllowInsecureProtocol = true` inside the `maven` block only for a plain `http://` URL, such as a local test server.
+</Aside>
+
+## Overwrite rules
+
+The server decides on every `PUT`:
+
+| Case | Result |
+|---|---|
+| New path | `201 Created` |
+| Same bytes as the stored file | `200 OK` (a safe retry) |
+| Different bytes, release version | `409 Conflict` |
+| Different bytes, mutable path | `200 OK` and the file is replaced |
+| File larger than `max_upload_bytes` | `413` |
+
+A release file never changes. To fix a bad release, publish a new version.
+
+The mutable paths are:
+
+- `maven-metadata.xml` and its checksum files (`maven-metadata.xml*`)
+- any file under a directory whose name ends in `-SNAPSHOT`
+
+## Snapshots
+
+A version that ends in `-SNAPSHOT` is mutable. You can publish it again and again. Maven and Gradle update `maven-metadata.xml` for you, and the server accepts the new copy.
+
+You can publish snapshots and releases to the same repository, or use separate repositories. Both work. The overwrite rule follows the path, not the repository.
+
+## Gotchas
+
+- **Writes need a publish session.** A password or a read token on a `PUT` gets `401`. The error message names the Publishing page of the server.
+- **A mirrored repository is read only.** A repository that mirrors a Nexus source refuses uploads until you cut over. See [Nexus migration](/operations/nexus-migration/).
+- **Private repository, wrong name.** An unknown repository name and a missing login both answer `401` for anonymous callers, so repository names do not leak. Check the name and the token.
+- **Redirects on S3.** When the server uses S3 storage with `s3.redirect` on, a `GET` answers `302` to a presigned URL. Maven and Gradle follow it. `HEAD` is never redirected. See [Storage](/operations/storage/).

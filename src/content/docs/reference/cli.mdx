@@ -1,0 +1,136 @@
+---
+title: CLI
+description: Every telesphorepo command with examples. Run the server, start a local dev instance, manage users and create a signing key.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`telesphorepo` is one binary. It runs the server and also has a few offline commands for users and keys. Run `telesphorepo --help` for the list, or `telesphorepo <command> --help` for one command.
+
+```sh
+telesphorepo dev                     # try it locally (prints URL, user and password)
+telesphorepo                         # run the server (data in ./data)
+telesphorepo user add alice          # create a user (prompts for the password)
+```
+
+| Command | Does |
+|---|---|
+| `telesphorepo [serve]` | Runs the server. |
+| `telesphorepo dev` | Starts a zero-config local server with demo repos. |
+| `telesphorepo user add NAME [--admin]` | Creates a user. |
+| `telesphorepo user passwd NAME` | Resets a password. |
+| `telesphorepo user reset-2fa NAME` | Removes all second factors of a user. |
+| `telesphorepo keygen [FILE]` | Writes a new signing key file. |
+| `telesphorepo version` | Prints the version. |
+| `telesphorepo help [command]` | Shows help for a command. |
+
+## serve
+
+```sh
+telesphorepo
+TR_DATA_DIR=/srv/tr telesphorepo serve
+```
+
+`serve` is the default command. Run `telesphorepo` with no arguments and it starts the server. It takes no other arguments.
+
+The server reads three boot variables. All are optional.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TR_DATA_DIR` | `./data` (the container image uses `/data`) | Holds the SQLite database, the master key, the upload spool and the default blob root. |
+| `TR_LISTEN` | `:8080` | The address the server listens on. |
+| `TR_MASTER_KEY` | `<data dir>/master.key` | A base64 key of 32 bytes. It encrypts secret settings. The server generates the file on the first start. |
+
+All other settings live in the database and in the admin **Settings** page. You can also force any setting with `TR_<SETTING>`. For example, `TR_STORAGE=s3`. A setting that you force this way is read-only in the UI. See [Settings](/reference/settings/).
+
+On the first start with no users, the server creates an `admin` user and prints its random password once to stderr. It also generates a repository signing key and stores it, encrypted, in the database.
+
+To choose the first admin yourself, set `TR_BOOTSTRAP_ADMIN_USER` and `TR_BOOTSTRAP_ADMIN_PASSWORD` together. The server uses them only when the users table is empty.
+
+<Aside type="caution">
+Keep a copy of the master key. Without it the server cannot decrypt secret settings, and you must enter them again.
+</Aside>
+
+## dev
+
+```sh
+telesphorepo dev
+```
+
+`dev` runs a local server with no setup. It stores data in `./.telesphorepo-dev` and listens on `http://localhost:8080`. Cookies work over plain HTTP.
+
+On the first run it creates an `admin` user and one demo repo for each format. Each repo has the name of its format and allows anonymous reads. The banner prints the URL, the user name and the password on every start. It also prints client setup snippets for each format.
+
+To start over, delete `./.telesphorepo-dev`. `TR_*` variables still override the dev defaults.
+
+## user
+
+Manage users in the local database. These commands open the database directly. They do not call the server.
+
+```sh
+telesphorepo user add alice            # prompt for alice's password, create her
+telesphorepo user add ops --admin      # create an admin
+telesphorepo user passwd alice         # reset alice's password
+telesphorepo user reset-2fa alice      # remove alice's second factors
+```
+
+The commands choose the data directory in this order:
+
+1. `TR_DATA_DIR`, if set.
+2. `./data`.
+3. `./.telesphorepo-dev`, only when `./data` does not exist and the dev directory does.
+
+Each command prints the data directory it uses on stderr. Check that line before you continue.
+
+### user add
+
+```sh
+telesphorepo user add alice
+telesphorepo user add ops --admin
+echo 's3cretpass' | telesphorepo user add ci-bot
+```
+
+On a terminal, the command asks for the password twice and hides what you type. From a pipe, it reads one line. A password needs at least 8 characters.
+
+A user name uses lowercase letters, digits, `.`, `_` and `-`. It starts with a letter or a digit and has at most 64 characters. `--admin` makes the user an admin. A name that exists already is an error.
+
+### user passwd
+
+```sh
+telesphorepo user passwd alice
+echo 'n3wpassword' | telesphorepo user passwd alice
+```
+
+This sets a new password and signs out all sessions of the user. It is refused for SSO users, because they have no password.
+
+### user reset-2fa
+
+```sh
+telesphorepo user reset-2fa alice
+```
+
+Use this when a user lost every authenticator app, passkey and recovery code. The command removes all of them.
+
+The user then signs in with the password. The sign-in reaches only the **Security** page until the user adds a new second factor. Enrolled devices stay valid. See [Accounts and 2FA](/security/accounts-and-2fa/).
+
+## keygen
+
+```sh
+telesphorepo keygen                  # writes ./signing.asc
+telesphorepo keygen release.asc      # writes ./release.asc
+```
+
+`keygen` writes a new Ed25519 OpenPGP key and prints its fingerprint. It never overwrites a file. If the file exists, pick another name.
+
+The server makes its own signing key on the first start, so you rarely need this command. Use it to prepare a key ahead of time. Then upload the key in the admin **Settings** page, or point `TR_GPG_KEY_FILE` at the file. Debian repos sign `Release`, `InRelease` and `Release.gpg` with this key.
+
+## version and help
+
+```sh
+telesphorepo version
+telesphorepo --version
+telesphorepo help
+telesphorepo help user add
+```
+
+An unknown command exits with code 2 and suggests the closest known command.

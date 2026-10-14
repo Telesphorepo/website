@@ -1,0 +1,77 @@
+---
+title: Devices
+description: Approve and remove the devices that publish from a workstation.
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+A **device** is a workstation that is allowed to publish as one user. It holds an Ed25519 key pair. The private key stays on the workstation. The server stores the public key.
+
+A device does not publish by itself. It signs a short-lived challenge to get a [publish session](/publishing/overview/). The Gradle plugin and the Maven extension do this for you.
+
+## Enroll a device
+
+<Steps>
+
+1. Run the login command in your project.
+
+   ```sh
+   ./gradlew telesphorepoLogin     # Gradle
+   mvn telesphorepo:login          # Maven
+   ```
+
+   The client creates a key pair, stores it in `~/.telesphorepo/<host>[_<port>]/device.json` (readable by the owner only), and asks the server to enroll the device.
+
+2. The client prints a message like this:
+
+   ```text
+   Open https://repo.acme.com/#/device?code=ABCD-EFGH and approve code ABCD-EFGH
+   ```
+
+3. Open the link in a browser and sign in. The page shows the device name and kind (`gradle` or `maven`). Check that they match what you started.
+
+4. Approve with a fresh TOTP code or a passkey check. A recovery code does not work here.
+
+5. The client polls the server and gets its device ID. The command ends.
+
+</Steps>
+
+The user code is valid for 10 minutes. The client polls every 5 seconds. If it polls too fast, the server answers `slow_down`. If the code expires, run the login command again.
+
+<Aside type="caution">
+You need a second factor to approve a device. A user without one sees only the **Security** page. See [Accounts and 2FA](/security/accounts-and-2fa/).
+</Aside>
+
+## Expiry
+
+A device lives for `publish.device_ttl`. The default is `2160h`, which is 90 days. Go durations have no `d` unit, so write days as hours. When a device expires, the client enrolls again with the same flow.
+
+To change the lifetime, edit the setting on the **Settings** page (group **publishing**) or set `TR_PUBLISH_DEVICE_TTL`.
+
+## Which repos a device can publish to
+
+A device carries the permissions of its user. When a session is minted, the server checks that the user has `write` on the repo. The check runs again on every write. If an admin removes the permission, the next upload gets 403.
+
+## List and revoke devices
+
+Open the **Devices** page (`#/devices`). It lists your devices, newest first, with the state of each. An admin sees the devices of all users.
+
+Revoke a device from this page. Revoking ends all open sessions of that device at once. An admin may revoke any device.
+
+Via the API:
+
+```sh
+curl -u alice:PASSWORD -X DELETE https://repo.acme.com/api/devices/12
+```
+
+<Aside>
+Revoke a device when a laptop is lost or a key file may have leaked. The private key is the only secret. Anyone who has `device.json` can mint sessions until you revoke the device or it expires.
+</Aside>
+
+## Gotchas
+
+- Each IP address may start 10 enrollments in a burst, then 1 per 30 seconds. The server answers 429 over the limit.
+- If `base_url` is empty, the verification link uses the URL of the request. Set `base_url` so that the link always points at the public address.
+- A device or manual session writes only while its user still has `write` on the repo.
+- Disabling a user does not delete the key file on the workstation. Revoke the device as well.
+- CI does not use devices. Use a [trust policy](/security/trust-policies/) instead.

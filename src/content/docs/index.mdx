@@ -1,0 +1,83 @@
+---
+title: Telesphorepo
+description: A small, fast, self-hosted artifact repository for Maven, Gradle and Debian. One binary with SQLite, short-lived publish credentials, filesystem or S3 storage, and a warm cut-over from Nexus.
+template: splash
+editUrl: false
+lastUpdated: false
+hero:
+  title: A small, fast, self-hosted artifact repository for Maven, Gradle and Debian
+  tagline: Telesphorepo hosts Maven and Gradle artifacts, apt repos and raw files. It runs as one Go binary with a web UI and SQLite, and stores files on local disk or in any S3-compatible bucket.
+  actions:
+    - text: Read the docs
+      link: /getting-started/introduction
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/Telesphorepo/Telesphorepo
+      variant: secondary
+      icon: github
+---
+
+<ul class="tr-features not-content">
+    <li>
+        <span class="tr-label">Deploy</span>
+        <h3>One binary, one container</h3>
+        <p>The server, the web UI and the SQLite database run in one process. A container with a <code>/data</code> volume is the whole install. Settings change in the UI and apply without a restart.</p>
+    </li>
+    <li>
+        <span class="tr-label">Publish</span>
+        <h3>No long-lived secrets in CI</h3>
+        <p>Every upload needs a publish session: a credential for one repo that ends after 15 minutes by default. GitHub Actions and Jenkins get sessions with their OIDC tokens through trust policies. A laptop approves a device once with a second factor.</p>
+    </li>
+    <li>
+        <span class="tr-label">Store</span>
+        <h3>Filesystem or S3, moved live</h3>
+        <p>Keep blobs on local disk or in any S3-compatible bucket, such as Cloudflare R2, SeaweedFS or AWS. Change the storage in Settings and the server copies every blob in the background. Reads and uploads continue during the move.</p>
+    </li>
+    <li>
+        <span class="tr-label">Migrate</span>
+        <h3>Warm cut-over from Nexus</h3>
+        <p>Add a Nexus 3 server as a source. Telesphorepo mirrors the hosted repos you pick with repeated syncs and keeps them read only. Cut over when you are ready to publish here.</p>
+    </li>
+</ul>
+
+## Quickstart
+
+Build the image from the source and start it with a volume for `/data`. The build runs in Docker, so you need only Docker or Podman.
+
+```sh
+git clone https://github.com/Telesphorepo/Telesphorepo
+cd Telesphorepo
+docker build -t telesphorepo:local .
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data telesphorepo:local
+```
+
+On the first start, the server prints a generated `admin` password once to the container log. Read it, then open `http://localhost:8080` and sign in.
+
+```sh
+docker logs telesphorepo
+```
+
+## Next steps
+
+<nav class="tr-entries not-content" aria-label="Next steps">
+    <a href="/getting-started/install">
+        <span class="tr-entry-title">Install</span>
+        <span class="tr-entry-text">Run Telesphorepo in a container or as a binary.</span>
+    </a>
+    <a href="/publishing/overview">
+        <span class="tr-entry-title">Publishing</span>
+        <span class="tr-entry-text">Publish sessions, the Gradle plugin, the Maven extension and CI.</span>
+    </a>
+    <a href="/operations/nexus-migration">
+        <span class="tr-entry-title">Nexus migration</span>
+        <span class="tr-entry-text">Mirror your Nexus 3 repos, then cut over.</span>
+    </a>
+    <a href="/reference/http-api">
+        <span class="tr-entry-title">HTTP API</span>
+        <span class="tr-entry-text">Every route the server answers.</span>
+    </a>
+    <a href="https://github.com/Telesphorepo/Telesphorepo">
+        <span class="tr-entry-title">Source code</span>
+        <span class="tr-entry-text">The server is AGPL-3.0. The publisher clients are MIT.</span>
+    </a>
+</nav>
