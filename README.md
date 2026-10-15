@@ -1,7 +1,7 @@
 # Telesphorepo website
 
 The website and documentation for [Telesphorepo](https://github.com/Telesphorepo/Telesphorepo), at
-https://telesphorepo.com. It is an [Astro](https://astro.build) site built with
+https://docs.telesphorepo.com (the live demo of the app is https://telesphorepo.com). It is an [Astro](https://astro.build) site built with
 [Starlight](https://starlight.astro.build).
 
 ## Develop

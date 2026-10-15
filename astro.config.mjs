@@ -83,7 +83,7 @@ const pageOrder = ['index', ...sidebar
 
 // https://astro.build/config
 export default defineConfig({
-    site: 'https://telesphorepo.com',
+    site: 'https://docs.telesphorepo.com',
     integrations: [starlight({
         title: 'Telesphorepo',
         description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
@@ -133,12 +133,12 @@ export default defineConfig({
         },
         head: [
             // The social card is the brand's og-image (src/assets/brand/png/og-image.png, copied to public/).
-            {tag: 'meta', attrs: {property: 'og:image', content: 'https://telesphorepo.com/og-image.png'}},
+            {tag: 'meta', attrs: {property: 'og:image', content: 'https://docs.telesphorepo.com/og-image.png'}},
             {tag: 'meta', attrs: {property: 'og:image:width', content: '1200'}},
             {tag: 'meta', attrs: {property: 'og:image:height', content: '630'}},
             {tag: 'meta', attrs: {property: 'og:image:alt', content: 'The Telesphorepo gold ticket and wordmark on carbon blue'}},
             {tag: 'meta', attrs: {name: 'twitter:card', content: 'summary_large_image'}},
-            {tag: 'meta', attrs: {name: 'twitter:image', content: 'https://telesphorepo.com/og-image.png'}},
+            {tag: 'meta', attrs: {name: 'twitter:image', content: 'https://docs.telesphorepo.com/og-image.png'}},
             {tag: 'link', attrs: {rel: 'apple-touch-icon', href: '/apple-touch-icon.png'}},
             // Dark is the default theme. A first visit stores 'dark'. A later choice in the theme menu
             // (Auto stores '') replaces it.
