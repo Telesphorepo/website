@@ -7,8 +7,12 @@
  * The ticket file is 720 x 480. The ticket itself is the flat mark at 10x (640 x 400) at offset
  * (40, 32); the margin holds the drop shadow. The void stamp sits on the center of the T's box: the
  * box center is (22.5, 20) in mark units, so (40 + 225, 32 + 200) = (265, 232) in the file.
+ *
+ * The page shows WebP renders of src/assets/brand/ticket-skeuomorphic.svg at 1x, 2x and 3x
+ * (public/brand/ticket-*.webp). Phone browsers draw an <img> SVG with filters at low resolution,
+ * which blurs the felt. Render them again with sharp when the SVG changes.
  */
-import ticketUrl from '../../assets/brand/ticket-skeuomorphic.svg?url';
+const srcset = [720, 1440, 2160].map((w) => `/brand/ticket-${w}.webp ${w}w`).join(', ');
 
 const { entry } = Astro.locals.starlightRoute;
 const { data } = entry;
@@ -35,7 +39,7 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
     </div>
 
     <div class="ticket" aria-hidden="true">
-        <img src={ticketUrl} width={file.width} height={file.height} alt="" decoding="async" fetchpriority="high"/>
+        <img src="/brand/ticket-1440.webp" srcset={srcset} sizes="(min-width: 56rem) 38rem, 100vw" width={file.width} height={file.height} alt="" decoding="async" fetchpriority="high"/>
         {notFound && <span class="void" style={stampAt}>Void</span>}
     </div>
 
