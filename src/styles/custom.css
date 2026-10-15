@@ -90,7 +90,7 @@
     --sl-text-h3: 1.1875rem;
     --sl-text-h4: 1rem;
     --sl-line-height: 1.65;
-    --sl-content-width: 46rem;
+    --sl-content-width: 56rem;
     --sl-sidebar-width: 17rem;
     --sl-nav-height: 3.75rem;
 
@@ -666,7 +666,7 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
 /* Landing page: one wide column. The hero is a component (src/components/landing/Hero.astro). */
 
 :root[data-has-hero] {
-    --sl-content-width: 72rem;
+    --sl-content-width: 80rem;
 }
 
 [data-has-hero] .sl-container {
@@ -708,6 +708,11 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     .tr-split {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 3.5rem;
+    }
+
+    /* The hero has its ticket on the right, so the split under it puts its picture on the left. */
+    .tr-split.tr-flip > :first-child {
+        order: 2;
     }
 }
 
