@@ -136,7 +136,7 @@ printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
 
 ## Publish with curl from CI
 
-A CI job trades its identity token for a publish token, then uploads. An admin adds a CI pipeline for the job first, as in [Publish](/publish/?from=github). The scripts need `curl` and `jq`.
+A CI job trades its identity token for a publish token, then uploads. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The scripts need `curl` and `jq`.
 
 <Tabs>
 <TabItem label="GitHub Actions">

@@ -1,0 +1,176 @@
+---
+/*
+ * Two inputs, "Your server's address" and "Repository". As the reader types, the page puts the
+ * values in place of https://your-server and your-repo: in the text, in each code line and in each
+ * copy button. Empty inputs keep the placeholders.
+ *
+ * The values come from the address (?server=&repo=), then from localStorage. Each change writes
+ * them to both, so an admin can share a link that opens with the real commands. The page makes no
+ * request to the server. Without JavaScript, the inputs stay hidden and the placeholders stay.
+ */
+// The code blocks come after the inputs, so the script waits for the whole page.
+const script = `(() => {
+    const run = () => {
+    const root = document.getElementById('tr-fill');
+    if (!root) return;
+    const SERVER = 'https://your-server';
+    const REPO = 'your-repo';
+    const server = root.querySelector('#tr-fill-server');
+    const repo = root.querySelector('#tr-fill-repo');
+    const read = (key) => { try { return localStorage.getItem('tr-fill-' + key) || ''; } catch (e) { return ''; } };
+    const write = (key, value) => { try { localStorage.setItem('tr-fill-' + key, value); } catch (e) {} };
+    const normalServer = (v) => {
+        v = v.trim().replace(/\\/+$/, '');
+        if (v && !/^[a-z][a-z0-9+.-]*:\\/\\//i.test(v)) v = 'https://' + v;
+        return v;
+    };
+
+    // Each group is a list of text nodes whose joined text can hold a placeholder: one code line,
+    // or one text node outside code. A placeholder can span several nodes of a highlighted line.
+    const content = document.querySelector('.sl-markdown-content') || document.body;
+    const groups = [];
+    const has = (text) => text.includes(SERVER) || text.includes(REPO);
+    // The text nodes under el, in order. A code line is one group; other text nodes are one each.
+    const collect = (el, nodes) => {
+        for (const child of el.childNodes) {
+            if (child.nodeType === 3) {
+                if (nodes) nodes.push(child);
+                else if (has(child.data)) groups.push({ nodes: [child], originals: [child.data] });
+            } else if (child.nodeType === 1 && child.id !== 'tr-fill') {
+                if (!nodes && child.matches('.ec-line .code')) {
+                    const line = collect(child, []);
+                    const originals = line.map((n) => n.data);
+                    if (has(originals.join(''))) groups.push({ nodes: line, originals });
+                } else {
+                    collect(child, nodes);
+                }
+            }
+        }
+        return nodes;
+    };
+    collect(content, null);
+    const buttons = [...content.querySelectorAll('.expressive-code button[data-code]')]
+        .map((b) => ({ b, code: b.getAttribute('data-code') }))
+        .filter((x) => x.code.includes(SERVER) || x.code.includes(REPO));
+
+    const replaceAll = (s, values) => s.split(SERVER).map((part) => part.split(REPO).join(values.repo)).join(values.server);
+
+    const fill = (values) => {
+        for (const g of groups) {
+            const text = g.originals.join('');
+            // The placeholder matches in order, left to right.
+            const matches = [];
+            const re = /https:\\/\\/your-server|your-repo/g;
+            let m;
+            while ((m = re.exec(text))) matches.push({ start: m.index, end: m.index + m[0].length, value: m[0] === SERVER ? values.server : values.repo });
+            let offset = 0;
+            g.nodes.forEach((node, i) => {
+                const s = g.originals[i];
+                let out = '';
+                for (let p = offset; p < offset + s.length; p++) {
+                    const hit = matches.find((x) => p >= x.start && p < x.end);
+                    if (!hit) out += text[p];
+                    else if (p === hit.start) out += hit.value;
+                }
+                if (node.data !== out) node.data = out;
+                offset += s.length;
+            });
+        }
+        for (const x of buttons) x.b.setAttribute('data-code', replaceAll(x.code, values));
+    };
+
+    const apply = (store) => {
+        const s = normalServer(server.value);
+        const r = repo.value.trim();
+        fill({ server: s || SERVER, repo: r || REPO });
+        if (!store) return;
+        write('server', s);
+        write('repo', r);
+        try {
+            const url = new URL(location.href);
+            if (s) url.searchParams.set('server', s); else url.searchParams.delete('server');
+            if (r) url.searchParams.set('repo', r); else url.searchParams.delete('repo');
+            history.replaceState(history.state, '', url);
+        } catch (e) {}
+    };
+
+    const params = new URLSearchParams(location.search);
+    server.value = params.get('server') || read('server');
+    repo.value = params.get('repo') || read('repo');
+    root.addEventListener('input', () => apply(true));
+    root.hidden = false;
+    apply(params.has('server') || params.has('repo'));
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+})();`;
+---
+
+<div id="tr-fill" class="tr-fill not-content" hidden>
+    <div class="tr-fill-fields">
+        <label>
+            <span>Your server's address</span>
+            <input id="tr-fill-server" type="url" inputmode="url" placeholder="https://repo.example.com" autocomplete="off" spellcheck="false" />
+        </label>
+        <label>
+            <span>Repository</span>
+            <input id="tr-fill-repo" type="text" placeholder="releases" autocomplete="off" spellcheck="false" />
+        </label>
+    </div>
+    <p class="tr-fill-hint">Or open your repository's <strong>Publish to this repository</strong> tab: it shows this command filled in.</p>
+</div>
+<script is:inline set:html={script}></script>
+
+<style>
+    .tr-fill {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-block: 1.5rem 0;
+    }
+
+    .tr-fill[hidden] {
+        display: none;
+    }
+
+    .tr-fill-fields {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+        gap: 0.75rem;
+    }
+
+    .tr-fill label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        color: var(--tr-heading);
+        font-size: 0.9375rem;
+        font-weight: 600;
+    }
+
+    .tr-fill input {
+        min-height: 2.5rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--tr-line);
+        border-radius: 8px;
+        background-color: var(--tr-surface);
+        color: var(--tr-heading);
+        font: inherit;
+        font-weight: 400;
+    }
+
+    .tr-fill input::placeholder {
+        color: var(--tr-muted);
+    }
+
+    .tr-fill input:focus-visible {
+        outline: 2px solid var(--tr-accent);
+        outline-offset: 1px;
+    }
+
+    .tr-fill-hint {
+        margin: 0;
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+    }
+</style>

@@ -1,0 +1,195 @@
+---
+title: Run the server
+description: Run Telesphorepo, make a repository, let people publish and add CI pipelines.
+tableOfContents: false
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+This page is for the server admin.
+
+<Choice questions={[
+    {key: 'engine', label: 'How do you run the server?', options: [
+        {value: 'docker', label: 'Docker'},
+        {value: 'podman', label: 'Podman'},
+        {value: 'binary', label: 'Download the program'},
+    ]},
+]} />
+
+## Start the server
+
+<Path title="Docker" engine="docker" level={3}>
+
+<Steps>
+
+1. Start the server.
+
+   ```sh
+   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+2. Copy the admin password from the log.
+
+   ```sh
+   docker logs telesphorepo
+   ```
+
+</Steps>
+
+</Path>
+
+<Path title="Podman" engine="podman" level={3}>
+
+<Steps>
+
+1. Start the server.
+
+   ```sh
+   podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+2. Copy the admin password from the log.
+
+   ```sh
+   podman logs telesphorepo
+   ```
+
+</Steps>
+
+</Path>
+
+<Path title="Download the program" engine="binary" level={3}>
+
+<Steps>
+
+1. Download the file for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases).
+
+2. Unpack the file.
+
+3. Start the server, and copy the admin password that it shows.
+
+   ```sh
+   ./telesphorepo serve
+   ```
+
+</Steps>
+
+</Path>
+
+## Sign in
+
+<Steps>
+
+1. Open `http://localhost:8080`.
+
+2. Sign in as `admin`, with the password from the log.
+
+3. Add your authenticator app when the page asks.
+
+   **Authenticator app** › **Add**. Scan the code, then type the code from your phone.
+
+</Steps>
+
+## Set the public address
+
+<Steps>
+
+1. Open **Settings** › **General**.
+
+2. Set **Public address** to the address that people use.
+
+   ```text
+   https://repo.example.com
+   ```
+
+3. Click **Save**.
+
+</Steps>
+
+CI jobs cannot publish without the public address. For HTTPS, see [Run in production](/production/).
+
+## Make a repository
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, then click **New repository**.
+
+2. Type a name, such as `releases`.
+
+3. Choose **Maven / Gradle**.
+
+4. Click **Create repository**.
+
+</Steps>
+
+## Give people Publish
+
+<Steps>
+
+1. Open **Settings** › **Repositories** › your repository › **Access**.
+
+2. Click **Give access**.
+
+3. Choose the people.
+
+4. Tick **Publish**.
+
+5. Click the button that gives them access.
+
+</Steps>
+
+To add a person first, open **Settings** › **People** and click **New account**. See [People and sign-in](/people-and-sign-in/).
+
+Then send people two links: [Set up a project](/set-up/) for the first person on a project, and [Publish a package](/publish/) for everyone.
+
+## Add a CI pipeline
+
+A developer sends you the values. [Set up a project](/set-up/) tells them which ones.
+
+<Steps>
+
+1. Open **Settings** › **CI pipelines**, then click **New CI pipeline**.
+
+2. Choose **GitHub Actions** or **Jenkins**.
+
+3. Fill in the values that the developer sent you.
+
+4. Tick the repository.
+
+5. Click **Create CI pipeline**.
+
+</Steps>
+
+<details>
+<summary>Jenkins: a freestyle job or a Jenkinsfile</summary>
+
+Both kinds of job use the same CI pipeline. Under **Jobs**, write the full job name with its folders, such as `team/app`. A branch of a multibranch pipeline is a job of its own, such as `app/main`.
+
+If this server cannot reach Jenkins, open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys**. Do it again when Jenkins changes its keys.
+
+</details>
+
+## Move from Nexus
+
+To copy your Nexus 3 repositories, see [Move from Nexus](/move-from-nexus/).
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**The log shows no password.** Wait a few seconds, then run the log command again.
+
+**You lost the admin password.** Run `docker exec -it telesphorepo /telesphorepo user passwd admin`, and type a new one.
+
+**You want to pick the first admin yourself.** Set `TR_BOOTSTRAP_ADMIN_USER` and `TR_BOOTSTRAP_ADMIN_PASSWORD` on the first start. The server reads them only while it has no users.
+
+**Your data is gone after you removed the container.** Always keep the `telesphorepo-data` volume. It holds the database, the files and the key for your secret settings.
+
+**You run the program and want to know where the data is.** It is in `./data`, next to where you started it.
+
+**Which image tags and systems are there?** The image runs on `linux/amd64` and `linux/arm64`. Each release has the tags `X.Y.Z` and `X.Y`, and `latest` is the newest. Check a downloaded program against `SHA256SUMS` on the release page.
+
+</details>

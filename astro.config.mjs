@@ -8,25 +8,29 @@ import starlightUtils from "@lorenzo_lewis/starlight-utils";
 import starlightLlmsTxt from 'starlight-llms-txt';
 
 const sidebar = [
-    {
-        label: "leadingNavLinks",
-        items: [
-            {label: "Docs", link: "/get-started"},
-            {label: "Reference", link: "/reference"},
-        ]
-    },
-    {label: 'Get started', link: '/get-started'},
-    {label: 'Publish', link: '/publish'},
+    {label: 'Publish a package', link: '/publish'},
+    {label: 'Set up a project', link: '/set-up'},
     {label: 'Download packages', link: '/download'},
-    {label: 'Move from Nexus', link: '/move-from-nexus'},
+    {label: 'Run the server', link: '/run-the-server'},
     {
         label: 'Reference',
         collapsed: true,
         items: [
-            {label: 'Settings and commands', link: '/reference'},
-            {label: 'Debian, raw and curl', link: '/debian-and-raw'},
+            {label: 'Move from Nexus', link: '/move-from-nexus'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
             {label: 'Run in production', link: '/production'},
+            {label: 'Debian, raw and curl', link: '/debian-and-raw'},
+            {label: 'Settings and commands', link: '/reference'},
+        ]
+    },
+    // The header links. starlight-utils takes this group out of the sidebar. Starlight marks only the
+    // first sidebar entry with the current page's path, so this group comes last: the sidebar entry
+    // with the same path is then the one that shows as current.
+    {
+        label: "leadingNavLinks",
+        items: [
+            {label: "Docs", link: "/publish"},
+            {label: "Reference", link: "/reference"},
         ]
     },
 ];
@@ -110,18 +114,18 @@ export default defineConfig({
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
             description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, Debian packages and raw files. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/get-started.md`. The Publish and Download pages hold the steps for every choice, each under its own heading.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish.md`. The Set up a project, Download packages and Run the server pages hold the steps for every choice, each under its own heading.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['publish', 'people-and-sign-in'],
-                    description: 'The Gradle plugin, the Maven extension, CI pipelines for GitHub Actions and Jenkins, accounts and two-step verification',
+                    paths: ['publish', 'set-up', 'people-and-sign-in'],
+                    description: 'The Gradle plugin, the Maven extension, the setup command, CI for GitHub Actions and Jenkins, accounts and two-step verification',
                 },
                 {
                     label: 'Operations',
-                    paths: ['production', 'move-from-nexus', 'reference'],
+                    paths: ['run-the-server', 'production', 'move-from-nexus', 'reference'],
                     description: 'HTTPS, storage, backups, upgrades, the move from Nexus, commands, environment variables and settings',
                 },
             ],

@@ -1,6 +1,6 @@
 ---
-title: Publish
-description: Publish to Telesphorepo from your computer, GitHub Actions or Jenkins, with Gradle or Maven.
+title: Publish a package
+description: Publish from a project that is already set up for Telesphorepo.
 tableOfContents: false
 ---
 
@@ -8,58 +8,24 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-In the blocks, put your server's address in place of `https://your-server`, and your repository's name in place of `your-repo`. The **Publish to this repository** tab of your repository shows the same blocks with your values filled in.
-
 <Choice questions={[
-    {key: 'from', label: 'Where do you publish from?', options: [
-        {value: 'computer', label: 'Your computer'},
-        {value: 'github', label: 'GitHub Actions'},
-        {value: 'jenkins', label: 'Jenkins'},
-    ]},
-    {key: 'tool', label: 'Which build tool?', options: [
-        {value: 'gradle-kts', label: 'Gradle (Kotlin)'},
-        {value: 'gradle-groovy', label: 'Gradle (Groovy)'},
+    {key: 'build', label: 'Which build tool?', options: [
+        {value: 'gradle', label: 'Gradle'},
         {value: 'maven', label: 'Maven'},
     ]},
 ]} />
 
-{/* ---------------------------------------------------------------- Your computer */}
-
-<Path title="Your computer, Gradle (Kotlin)" from="computer" tool="gradle-kts">
+<Path title="Gradle" build="gradle">
 
 <Steps>
 
-1. Ask an admin to give you **Publish** on your repository.
-
-   **Settings** › **Repositories** › `your-repo` › **Access** › **Give access**
-
-2. Paste this at the top of `settings.gradle.kts`.
-
-   ```kotlin title="settings.gradle.kts"
-   plugins {
-       id("com.telesphorepo.publish") version "0.1.0"
-   }
-
-   telesphorepo {
-       url = "https://your-server"
-       repository = "your-repo"
-   }
-   ```
-
-3. Give your project a group and a version in `build.gradle.kts`.
-
-   ```kotlin title="build.gradle.kts"
-   group = "com.example"
-   version = "1.0.0"
-   ```
-
-4. Run this.
+1. Run the publish command.
 
    ```sh
    ./gradlew publish
    ```
 
-5. Click **Approve device** in the browser page that opens.
+2. The first time, click **Approve device** in the browser.
 
 </Steps>
 
@@ -67,96 +33,17 @@ Done when Gradle prints `BUILD SUCCESSFUL`.
 
 </Path>
 
-<Path title="Your computer, Gradle (Groovy)" from="computer" tool="gradle-groovy">
+<Path title="Maven" build="maven">
 
 <Steps>
 
-1. Ask an admin to give you **Publish** on your repository.
-
-   **Settings** › **Repositories** › `your-repo` › **Access** › **Give access**
-
-2. Paste this at the top of `settings.gradle`.
-
-   ```groovy title="settings.gradle"
-   plugins {
-       id 'com.telesphorepo.publish' version '0.1.0'
-   }
-
-   telesphorepo {
-       url = 'https://your-server'
-       repository = 'your-repo'
-   }
-   ```
-
-3. Give your project a group and a version in `build.gradle`.
-
-   ```groovy title="build.gradle"
-   group = 'com.example'
-   version = '1.0.0'
-   ```
-
-4. Run this.
-
-   ```sh
-   ./gradlew publish
-   ```
-
-5. Click **Approve device** in the browser page that opens.
-
-</Steps>
-
-Done when Gradle prints `BUILD SUCCESSFUL`.
-
-</Path>
-
-<Path title="Your computer, Maven" from="computer" tool="maven">
-
-<Steps>
-
-1. Ask an admin to give you **Publish** on your repository.
-
-   **Settings** › **Repositories** › `your-repo` › **Access** › **Give access**
-
-2. Create `.mvn/extensions.xml` with this.
-
-   ```xml title=".mvn/extensions.xml"
-   <extensions>
-     <extension>
-       <groupId>com.telesphorepo</groupId>
-       <artifactId>telesphorepo-maven-extension</artifactId>
-       <version>0.1.0</version>
-     </extension>
-   </extensions>
-   ```
-
-3. Create `.mvn/maven.config` with this.
-
-   ```text title=".mvn/maven.config"
-   -Dtelesphorepo.url=https://your-server
-   ```
-
-4. Paste this into `pom.xml`, inside `<project>`.
-
-   ```xml title="pom.xml"
-   <distributionManagement>
-     <repository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </repository>
-     <snapshotRepository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </snapshotRepository>
-   </distributionManagement>
-   ```
-
-5. Run this.
+1. Run the publish command.
 
    ```sh
    mvn deploy
    ```
 
-6. Click **Approve device** in the browser page that opens.
+2. The first time, click **Approve device** in the browser.
 
 </Steps>
 
@@ -164,502 +51,34 @@ Done when Maven prints `BUILD SUCCESS`.
 
 </Path>
 
-{/* ---------------------------------------------------------------- GitHub Actions */}
-
-<Path title="GitHub Actions, Gradle (Kotlin)" from="github" tool="gradle-kts">
-
-<Steps>
-
-1. Ask an admin to add a CI pipeline for your GitHub repository.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **GitHub Actions**. Fill in your GitHub repository, the workflow file `publish.yml`, the tag `v*` in place of the branch `main`, and tick `your-repo`.
-
-2. Paste this at the top of `settings.gradle.kts`.
-
-   ```kotlin title="settings.gradle.kts"
-   plugins {
-       id("com.telesphorepo.publish") version "0.1.0"
-   }
-
-   telesphorepo {
-       url = "https://your-server"
-       repository = "your-repo"
-   }
-   ```
-
-3. Give your project a group and a version in `build.gradle.kts`.
-
-   ```kotlin title="build.gradle.kts"
-   group = "com.example"
-   version = "1.0.0"
-   ```
-
-4. Create `.github/workflows/publish.yml` with this.
-
-   ```yaml title=".github/workflows/publish.yml"
-   on:
-     push:
-       tags: ["v*"]
-
-   permissions:
-     id-token: write
-     contents: read
-
-   jobs:
-     publish:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v7
-         - uses: actions/setup-java@v6
-           with:
-             distribution: temurin
-             java-version: 21
-         - run: ./gradlew publish
-   ```
-
-5. Push your changes and a tag.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-</Steps>
-
-Done when the run on the **Actions** tab of GitHub shows a green check.
-
-</Path>
-
-<Path title="GitHub Actions, Gradle (Groovy)" from="github" tool="gradle-groovy">
-
-<Steps>
-
-1. Ask an admin to add a CI pipeline for your GitHub repository.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **GitHub Actions**. Fill in your GitHub repository, the workflow file `publish.yml`, the tag `v*` in place of the branch `main`, and tick `your-repo`.
-
-2. Paste this at the top of `settings.gradle`.
-
-   ```groovy title="settings.gradle"
-   plugins {
-       id 'com.telesphorepo.publish' version '0.1.0'
-   }
-
-   telesphorepo {
-       url = 'https://your-server'
-       repository = 'your-repo'
-   }
-   ```
-
-3. Give your project a group and a version in `build.gradle`.
-
-   ```groovy title="build.gradle"
-   group = 'com.example'
-   version = '1.0.0'
-   ```
-
-4. Create `.github/workflows/publish.yml` with this.
-
-   ```yaml title=".github/workflows/publish.yml"
-   on:
-     push:
-       tags: ["v*"]
-
-   permissions:
-     id-token: write
-     contents: read
-
-   jobs:
-     publish:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v7
-         - uses: actions/setup-java@v6
-           with:
-             distribution: temurin
-             java-version: 21
-         - run: ./gradlew publish
-   ```
-
-5. Push your changes and a tag.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-</Steps>
-
-Done when the run on the **Actions** tab of GitHub shows a green check.
-
-</Path>
-
-<Path title="GitHub Actions, Maven" from="github" tool="maven">
-
-<Steps>
-
-1. Ask an admin to add a CI pipeline for your GitHub repository.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **GitHub Actions**. Fill in your GitHub repository, the workflow file `publish.yml`, the tag `v*` in place of the branch `main`, and tick `your-repo`.
-
-2. Create `.mvn/extensions.xml` with this.
-
-   ```xml title=".mvn/extensions.xml"
-   <extensions>
-     <extension>
-       <groupId>com.telesphorepo</groupId>
-       <artifactId>telesphorepo-maven-extension</artifactId>
-       <version>0.1.0</version>
-     </extension>
-   </extensions>
-   ```
-
-3. Create `.mvn/maven.config` with this.
-
-   ```text title=".mvn/maven.config"
-   -Dtelesphorepo.url=https://your-server
-   ```
-
-4. Paste this into `pom.xml`, inside `<project>`.
-
-   ```xml title="pom.xml"
-   <distributionManagement>
-     <repository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </repository>
-     <snapshotRepository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </snapshotRepository>
-   </distributionManagement>
-   ```
-
-5. Create `.github/workflows/publish.yml` with this.
-
-   ```yaml title=".github/workflows/publish.yml"
-   on:
-     push:
-       tags: ["v*"]
-
-   permissions:
-     id-token: write
-     contents: read
-
-   jobs:
-     publish:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v7
-         - uses: actions/setup-java@v6
-           with:
-             distribution: temurin
-             java-version: 21
-         - run: mvn -B deploy
-   ```
-
-6. Push your changes and a tag.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-
-</Steps>
-
-Done when the run on the **Actions** tab of GitHub shows a green check.
-
-</Path>
-
-{/* ---------------------------------------------------------------- Jenkins */}
-
-<Path title="Jenkins, Gradle (Kotlin)" from="jenkins" tool="gradle-kts">
-
-<Steps>
-
-1. Install the Jenkins plugin **OpenID Connect Provider**.
-
-   **Manage Jenkins** › **Plugins** › **Available plugins**
-
-2. Add a Jenkins credential of the kind **OpenID Connect id token**.
-
-   **Manage Jenkins** › **Credentials**. Set **ID** to `telesphorepo-id-token` and **Audience** to `https://your-server`.
-
-3. Ask an admin to add a CI pipeline for your Jenkins job.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **Jenkins**. Fill in the Jenkins address, the job name, such as `team/app`, and tick `your-repo`.
-
-4. Paste this at the top of `settings.gradle.kts`.
-
-   ```kotlin title="settings.gradle.kts"
-   plugins {
-       id("com.telesphorepo.publish") version "0.1.0"
-   }
-
-   telesphorepo {
-       url = "https://your-server"
-       repository = "your-repo"
-       oidcTokenEnv = "OIDC_TOKEN"
-   }
-   ```
-
-5. Give your project a group and a version in `build.gradle.kts`.
-
-   ```kotlin title="build.gradle.kts"
-   group = "com.example"
-   version = "1.0.0"
-   ```
-
-6. Create `Jenkinsfile` with this.
-
-   ```groovy title="Jenkinsfile"
-   pipeline {
-     agent any
-     stages {
-       stage('Build') {
-         steps {
-           sh './gradlew build'
-         }
-       }
-       stage('Publish to your-repo') {
-         steps {
-           // The token is good for 10 minutes, so only this stage gets it.
-           withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-             sh './gradlew publish'
-           }
-         }
-       }
-     }
-   }
-   ```
-
-7. Push your changes, then click **Build Now** on the job.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   ```
-
-</Steps>
-
-Done when the build log ends with `Finished: SUCCESS`.
-
-</Path>
-
-<Path title="Jenkins, Gradle (Groovy)" from="jenkins" tool="gradle-groovy">
-
-<Steps>
-
-1. Install the Jenkins plugin **OpenID Connect Provider**.
-
-   **Manage Jenkins** › **Plugins** › **Available plugins**
-
-2. Add a Jenkins credential of the kind **OpenID Connect id token**.
-
-   **Manage Jenkins** › **Credentials**. Set **ID** to `telesphorepo-id-token` and **Audience** to `https://your-server`.
-
-3. Ask an admin to add a CI pipeline for your Jenkins job.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **Jenkins**. Fill in the Jenkins address, the job name, such as `team/app`, and tick `your-repo`.
-
-4. Paste this at the top of `settings.gradle`.
-
-   ```groovy title="settings.gradle"
-   plugins {
-       id 'com.telesphorepo.publish' version '0.1.0'
-   }
-
-   telesphorepo {
-       url = 'https://your-server'
-       repository = 'your-repo'
-       oidcTokenEnv = 'OIDC_TOKEN'
-   }
-   ```
-
-5. Give your project a group and a version in `build.gradle`.
-
-   ```groovy title="build.gradle"
-   group = 'com.example'
-   version = '1.0.0'
-   ```
-
-6. Create `Jenkinsfile` with this.
-
-   ```groovy title="Jenkinsfile"
-   pipeline {
-     agent any
-     stages {
-       stage('Build') {
-         steps {
-           sh './gradlew build'
-         }
-       }
-       stage('Publish to your-repo') {
-         steps {
-           // The token is good for 10 minutes, so only this stage gets it.
-           withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-             sh './gradlew publish'
-           }
-         }
-       }
-     }
-   }
-   ```
-
-7. Push your changes, then click **Build Now** on the job.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   ```
-
-</Steps>
-
-Done when the build log ends with `Finished: SUCCESS`.
-
-</Path>
-
-<Path title="Jenkins, Maven" from="jenkins" tool="maven">
-
-<Steps>
-
-1. Install the Jenkins plugin **OpenID Connect Provider**.
-
-   **Manage Jenkins** › **Plugins** › **Available plugins**
-
-2. Add a Jenkins credential of the kind **OpenID Connect id token**.
-
-   **Manage Jenkins** › **Credentials**. Set **ID** to `telesphorepo-id-token` and **Audience** to `https://your-server`.
-
-3. Ask an admin to add a CI pipeline for your Jenkins job.
-
-   **Settings** › **CI pipelines** › **New CI pipeline** › **Jenkins**. Fill in the Jenkins address, the job name, such as `team/app`, and tick `your-repo`.
-
-4. Create `.mvn/extensions.xml` with this.
-
-   ```xml title=".mvn/extensions.xml"
-   <extensions>
-     <extension>
-       <groupId>com.telesphorepo</groupId>
-       <artifactId>telesphorepo-maven-extension</artifactId>
-       <version>0.1.0</version>
-     </extension>
-   </extensions>
-   ```
-
-5. Create `.mvn/maven.config` with this.
-
-   ```text title=".mvn/maven.config"
-   -Dtelesphorepo.url=https://your-server
-   ```
-
-6. Paste this into `pom.xml`, inside `<project>`.
-
-   ```xml title="pom.xml"
-   <distributionManagement>
-     <repository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </repository>
-     <snapshotRepository>
-       <id>your-repo</id>
-       <url>https://your-server/maven/your-repo</url>
-     </snapshotRepository>
-   </distributionManagement>
-   ```
-
-7. Create `Jenkinsfile` with this.
-
-   ```groovy title="Jenkinsfile"
-   pipeline {
-     agent any
-     stages {
-       stage('Build') {
-         steps {
-           sh 'mvn -B verify'
-         }
-       }
-       stage('Publish to your-repo') {
-         steps {
-           // The token is good for 10 minutes, so only this stage gets it.
-           withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-             sh 'mvn -B deploy -DskipTests -Dtelesphorepo.oidcTokenEnv=OIDC_TOKEN'
-           }
-         }
-       }
-     }
-   }
-   ```
-
-8. Push your changes, then click **Build Now** on the job.
-
-   ```sh
-   git add .
-   git commit -m "Publish to Telesphorepo"
-   git push
-   ```
-
-</Steps>
-
-Done when the build log ends with `Finished: SUCCESS`.
-
-</Path>
+Project not set up yet? [Set up a project](/set-up/).
 
 ## If something goes wrong
 
 <details>
 <summary>Find your problem, then do the fix</summary>
 
-**The browser page asks for two-step verification.** Click **Set up two-step verification**. Add your phone app, then come back and approve.
+**The browser page asks for two-step verification.** Click **Set up two-step verification**. Add your phone app, then approve.
 
-**No browser page opens.** Copy the address that the terminal prints. Open it yourself.
+**No browser page opens.** Copy the address that the terminal shows. Open it yourself.
 
-**Gradle says the `plugins` block is in the wrong place.** Move it to the top. Only a `pluginManagement` block can come before it. If the file already has a `plugins` block, add the `id` line to it.
+**403 when you publish.** You cannot publish to this repository yet. Ask your server admin for **Publish**.
 
-**Gradle says `Task 'publish' not found`.** Add the `java` or `java-library` plugin to `build.gradle.kts`.
+**409 when you publish.** That version is already on the server. Raise the version. You can publish a `-SNAPSHOT` version again and again.
 
-**The repository "your-repo" does not exist.** Check the repository name in the settings file or in `pom.xml`.
-
-**403 when you publish.** You have no **Publish** on the repository. Do step 1 again.
-
-**409 when you publish.** That version is already on the server. Raise the version. A `-SNAPSHOT` version can be published again and again.
-
-**401 with a password in the build.** A password cannot publish. Remove the password from the build and from `~/.m2/settings.xml`.
-
-**The server refused device.** Delete the file that the message names. Publish again and approve again. This happens 90 days after the approval, or when someone removes the device.
+**The server refused the device.** Delete the file that the message names. Publish again and approve again. An approval lasts 90 days, unless someone removes the device.
 
 **You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop.
 
-**GitHub Actions gave this job no identity token.** Add `id-token: write` under `permissions` in the workflow file.
+**You want to approve the computer before you publish.** In the project folder, run `./gradlew telesphorepoLogin` or `mvn com.telesphorepo:telesphorepo-maven-plugin:login`.
 
-**Jenkins gave this build no identity token.** Run the publish inside `withCredentials`, as in the `Jenkinsfile`. For Gradle, add `oidcTokenEnv = "OIDC_TOKEN"` to the `telesphorepo` block.
-
-**The server refuses the job's token.** An admin opens **Settings** › **General** and sets **Public address** to `https://your-server`. It must match the `url` in the build. For Jenkins, it must also match the **Audience** of the credential.
-
-**No CI pipeline matches the job.** Open the CI pipeline. Check the GitHub repository, the tag, the workflow file or the job name. Check that it ticks your repository.
-
-**The server cannot reach Jenkins.** Open the Jenkins address followed by `/oidc/jwks`. Copy the whole page into **Jenkins keys** in the CI pipeline. Do it again when Jenkins changes its keys.
-
-**Permission denied on `./gradlew` in CI.** Run `git update-index --chmod=+x gradlew`, then commit and push.
+**Gradle says `Task 'publish' not found`.** Add the `java` or `java-library` plugin to the build file.
 
 **One project must not publish.** Add this line to the build file of that project:
 
 ```kotlin title="build.gradle.kts"
 tasks.withType<PublishToMavenRepository>().configureEach { enabled = false }
 ```
-
-**You want to approve the computer before you publish.** Run `./gradlew telesphorepoLogin`, or `mvn com.telesphorepo:telesphorepo-maven-plugin:login -Dtelesphorepo.url=https://your-server`.
 
 **You publish without Gradle or Maven.** See [Debian, raw and curl](/debian-and-raw/).
 

@@ -7,14 +7,14 @@
  */
 interface Props {
     title: string;
-    level?: 2 | 3;
+    level?: 2 | 3 | 4;
     [key: string]: string | number | undefined;
 }
 
 const { title, level = 2, ...when } = Astro.props;
 const attrs = Object.fromEntries(Object.entries(when).map(([key, value]) => [`data-${key}`, value]));
 const id = Object.values(when).join('-').replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
-const Heading = level === 3 ? 'h3' : 'h2';
+const Heading = `h${level}` as 'h2' | 'h3' | 'h4';
 ---
 
 <section class="tr-path" {...attrs}>
