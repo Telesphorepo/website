@@ -2,6 +2,9 @@
 /*
  * What you get, in groups. To add a benefit, add an item to a group. To add a group, add an
  * entry to the list. An item with an href is a link and fills on hover; an item without one is text.
+ *
+ * Each group is its name beside a grid of paper tiles. A perforation, the brand's row of slots,
+ * separates one group from the next.
  */
 interface Item {
     title: string;
@@ -103,8 +106,8 @@ const groups: Group[] = [
         name: 'An easy way off Nexus',
         items: [
             {
-                title: 'Mirror first, cut over later',
-                text: 'Telesphorepo mirrors your Nexus 3 hosted repos while Nexus keeps serving builds. When you are ready, one last sync and the repos are yours to publish to.',
+                title: 'Copy first, switch later',
+                text: 'Telesphorepo copies your Nexus 3 repos and keeps them up to date while your builds still publish to Nexus. When you are ready, switch your builds and press Cut over.',
                 href: '/operations/nexus-migration/',
             },
         ],
@@ -114,18 +117,18 @@ const groups: Group[] = [
 
 <div class="tr-benefits not-content">
     {groups.map((group) => (
-        <section class="group tr-paper" aria-label={group.name}>
+        <section class="group" aria-label={group.name}>
             <h3 class="group-name">{group.name}</h3>
             <ul class="items">
                 {group.items.map((item) => (
                     <li>
                         {item.href ? (
-                            <a class="item" href={item.href}>
+                            <a class="item tr-paper" href={item.href}>
                                 <span class="title">{item.title}</span>
                                 <span class="text">{item.text}</span>
                             </a>
                         ) : (
-                            <div class="item">
+                            <div class="item tr-paper">
                                 <span class="title">{item.title}</span>
                                 <span class="text">{item.text}</span>
                             </div>
@@ -141,55 +144,77 @@ const groups: Group[] = [
     .tr-benefits {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        margin-top: 2.5rem;
+        gap: 2.5rem;
+        margin-top: 2rem;
     }
 
-    /* A group: its name on the left, its items in a grid on the right. */
+    /* A group: its name over its tiles, or beside them from 60rem. */
     .group {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: 1rem 2.5rem;
-        padding: 1.5rem;
-        border-radius: 14px;
     }
 
     @media (min-width: 60rem) {
         .group {
-            grid-template-columns: 15rem minmax(0, 1fr);
-            padding: 2rem;
+            grid-template-columns: 14rem minmax(0, 1fr);
         }
+
+        /* The name lines up with the first tile title. */
+        .group-name {
+            padding-top: 0.875rem;
+        }
+    }
+
+    /* The perforation between groups: the shared tile from custom.css. */
+    .group + .group::before {
+        content: '';
+        grid-column: 1 / -1;
+        height: 4px;
+        margin-bottom: 1.5rem;
+        background-color: var(--tr-line-strong);
+        mask: var(--tr-perforation) left center / 12px 4px repeat-x;
     }
 
     .group-name {
         margin: 0;
         color: var(--tr-heading);
-        font-size: 1.375rem;
+        font-size: 1.5rem;
         font-weight: 600;
         letter-spacing: -0.025em;
-        line-height: 1.1;
-        letter-spacing: -0.01em;
+        line-height: 1.15;
         text-wrap: balance;
     }
 
     .items {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
-        gap: 0.25rem 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+        gap: 0.5rem;
         margin: 0;
         padding: 0;
         list-style: none;
     }
 
-    /* The item pads into the gap, so its text lines up with the group name and the fill has room. */
+    /* A group with one benefit: the tile fills the row; its text keeps a readable measure. */
+    .items > li:only-child {
+        grid-column: 1 / -1;
+    }
+
+    .items > li:only-child .text {
+        max-width: 62ch;
+    }
+
+    .items li {
+        margin: 0;
+    }
+
     .item {
         display: flex;
         flex-direction: column;
         gap: 0.375rem;
         height: 100%;
-        margin-inline: -0.75rem;
-        padding: 0.75rem;
-        border-radius: 10px;
+        padding: 1.125rem 1.25rem 1.25rem;
+        border-radius: 12px;
         color: var(--tr-body);
         text-decoration: none;
     }

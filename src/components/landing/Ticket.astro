@@ -1,6 +1,6 @@
 ---
 /*
- * A gold ticket that carries text: the landing page shows an example publish session on it. It
+ * A gold felt ticket that carries text: the landing page shows an example publish session on it. It
  * has the geometry of the brand mark (src/assets/brand/README.md) at 8x, so the 64 x 40 mark grid
  * becomes 512 x 320. Every position below is a mark-grid value times U, or a text baseline that
  * the constants give. The stamp lands once, when the ticket first scrolls into view.
@@ -35,10 +35,11 @@ const outline = [
     `V${corner}A${corner} ${corner} 0 0 1 ${corner} 0Z`,
 ].join('');
 const r = slot.w / 2;
-const slots = Array.from({ length: slot.count }, (_, i) => {
+const slotList = Array.from({ length: slot.count }, (_, i) => {
     const y = slot.first + i * slot.step;
     return `M${slot.x} ${y + r}A${r} ${r} 0 0 1 ${slot.x + slot.w} ${y + r}V${y + slot.h - r}A${r} ${r} 0 0 1 ${slot.x} ${y + slot.h - r}Z`;
-}).join('');
+});
+const slots = slotList.join('');
 
 // The text. The left edge clears the notch (radius 5 units) by one unit.
 const left = 6 * U;
@@ -62,45 +63,66 @@ const stampBox = { w: stampText + 2 * stampPad, h: 34 };
 const stampCenter = { x: panelEnd / 2 + 2 * U, y: 274 };
 
 const id = `tk${Math.random().toString(36).slice(2, 8)}`;
+
+/*
+ * The felt: the filters of the brand's felt ticket (src/assets/brand/ticket-skeuomorphic.svg). The
+ * noise sizes are in user units. This ticket shows at about the same pixels per unit as the hero
+ * ticket, so the fibers look the same size in both.
+ *   felt   fuzzy cut edges, a matte fiber surface under a soft top-left light, a darker rim
+ *   holes  a soft compressed ring around each punched slot
+ *   ink    print on felt: the ink follows the fibers, softens, and varies in density
+ */
+const feltDefs = `
+<filter id="${id}-felt" x="-2%" y="-2%" width="104%" height="104%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="fz"/>
+<feDisplacementMap in="SourceAlpha" in2="fz" scale="2.6" xChannelSelector="R" yChannelSelector="G" result="cut"/>
+<feTurbulence type="turbulence" baseFrequency=".55" numOctaves="2" seed="9" result="hz"/>
+<feDisplacementMap in="SourceAlpha" in2="hz" scale="7" xChannelSelector="R" yChannelSelector="B" result="hairy"/>
+<feGaussianBlur in="hairy" stdDeviation=".7" result="hairb"/>
+<feComponentTransfer in="hairb" result="halo"><feFuncA type="linear" slope=".4"/></feComponentTransfer>
+<feGaussianBlur in="cut" stdDeviation=".45" result="edge"/>
+<feMerge result="alpha"><feMergeNode in="halo"/><feMergeNode in="edge"/></feMerge>
+<feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="4" seed="21" result="fine"/>
+<feGaussianBlur in="fine" stdDeviation=".6" result="fines"/>
+<feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="2" seed="2" result="mottle"/>
+<feComposite in="fines" in2="mottle" operator="arithmetic" k2="1" k3=".7" k4="-.35" result="height"/>
+<feDiffuseLighting in="height" surfaceScale="1.1" diffuseConstant="1" lighting-color="#F7C766" result="lit"><feDistantLight azimuth="225" elevation="62"/></feDiffuseLighting>
+<feTurbulence type="turbulence" baseFrequency=".2" numOctaves="2" seed="31" result="v1"/>
+<feColorMatrix in="v1" type="matrix" values="0 0 0 0 1  0 0 0 0 .92  0 0 0 0 .72  -6 0 0 0 1.05" result="h1"/>
+<feGaussianBlur in="h1" stdDeviation=".35" result="h1b"/><feComponentTransfer in="h1b" result="hairlight"><feFuncA type="linear" slope=".3"/></feComponentTransfer>
+<feTurbulence type="turbulence" baseFrequency=".26" numOctaves="2" seed="37" result="v2"/>
+<feColorMatrix in="v2" type="matrix" values="0 0 0 0 .45  0 0 0 0 .28  0 0 0 0 .04  -7 0 0 0 1.05" result="h2"/>
+<feGaussianBlur in="h2" stdDeviation=".35" result="h2b"/><feComponentTransfer in="h2b" result="hairdark"><feFuncA type="linear" slope=".14"/></feComponentTransfer>
+<feComponentTransfer in="edge" result="inv"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer>
+<feGaussianBlur in="inv" stdDeviation="5" result="invb"/>
+<feFlood flood-color="#6B4508" flood-opacity=".35"/><feComposite in2="invb" operator="in"/><feComposite in2="edge" operator="in" result="rimshade"/>
+<feMerge result="surf"><feMergeNode in="lit"/><feMergeNode in="hairdark"/><feMergeNode in="hairlight"/><feMergeNode in="rimshade"/></feMerge>
+<feComposite in="surf" in2="alpha" operator="in"/></filter>
+<filter id="${id}-holes" x="-50%" y="-20%" width="200%" height="140%" color-interpolation-filters="sRGB">
+<feMorphology in="SourceAlpha" operator="dilate" radius="3" result="d"/>
+<feGaussianBlur in="d" stdDeviation="2.5" result="db"/>
+<feComposite in="db" in2="SourceAlpha" operator="out" result="ring"/>
+<feFlood flood-color="#4A2E04" flood-opacity=".4"/><feComposite in2="ring" operator="in"/></filter>
+<filter id="${id}-ink" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="2" seed="11" result="n"/>
+<feDisplacementMap in="SourceGraphic" in2="n" scale="1.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+<feGaussianBlur in="d" stdDeviation=".4" result="soft"/>
+<feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="17" result="m"/>
+<feColorMatrix in="m" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 .6" result="dens"/>
+<feComposite in="soft" in2="dens" operator="in"/></filter>
+<clipPath id="${id}-clip"><path d="${outline + slots}" clip-rule="evenodd"/></clipPath>`;
 ---
 
 <div class="tr-ticket-lift">
     <svg class="tr-ticket" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${kind} ${token}. ${rows.map(([n, v]) => `${n}: ${v}`).join(', ')}. ${stamp}.`}>
-        <defs>
-            <linearGradient id={`${id}-foil`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={W} y2={H}>
-                <stop offset="0" stop-color="#FBE3A0"/>
-                <stop offset=".2" stop-color="#EEC05A"/>
-                <stop offset=".45" stop-color="#CF972E"/>
-                <stop offset=".63" stop-color="#F4D27A"/>
-                <stop offset=".8" stop-color="#DDA840"/>
-                <stop offset="1" stop-color="#B27C20"/>
-            </linearGradient>
-            <linearGradient id={`${id}-sheen`} gradientUnits="userSpaceOnUse" x1={W * 0.1} y1="0" x2={W * 0.6} y2={H}>
-                <stop offset=".3" stop-color="#FFF8E1" stop-opacity="0"/>
-                <stop offset=".44" stop-color="#FFF8E1" stop-opacity=".5"/>
-                <stop offset=".52" stop-color="#FFF8E1" stop-opacity=".12"/>
-                <stop offset=".6" stop-color="#FFF8E1" stop-opacity="0"/>
-            </linearGradient>
-            <filter id={`${id}-grain`} x="0" y="0" width="100%" height="100%">
-                <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
-                <feColorMatrix in="n" values="0 0 0 0 .43 0 0 0 0 .28 0 0 0 0 .03 0 0 0 .22 0"/>
-                <feComposite in2="SourceGraphic" operator="in"/>
-            </filter>
-            <clipPath id={`${id}-clip`}>
-                <path d={outline + slots} fill-rule="evenodd" clip-rule="evenodd"/>
-            </clipPath>
-        </defs>
+        <defs set:html={feltDefs}/>
 
-        <g clip-path={`url(#${id}-clip)`}>
-            <rect width={W} height={H} fill={`url(#${id}-foil)`}/>
-            <rect width={W} height={H} fill={`url(#${id}-sheen)`}/>
-            <rect width={W} height={H} fill="#000" filter={`url(#${id}-grain)`}/>
-            <!-- The card edge: light along the top, dark along the bottom. -->
-            <rect width={W} height="2" fill="#FFF3CC" opacity=".7"/>
-            <rect y={H - 2} width={W} height="2" fill="#6E4708" opacity=".45"/>
+        <path d={outline + slots} fill-rule="evenodd" filter={`url(#${id}-felt)`}/>
+        <g filter={`url(#${id}-holes)`} clip-path={`url(#${id}-clip)`}>
+            {slotList.map((d) => <path d={d}/>)}
         </g>
 
-        <g class="ink">
+        <g class="ink" filter={`url(#${id}-ink)`}>
             <text class="kind" x={left} y={kindBaseline}>{kind}</text>
             <text class="token" x={left} y={tokenBaseline}>{token}</text>
             {rows.map(([name, value], i) => (
@@ -115,7 +137,7 @@ const id = `tk${Math.random().toString(36).slice(2, 8)}`;
         </g>
 
         <g transform={`rotate(-8 ${stampCenter.x} ${stampCenter.y})`}>
-            <g class="stamp" data-stamp>
+            <g class="stamp" data-stamp filter={`url(#${id}-ink)`}>
                 <rect x={stampCenter.x - stampBox.w / 2} y={stampCenter.y - stampBox.h / 2} width={stampBox.w} height={stampBox.h} rx="5"/>
                 <text x={stampCenter.x} y={stampCenter.y} textLength={stampText} lengthAdjust="spacing">{stamp}</text>
             </g>

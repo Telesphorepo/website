@@ -1,231 +1,226 @@
 ---
 /*
- * The warm cut-over from Nexus as a timeline: add the source, mirror with repeated syncs, cut
- * over with one final sync, then publish here. Each phase shows its syncs and what a write to a
- * mapped repo gets.
+ * The move off Nexus in three steps. Each step has its sentence and a small picture of who talks
+ * to whom at that point: the repos you pick, the builds that still publish to Nexus while
+ * Telesphorepo copies, and the builds that publish to Telesphorepo after the cut-over.
  *
- * The rail and the sync bars are SVG with no viewBox, so they stretch with the column. The rail
- * is 12 px tall: its dot and its line share the center y 6, and the 2 px line covers the pixel
- * rows 5 and 6. The sync bars take their x and their width from the data, in percent.
+ * The steps share rows through a subgrid, so the three sentences and the three pictures line up
+ * across the panel. In a narrow panel the steps run top to bottom.
  */
+import Arrow from './Arrow.astro';
 import Figure from './Figure.astro';
 
-const rail = { height: 12, stroke: 2 };
-const railMid = rail.height / 2;
-const dotRadius = railMid - rail.stroke / 2;
-
-// Sync widths in the mirroring phase, in percent: the first sync copies everything, later ones only the changes.
-const syncGap = 4;
-const syncHeight = 14;
-const toBars = (widths: number[]) =>
-    widths.map((width, i) => ({
-        x: widths.slice(0, i).reduce((sum, w) => sum + w + syncGap, 0),
-        width,
-    }));
-const mirrorSyncs = toBars([46, 7, 5, 8, 5, 6]);
-const finalSync = toBars([40]);
+const repos = [
+    { name: 'maven-releases', picked: true },
+    { name: 'maven-snapshots', picked: true },
+    { name: 'apt-hosted', picked: true },
+    { name: 'raw-archive', picked: false },
+];
 ---
 
 <Figure
-    caption="Mirror while Nexus stays live. Cut over when you are ready to publish here."
-    summary="A Nexus cut-over has four phases. Add source: Telesphorepo checks the Nexus login and lists the hosted repos, and you map each one to a target repo. Mirroring: the first sync copies every file, and later syncs run every nexus.sync_interval (15 minutes by default) and copy only new and changed files, because a file with the same SHA-256 is skipped. During mirroring, a write to a mapped repo gets 409, mirrors Nexus source, cut over first. Cut over: you stop publishing to Nexus, and Telesphorepo runs one final sync. Publishing here: the source is cut_over, the mapped repos are writable, and the server deletes the stored Nexus credentials."
+    caption="Nexus keeps serving your builds until you cut over."
+    summary="Moving off Nexus takes three steps. First, add your Nexus server in Telesphorepo and pick the repos. Second, Telesphorepo copies them, then keeps copying new uploads every 15 minutes, while your builds still publish to Nexus. Third, when you are ready, switch your builds to Telesphorepo and press Cut over."
 >
-    <ol class="phases">
-        {[
-            { name: 'Add source', state: undefined, dot: 'dot' },
-            { name: 'Mirroring', state: 'mirroring', dot: 'dot' },
-            { name: 'Cut over', state: undefined, dot: 'dot dot-cut' },
-            { name: 'Publishing here', state: 'cut_over', dot: 'dot dot-done' },
-        ].map((phase, i, all) => (
-            <li class="phase">
-                <div class="head">
-                    <svg class:list={['rail', { 'rail-last': i === all.length - 1 }]} height={rail.height} aria-hidden="true">
-                        <line class="rail-line" x1={railMid} x2="100%" y1={railMid} y2={railMid}/>
-                        <circle class={phase.dot} cx={railMid} cy={railMid} r={dotRadius}/>
-                    </svg>
-                    <p><span class="name">{phase.name}</span>{phase.state && <> <code>{phase.state}</code></>}</p>
+    <ol class="steps">
+        <li class="step">
+            <p class="text"><span class="num">1</span>Add your Nexus server in Telesphorepo and pick the repos.</p>
+            <div class="scene">
+                <div class="dg-node source">
+                    <p class="dg-title">Nexus 3</p>
+                    <ul class="repos">
+                        {repos.map((repo) => (
+                            <li class:list={{ off: !repo.picked }}>
+                                <span class="box" aria-hidden="true">{repo.picked && <svg viewBox="0 0 12 12" width="12" height="12"><path d="M2.5 6.5 5 9l4.5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>}</span>
+                                <span class="repo-name">{repo.name}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
-                {i === 0 && (
-                    <>
-                        <div class="lane">
-                            <p class="lane-name">Syncs</p>
-                            <p class="dg-note">None yet. The server checks the Nexus login and lists the hosted repos. You map each one to a target.</p>
-                        </div>
-                        <div class="lane">
-                            <p class="lane-name">Writes to a mapped repo</p>
-                            <p class="dg-note">Not mapped yet.</p>
-                        </div>
-                    </>
-                )}
-                {i === 1 && (
-                    <>
-                        <div class="lane">
-                            <p class="lane-name">Syncs</p>
-                            <svg class="syncs" height={syncHeight} aria-hidden="true">
-                                {mirrorSyncs.map((bar) => <rect class="sync" x={`${bar.x}%`} width={`${bar.width}%`} height={syncHeight} rx="2"/>)}
-                            </svg>
-                            <p class="dg-note">The first sync copies everything. Then one every <code>nexus.sync_interval</code> (15 min). Same SHA-256, no copy.</p>
-                        </div>
-                        <div class="lane">
-                            <p class="lane-name">Writes to a mapped repo</p>
-                            <p><span class="dg-stamp dg-stamp-bad">409</span></p>
-                            <p class="dg-note"><code>mirrors Nexus source &lt;name&gt;; cut over first</code></p>
-                        </div>
-                    </>
-                )}
-                {i === 2 && (
-                    <>
-                        <div class="lane">
-                            <p class="lane-name">Syncs</p>
-                            <svg class="syncs" height={syncHeight} aria-hidden="true">
-                                {finalSync.map((bar) => <rect class="sync sync-final" x={`${bar.x}%`} width={`${bar.width}%`} height={syncHeight} rx="2"/>)}
-                            </svg>
-                            <p class="dg-note">Stop publishing to Nexus. One final sync runs.</p>
-                        </div>
-                        <div class="lane">
-                            <p class="lane-name">Writes to a mapped repo</p>
-                            <p><span class="dg-stamp dg-stamp-bad">409</span></p>
-                            <p class="dg-note">Until the final sync ends.</p>
-                        </div>
-                    </>
-                )}
-                {i === 3 && (
-                    <>
-                        <div class="lane">
-                            <p class="lane-name">Syncs</p>
-                            <p class="dg-note">None. The server deletes the Nexus credentials. The sync history stays.</p>
-                        </div>
-                        <div class="lane">
-                            <p class="lane-name">Writes to a mapped repo</p>
-                            <p><span class="dg-stamp dg-stamp-ok">writable</span></p>
-                            <p class="dg-note">Point clients and CI here.</p>
-                        </div>
-                    </>
-                )}
-            </li>
-        ))}
+            </div>
+        </li>
+        <li class="step">
+            <p class="text"><span class="num">2</span>Telesphorepo copies them, then keeps copying new uploads every 15 minutes, while your builds still publish to Nexus.</p>
+            <div class="scene">
+                <div class="flow">
+                    <p class="dg-node">Your builds</p>
+                    <div class="link"><Arrow/><span class="dg-note">publish</span></div>
+                    <p class="dg-node">Nexus</p>
+                </div>
+                <div class="flow">
+                    <p class="dg-node">Nexus</p>
+                    <div class="link"><Arrow/><span class="dg-note">every 15 min</span></div>
+                    <p class="dg-node here">Telesphorepo</p>
+                </div>
+            </div>
+        </li>
+        <li class="step">
+            <p class="text"><span class="num">3</span>When you are ready, switch your builds to Telesphorepo and press Cut over.</p>
+            <div class="scene">
+                <div class="flow">
+                    <p class="dg-node">Your builds</p>
+                    <div class="link"><Arrow/><span class="dg-note">publish</span></div>
+                    <p class="dg-node here">Telesphorepo</p>
+                </div>
+                <p class="cut"><span class="button">Cut over</span></p>
+            </div>
+        </li>
     </ol>
 </Figure>
 
 <style>
-    .phases {
-        --column-gap: 1rem;
+    .steps {
         display: grid;
-        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
-        grid-template-rows: auto auto auto;
-        column-gap: var(--column-gap);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: auto auto;
+        gap: 1rem 1.5rem;
         margin: 0;
         padding: 0;
         list-style: none;
     }
 
-    .phase {
+    .step {
         display: grid;
-        grid-row: span 3;
+        grid-row: span 2;
         grid-template-rows: subgrid;
-        row-gap: 0.75rem;
+        row-gap: 1rem;
         min-width: 0;
     }
 
-    /* The phase heads sit on one rail. Each rail runs across its column gap to the next dot. */
-    .head {
+    .text {
+        display: flex;
+        gap: 0.75rem;
+        color: var(--tr-heading);
+        font-size: 0.9375rem;
+        line-height: 1.45;
+    }
+
+    .num {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: 1.625rem;
+        height: 1.625rem;
+        border-radius: 999px;
+        background-color: var(--tr-gold);
+        color: var(--tr-gold-ink);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .scene {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .source {
         display: flex;
         flex-direction: column;
         gap: 0.5rem;
     }
 
-    .rail {
-        display: block;
-        width: calc(100% + var(--column-gap));
-        overflow: visible;
-    }
-
-    .rail-last {
-        width: 100%;
-    }
-
-    .rail-line {
-        stroke: var(--tr-line-strong);
-        stroke-width: 2;
-    }
-
-    .dot {
-        fill: var(--tr-surface);
-        stroke: var(--tr-muted);
-        stroke-width: 2;
-    }
-
-    .dot-cut {
-        fill: var(--tr-accent);
-        stroke: var(--tr-accent);
-    }
-
-    .dot-done {
-        stroke: var(--tr-ok);
-    }
-
-    .name {
-        color: var(--tr-heading);
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: -0.01em;
-        line-height: 1.25;
-    }
-
-    .lane {
+    .repos {
         display: flex;
         flex-direction: column;
-        gap: 0.375rem;
-        padding-top: 0.625rem;
-        border-top: 1px solid var(--tr-line);
+        gap: 0.25rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
     }
 
-    .lane-name {
+    .repos li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+    }
+
+    .box {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 4px;
+        background-color: var(--tr-gold);
+        color: var(--tr-gold-ink);
+    }
+
+    .off .box {
+        background-color: transparent;
+        box-shadow: inset 0 0 0 1.5px var(--tr-line-strong);
+    }
+
+    .off .repo-name {
         color: var(--tr-muted);
-        font-size: 0.75rem;
+    }
+
+    .flow {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 5.5rem minmax(0, 1fr);
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .flow .dg-node {
+        padding: 0.5rem 0.625rem;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .here {
+        box-shadow: inset 0 0 0 1.5px var(--tr-accent);
+        color: var(--tr-heading);
         font-weight: 600;
     }
 
-    .syncs {
-        display: block;
-        width: 100%;
+    /* The arrow centers on the nodes. Its label hangs under it and takes no height. */
+    .link {
+        position: relative;
+        display: flex;
+        justify-content: center;
     }
 
-    .sync {
-        fill: var(--tr-muted);
+    .link .dg-note {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        translate: -50% 0;
+        font-size: 0.75rem;
+        line-height: 1.3;
+        white-space: nowrap;
     }
 
-    .sync-final {
-        fill: var(--tr-accent);
+    .cut {
+        display: flex;
+        justify-content: flex-start;
     }
 
-    /* Narrow panels: the phases run top to bottom, with no rail between them. */
-    @container (max-width: 38rem) {
-        .phases {
+    /* The button on the source page, drawn as the site's gold button. */
+    .button {
+        padding: 0.375rem 0.875rem;
+        border-radius: 8px;
+        background-image: linear-gradient(180deg, var(--tr-gold-light) 0%, var(--tr-gold) 55%, var(--tr-gold-dark) 100%);
+        box-shadow: inset 0 1px 0 rgb(255 248 225 / 0.7), inset 0 -1px 0 rgb(110 71 8 / 0.45), 0 1px 0 rgb(5 7 26 / 0.35);
+        color: var(--tr-gold-ink);
+        font-size: 0.8125rem;
+        font-weight: 600;
+    }
+
+    /* Narrow panels: the steps run top to bottom. */
+    @container (max-width: 46rem) {
+        .steps {
             grid-template-columns: minmax(0, 1fr);
             grid-template-rows: none;
-            row-gap: 1.5rem;
+            row-gap: 1.75rem;
         }
 
-        .phase {
+        .step {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .head {
-            flex-direction: row;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .rail {
-            width: 12px;
-            flex: none;
-        }
-
-        .rail-line {
-            display: none;
+            gap: 0.875rem;
         }
     }
 </style>

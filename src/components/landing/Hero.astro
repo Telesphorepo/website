@@ -1,12 +1,12 @@
 ---
 /*
  * Replaces Starlight's Hero. The landing page shows the title, the tagline and the actions next to
- * the skeuomorphic ticket from the brand, then the one command that runs the server. The 404 page
+ * the felt ticket from the brand, then the one command that runs the server. The 404 page
  * shows the same ticket with a void stamp.
  *
  * The ticket file is 720 x 480. The ticket itself is the flat mark at 10x (640 x 400) at offset
- * (40, 32); the margin holds the drop shadow. The void stamp sits on the center of the T: the T
- * center is (22, 20) in mark units, so (40 + 220, 32 + 200) = (260, 232) in the file.
+ * (40, 32); the margin holds the drop shadow. The void stamp sits on the center of the T's box: the
+ * box center is (22.5, 20) in mark units, so (40 + 225, 32 + 200) = (265, 232) in the file.
  */
 import ticketUrl from '../../assets/brand/ticket-skeuomorphic.svg?url';
 
@@ -17,7 +17,7 @@ const notFound = entry.id === '404';
 const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest';
 
 const file = { width: 720, height: 480 };
-const tCenter = { x: 40 + 22 * 10, y: 32 + 20 * 10 };
+const tCenter = { x: 40 + 22.5 * 10, y: 32 + 20 * 10 };
 const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / file.height) * 100}%`;
 ---
 

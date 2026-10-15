@@ -5,7 +5,7 @@
  *
  * The idea: a gold admission ticket on carbon blue. The brand files are in src/assets/brand
  * (copies of the Telesphorepo repo's branding/ folder). The landing page leans tactile: the hero
- * is the skeuomorphic ticket, the primary button is a piece of gold foil, and the landing cards
+ * is the felt ticket, the primary button is a piece of gold foil, and the landing cards
  * are paper with a fine grain. The docs pages stay flat and quiet.
  *
  * Palette (branding/README.md): Carbon #131838 is the page in dark and the ink in light. Gold
@@ -691,23 +691,32 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     font-size: 1.0625rem;
 }
 
-/* A text column next to a picture, as in the publishing section. */
+/*
+ * A text column next to a picture, as in the publishing section. The section heading sits in the
+ * text column, so the text and the picture share one row and center on each other. A split that
+ * starts a section (.tr-section) takes the same space above it as a section heading.
+ */
 
 .tr-split {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem;
+    gap: 2rem;
     align-items: center;
 }
 
 @media (min-width: 56rem) {
     .tr-split {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 4rem;
+        gap: 3.5rem;
     }
 }
 
-.tr-split > * {
+[data-has-hero] .sl-markdown-content .tr-split.tr-section {
+    margin-top: clamp(4rem, 3rem + 4vw, 6.5rem);
+}
+
+.tr-split > *,
+.tr-split > div > :first-child {
     margin-top: 0;
 }
 
@@ -720,9 +729,8 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.25rem;
+    gap: 1rem;
     margin: 0;
-    padding-block: 1rem;
 }
 
 .tr-ticket-figure figcaption {

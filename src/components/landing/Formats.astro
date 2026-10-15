@@ -41,13 +41,26 @@ const formats = [
 </ul>
 
 <style>
+    /* One, two or four columns, so the row always spans the full content width. */
     .tr-formats {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.5rem;
         margin: 2rem 0 0;
         padding: 0;
         list-style: none;
+    }
+
+    @media (min-width: 36rem) {
+        .tr-formats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 64rem) {
+        .tr-formats {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
     }
 
     a {

@@ -30,10 +30,10 @@ A repository should hold your builds and stay out of your way. These are the par
 
 <Benefits />
 
-## Every publish gets its own ticket
-
-<div class="tr-split">
+<div class="tr-split tr-section">
 <div>
+
+## Every publish gets its own ticket
 
 In many setups, a CI job holds a deploy password that never changes. Here, no long-lived credential can write. The client proves who it is, and the server issues a publish session: a token for one repo that ends after 15 minutes.
 
@@ -92,11 +92,11 @@ Each format is a plugin with its own routes and its own rules. More formats will
 
 Nexus 3 needs a JVM and a database to run, and some of its upgrades are projects of their own. The move from OrientDB to H2 is one example: [its issue](https://github.com/sonatype/nexus-public/issues/449) was opened in 2024 and is still open.
 
-To move, add your Nexus 3 server as a source and pick its hosted repos. Telesphorepo mirrors them with repeated syncs and keeps them read only until you cut over. It only reads from Nexus, so Nexus keeps serving your builds the whole time. When you are ready, cut over: one last sync, and the repos are yours to publish to.
+The move takes three steps, and your builds keep working the whole time.
 
 <NexusCutover />
 
-The [Nexus migration guide](/operations/nexus-migration/) has the format mapping and the failure rules.
+The [Nexus migration guide](/operations/nexus-migration/) has each step in detail.
 
 ## Read the docs
 
@@ -115,7 +115,7 @@ The [Nexus migration guide](/operations/nexus-migration/) has the format mapping
     </a>
     <a href="/operations/nexus-migration/">
         <span class="tr-entry-title">Nexus migration</span>
-        <span class="tr-entry-text">Mirror your Nexus 3 repos, then cut over.</span>
+        <span class="tr-entry-text">Copy your Nexus 3 repos, then cut over.</span>
     </a>
     <a href="/reference/http-api/">
         <span class="tr-entry-title">HTTP API</span>
