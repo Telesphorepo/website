@@ -1,52 +1,59 @@
 ---
 /*
- * Replaces Starlight's Hero. The landing page shows its title across the page, then the tagline,
- * the actions and the one command that runs the server. The 404 page shows a void ticket.
+ * Replaces Starlight's Hero. The landing page shows the title, the tagline and the actions next to
+ * the skeuomorphic ticket from the brand, then the one command that runs the server. The 404 page
+ * shows the same ticket with a void stamp.
+ *
+ * The ticket file is 720 x 480. The ticket itself is the flat mark at 10x (640 x 400) at offset
+ * (40, 32); the margin holds the drop shadow. The void stamp sits on the center of the T: the T
+ * center is (22, 20) in mark units, so (40 + 220, 32 + 200) = (260, 232) in the file.
  */
-import Ticket from './Ticket.astro';
+import ticketUrl from '../../assets/brand/ticket-skeuomorphic.svg?url';
 
 const { entry } = Astro.locals.starlightRoute;
 const { data } = entry;
 const { title = data.title, tagline, actions = [] } = data.hero || {};
 const notFound = entry.id === '404';
 const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest';
+
+const file = { width: 720, height: 480 };
+const tCenter = { x: 40 + 22 * 10, y: 32 + 20 * 10 };
+const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / file.height) * 100}%`;
 ---
 
 <div class="tr-hero">
-    <h1 id="_top" data-page-title set:html={title}/>
-
-    <div class="lower">
-        <div class="copy">
-            {tagline && <div class="tagline" set:html={tagline}/>}
-            {actions.length > 0 && (
-                <div class="actions">
-                    {actions.map(({ link, text, variant }) => (
-                        <a href={link} class:list={['tr-button', variant === 'primary' ? 'tr-button-primary' : 'tr-button-secondary']}>{text}</a>
-                    ))}
-                </div>
-            )}
-        </div>
-
-        {notFound ? (
-            <div class="void" aria-hidden="true">
-                <Ticket kind="Page" token="404" rows={[['path', 'not on any shelf']]} stub={['No', 'entry']} stamp="Void" tilt={3}/>
-            </div>
-        ) : (
-            <div class="run">
-                <p class="run-title">Run it</p>
-                <div class="run-line">
-                    <code>{command}</code>
-                    <button type="button" class="copy-button" data-copy-command={command}>
-                        <span data-copy-label aria-live="polite">Copy</span>
-                    </button>
-                </div>
-                <p class="run-note">
-                    Then open port 8080. The first start prints the <code>admin</code> password to the
-                    container log. The image runs on <code>linux/amd64</code> and <code>linux/arm64</code>.
-                </p>
+    <div class="copy">
+        <h1 id="_top" data-page-title set:html={title}/>
+        {tagline && <div class="tagline" set:html={tagline}/>}
+        {actions.length > 0 && (
+            <div class="actions">
+                {actions.map(({ link, text, variant }) => (
+                    <a href={link} class:list={['tr-button', variant === 'primary' ? 'tr-button-primary' : 'tr-button-secondary']}>{text}</a>
+                ))}
             </div>
         )}
     </div>
+
+    <div class="ticket" aria-hidden="true">
+        <img src={ticketUrl} width={file.width} height={file.height} alt="" decoding="async" fetchpriority="high"/>
+        {notFound && <span class="void" style={stampAt}>Void</span>}
+    </div>
+
+    {!notFound && (
+        <div class="run tr-paper">
+            <p class="run-title">Run it</p>
+            <div class="run-line">
+                <code>{command}</code>
+                <button type="button" class="copy-button" data-copy-command={command}>
+                    <span data-copy-label aria-live="polite">Copy</span>
+                </button>
+            </div>
+            <p class="run-note">
+                Then open port 8080. The first start prints the <code>admin</code> password to the
+                container log. The image runs on <code>linux/amd64</code> and <code>linux/arm64</code>.
+            </p>
+        </div>
+    )}
 </div>
 
 <script>
@@ -71,49 +78,46 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
 </script>
 
 <style>
+    /* The copy and the ticket side by side from 56rem, the run slip across both under them. */
     .tr-hero {
-        display: flex;
-        flex-direction: column;
-        gap: clamp(2rem, 1.5rem + 2vw, 3rem);
-        padding-block: clamp(2.5rem, 1rem + 7vmin, 5.5rem) 2rem;
-    }
-
-    /* The headline: Archivo at its widest, the loudest thing on the site. */
-    .tr-hero #_top {
-        max-width: 17ch;
-        margin: 0;
-        font-size: clamp(2.375rem, 1.25rem + 5vw, 5.25rem);
-        font-stretch: 125%;
-        font-weight: 850;
-        line-height: 0.98;
-        letter-spacing: -0.025em;
-        text-wrap: balance;
-    }
-
-    .lower {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
         gap: 2.5rem;
-        align-items: start;
+        align-items: center;
+        padding-block: clamp(2rem, 1rem + 5vmin, 4.5rem) 2rem;
     }
 
     @media (min-width: 56rem) {
-        .lower {
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
-            gap: 4rem;
+        .tr-hero {
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            column-gap: 3rem;
+        }
+
+        .run {
+            grid-column: 1 / -1;
         }
     }
 
     .copy {
         display: flex;
         flex-direction: column;
-        gap: 1.75rem;
+        gap: 1.5rem;
+    }
+
+    .tr-hero #_top {
+        max-width: 16ch;
+        margin: 0;
+        font-size: clamp(2.375rem, 1.25rem + 4.2vw, 4.25rem);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.035em;
+        text-wrap: balance;
     }
 
     .tagline {
         max-width: 36rem;
         color: var(--tr-body);
-        font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+        font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
         line-height: 1.6;
         text-wrap: pretty;
     }
@@ -122,6 +126,43 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
         display: flex;
         flex-wrap: wrap;
         gap: 0.75rem;
+        margin-top: 0.25rem;
+    }
+
+    /*
+     * The ticket. The file carries its own shadow. A slight turn makes it a card on a desk. The
+     * brand asks for the flat mark below 320 px wide, so the ticket keeps at least that width
+     * where the screen has room for it.
+     */
+    .ticket {
+        position: relative;
+        justify-self: center;
+        width: min(100%, 38rem);
+        min-width: min(20rem, 100%);
+        rotate: -4deg;
+    }
+
+    .ticket img {
+        display: block;
+        width: 100%;
+        height: auto;
+    }
+
+    /* A red rubber stamp. Its center is the T center, so it moves back by half its own size. */
+    .void {
+        position: absolute;
+        translate: -50% -50%;
+        rotate: -12deg;
+        padding: 0.125em 0.5em;
+        border: 0.12em solid #b3261e;
+        border-radius: 0.18em;
+        color: #b3261e;
+        font-size: clamp(2rem, 1.25rem + 3vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.04em;
+        mix-blend-mode: multiply;
+        opacity: 0.85;
     }
 
     /* The run slip: the whole install, one line. */
@@ -130,8 +171,7 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
         flex-direction: column;
         gap: 0.875rem;
         padding: 1.25rem;
-        border-radius: 12px;
-        background-color: var(--tr-surface);
+        border-radius: 14px;
     }
 
     .run p {
@@ -140,20 +180,20 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
 
     .run-title {
         color: var(--tr-heading);
-        font-family: var(--tr-display);
         font-size: 1.0625rem;
-        font-stretch: 118%;
-        font-weight: 780;
+        font-weight: 600;
+        letter-spacing: -0.015em;
     }
 
     .run-line {
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.75rem;
-        align-items: start;
-        padding: 0.875rem 0.875rem 0.875rem 1rem;
+        align-items: center;
+        padding: 0.75rem 0.75rem 0.75rem 1rem;
         border-radius: 8px;
         background-color: var(--tr-page);
+        box-shadow: inset 0 1px 2px rgb(5 7 26 / 0.35);
     }
 
     .run-line code {
@@ -165,10 +205,11 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
     }
 
     .copy-button {
-        padding: 0.375rem 0.75rem;
+        padding: 0.375rem 0.875rem;
         border: 0;
-        border-radius: 999px;
+        border-radius: 8px;
         background-color: var(--tr-raised);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 1px 0 rgb(5 7 26 / 0.4);
         color: var(--tr-heading);
         font: inherit;
         font-size: 0.8125rem;
@@ -181,9 +222,14 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
         background-color: var(--tr-hover);
     }
 
+    .copy-button:active {
+        translate: 0 1px;
+        box-shadow: none;
+    }
+
     .copy-button[data-state='done'] {
-        background-color: var(--tr-ticket);
-        color: var(--tr-ticket-ink);
+        background-color: var(--tr-gold);
+        color: var(--tr-gold-ink);
     }
 
     .run-note {
@@ -196,12 +242,6 @@ const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/t
         color: var(--tr-body);
         font-family: var(--sl-font-mono);
         font-size: 0.8125rem;
-    }
-
-    .void {
-        display: flex;
-        justify-content: center;
-        padding-block: 1rem;
     }
 
     @media (prefers-reduced-motion: reduce) {

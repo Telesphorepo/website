@@ -99,15 +99,19 @@ export default defineConfig({
             ThemeSelect: './src/components/overrides/ThemeSelect.astro',
         },
         customCss: [
-            '@fontsource-variable/archivo/wdth.css',
-            '@fontsource-variable/jetbrains-mono',
+            '@fontsource/geist/400.css',
+            '@fontsource/geist/500.css',
+            '@fontsource/geist/600.css',
+            '@fontsource/geist/700.css',
+            '@fontsource/geist-mono/400.css',
+            '@fontsource/geist-mono/500.css',
             './src/styles/custom.css',
         ],
         expressiveCode: {
             themes: ['github-dark-default', 'github-light'],
             styleOverrides: {
-                codeFontFamily: "'JetBrains Mono Variable', ui-monospace, monospace",
-                uiFontFamily: "'Archivo Variable', system-ui, sans-serif",
+                codeFontFamily: "'Geist Mono', ui-monospace, monospace",
+                uiFontFamily: "'Geist', system-ui, sans-serif",
                 borderRadius: '8px',
                 borderColor: 'var(--tr-line)',
                 codeBackground: 'var(--tr-surface)',
@@ -128,6 +132,14 @@ export default defineConfig({
             baseUrl: 'https://github.com/Telesphorepo/website/edit/main/',
         },
         head: [
+            // The social card is the brand's og-image (src/assets/brand/png/og-image.png, copied to public/).
+            {tag: 'meta', attrs: {property: 'og:image', content: 'https://telesphorepo.com/og-image.png'}},
+            {tag: 'meta', attrs: {property: 'og:image:width', content: '1200'}},
+            {tag: 'meta', attrs: {property: 'og:image:height', content: '630'}},
+            {tag: 'meta', attrs: {property: 'og:image:alt', content: 'The Telesphorepo gold ticket and wordmark on carbon blue'}},
+            {tag: 'meta', attrs: {name: 'twitter:card', content: 'summary_large_image'}},
+            {tag: 'meta', attrs: {name: 'twitter:image', content: 'https://telesphorepo.com/og-image.png'}},
+            {tag: 'link', attrs: {rel: 'apple-touch-icon', href: '/apple-touch-icon.png'}},
             // Dark is the default theme. A first visit stores 'dark'. A later choice in the theme menu
             // (Auto stores '') replaces it.
             {

@@ -1,8 +1,9 @@
 ---
 /*
- * The pink ticket: a card with a notch on each side and a stub behind a row of punched holes.
- * The landing page shows an example publish session with it. The 404 page shows a void ticket.
- * The stamp lands once, when the ticket first scrolls into view.
+ * A gold ticket that carries text: the landing page shows an example publish session on it. It
+ * has the geometry of the brand mark (src/assets/brand/README.md) at 8x, so the 64 x 40 mark grid
+ * becomes 512 x 320. Every position below is a mark-grid value times U, or a text baseline that
+ * the constants give. The stamp lands once, when the ticket first scrolls into view.
  */
 interface Props {
     kind: string;
@@ -10,29 +11,116 @@ interface Props {
     rows: string[][];
     stub: string[];
     stamp: string;
-    tilt?: number;
 }
 
-const { kind, token, rows, stub, stamp, tilt = -2 } = Astro.props;
+const { kind, token, rows, stub, stamp } = Astro.props;
+
+// The mark grid.
+const U = 8;
+const W = 64 * U;
+const H = 40 * U;
+const corner = 4 * U;
+const notch = 5 * U;
+const mid = H / 2;
+const slot = { x: 44 * U, w: 2 * U, h: 4 * U, step: 6 * U, first: 3 * U, count: 6 };
+const panelEnd = slot.x;
+const stubStart = slot.x + slot.w;
+
+const outline = [
+    `M${corner} 0H${W - corner}A${corner} ${corner} 0 0 1 ${W} ${corner}`,
+    `V${mid - notch}A${notch} ${notch} 0 0 0 ${W} ${mid + notch}`,
+    `V${H - corner}A${corner} ${corner} 0 0 1 ${W - corner} ${H}`,
+    `H${corner}A${corner} ${corner} 0 0 1 0 ${H - corner}`,
+    `V${mid + notch}A${notch} ${notch} 0 0 0 0 ${mid - notch}`,
+    `V${corner}A${corner} ${corner} 0 0 1 ${corner} 0Z`,
+].join('');
+const r = slot.w / 2;
+const slots = Array.from({ length: slot.count }, (_, i) => {
+    const y = slot.first + i * slot.step;
+    return `M${slot.x} ${y + r}A${r} ${r} 0 0 1 ${slot.x + slot.w} ${y + r}V${y + slot.h - r}A${r} ${r} 0 0 1 ${slot.x} ${y + slot.h - r}Z`;
+}).join('');
+
+// The text. The left edge clears the notch (radius 5 units) by one unit.
+const left = 6 * U;
+const valueX = left + 11 * U;
+const kindBaseline = 68;
+const tokenBaseline = 102;
+const rowBaseline = (i: number) => 140 + i * 30;
+
+// The stub: its lines run up the stub, like the serial on the brand ticket. They are centered on
+// the ticket middle and on the free band between the slots and the notch (x 46..59 units).
+const stubCenter = (stubStart + W - notch) / 2;
+const stubPitch = 24;
+const stubLineX = (i: number) => stubCenter + (i - (stub.length - 1) / 2) * stubPitch;
+
+// The stamp: a rubber stamp in the free space under the rows, centered on the main panel.
+// The text is set to an exact length, so the frame fits it: 0.6 em per character.
+const stampFont = 16;
+const stampText = stamp.length * stampFont * 0.6;
+const stampPad = 12;
+const stampBox = { w: stampText + 2 * stampPad, h: 34 };
+const stampCenter = { x: panelEnd / 2 + 2 * U, y: 274 };
+
+const id = `tk${Math.random().toString(36).slice(2, 8)}`;
 ---
 
-<div class="tr-ticket-lift" style={`--tilt: ${tilt}deg`}>
-    <div class="tr-ticket">
-        <div class="main">
-            <p class="kind">{kind}</p>
-            <p class="token"><code>{token}</code></p>
-            <dl>
-                {rows.map(([name, value]) => (
-                    <>
-                        <dt>{name}</dt>
-                        <dd>{value}</dd>
-                    </>
-                ))}
-            </dl>
-        </div>
-        <div class="stub">{stub.map((line) => <span>{line}</span>)}</div>
-        <span class="stamp" data-stamp>{stamp}</span>
-    </div>
+<div class="tr-ticket-lift">
+    <svg class="tr-ticket" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${kind} ${token}. ${rows.map(([n, v]) => `${n}: ${v}`).join(', ')}. ${stamp}.`}>
+        <defs>
+            <linearGradient id={`${id}-foil`} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2={W} y2={H}>
+                <stop offset="0" stop-color="#FBE3A0"/>
+                <stop offset=".2" stop-color="#EEC05A"/>
+                <stop offset=".45" stop-color="#CF972E"/>
+                <stop offset=".63" stop-color="#F4D27A"/>
+                <stop offset=".8" stop-color="#DDA840"/>
+                <stop offset="1" stop-color="#B27C20"/>
+            </linearGradient>
+            <linearGradient id={`${id}-sheen`} gradientUnits="userSpaceOnUse" x1={W * 0.1} y1="0" x2={W * 0.6} y2={H}>
+                <stop offset=".3" stop-color="#FFF8E1" stop-opacity="0"/>
+                <stop offset=".44" stop-color="#FFF8E1" stop-opacity=".5"/>
+                <stop offset=".52" stop-color="#FFF8E1" stop-opacity=".12"/>
+                <stop offset=".6" stop-color="#FFF8E1" stop-opacity="0"/>
+            </linearGradient>
+            <filter id={`${id}-grain`} x="0" y="0" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/>
+                <feColorMatrix in="n" values="0 0 0 0 .43 0 0 0 0 .28 0 0 0 0 .03 0 0 0 .22 0"/>
+                <feComposite in2="SourceGraphic" operator="in"/>
+            </filter>
+            <clipPath id={`${id}-clip`}>
+                <path d={outline + slots} fill-rule="evenodd" clip-rule="evenodd"/>
+            </clipPath>
+        </defs>
+
+        <g clip-path={`url(#${id}-clip)`}>
+            <rect width={W} height={H} fill={`url(#${id}-foil)`}/>
+            <rect width={W} height={H} fill={`url(#${id}-sheen)`}/>
+            <rect width={W} height={H} fill="#000" filter={`url(#${id}-grain)`}/>
+            <!-- The card edge: light along the top, dark along the bottom. -->
+            <rect width={W} height="2" fill="#FFF3CC" opacity=".7"/>
+            <rect y={H - 2} width={W} height="2" fill="#6E4708" opacity=".45"/>
+        </g>
+
+        <g class="ink">
+            <text class="kind" x={left} y={kindBaseline}>{kind}</text>
+            <text class="token" x={left} y={tokenBaseline}>{token}</text>
+            {rows.map(([name, value], i) => (
+                <>
+                    <text class="dt" x={left} y={rowBaseline(i)}>{name}</text>
+                    <text class="dd" x={valueX} y={rowBaseline(i)}>{value}</text>
+                </>
+            ))}
+            {stub.map((line, i) => (
+                <text class="stub" x={stubLineX(i)} y={mid} transform={`rotate(-90 ${stubLineX(i)} ${mid})`}>{line}</text>
+            ))}
+        </g>
+
+        <g transform={`rotate(-8 ${stampCenter.x} ${stampCenter.y})`}>
+            <g class="stamp" data-stamp>
+                <rect x={stampCenter.x - stampBox.w / 2} y={stampCenter.y - stampBox.h / 2} width={stampBox.w} height={stampBox.h} rx="5"/>
+                <text x={stampCenter.x} y={stampCenter.y} textLength={stampText} lengthAdjust="spacing">{stamp}</text>
+            </g>
+        </g>
+    </svg>
 </div>
 
 <script>
@@ -54,117 +142,83 @@ const { kind, token, rows, stub, stamp, tilt = -2 } = Astro.props;
 </script>
 
 <style>
-    /* The shadow sits on a wrapper: a mask on the ticket would cut it off. */
     .tr-ticket-lift {
         width: min(100%, 27rem);
-        rotate: var(--tilt);
-        filter: drop-shadow(0 18px 26px rgb(4 6 30 / 0.45));
+        rotate: -2deg;
+        filter: drop-shadow(0 2px 2px rgb(5 7 26 / 0.35)) drop-shadow(0 16px 22px rgb(5 7 26 / 0.45));
     }
 
     :global(:root[data-theme='light']) .tr-ticket-lift {
-        filter: drop-shadow(0 14px 20px rgb(13 20 80 / 0.18));
+        filter: drop-shadow(0 1px 1px rgb(60 40 5 / 0.3)) drop-shadow(0 12px 18px rgb(60 40 5 / 0.22));
     }
 
     .tr-ticket {
-        --notch: 13px;
-        position: relative;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 5.5rem;
-        border-radius: 10px;
-        background-color: var(--tr-ticket);
-        color: var(--tr-ticket-ink);
-        mask:
-            radial-gradient(circle var(--notch) at 0 50%, transparent 98%, #000) left / 51% 100% no-repeat,
-            radial-gradient(circle var(--notch) at 100% 50%, transparent 98%, #000) right / 51% 100% no-repeat;
+        display: block;
+        width: 100%;
+        height: auto;
+        overflow: visible;
     }
 
-    .main {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        /* The bottom padding keeps a clear space for the stamp, so it never covers a value. */
-        padding: 1.5rem 1.25rem 4.25rem 2rem;
+    text {
+        font-family: var(--sl-font);
+        dominant-baseline: alphabetic;
     }
 
-    p {
-        margin: 0;
-    }
-
+    /* Printed ink: Carbon for the values, the brand's printed brown for the names. */
     .kind {
-        font-family: var(--tr-display);
-        font-size: 1.375rem;
-        font-stretch: 125%;
-        font-weight: 850;
-        line-height: 1;
-        letter-spacing: -0.01em;
+        fill: #131838;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
     }
 
     .token {
-        font-size: 0.9375rem;
+        fill: #131838;
+        font-size: 17px;
+        font-weight: 500;
+    }
+
+    .dt {
+        fill: #5c3f08;
+        font-size: 18px;
+    }
+
+    .dd {
+        fill: #131838;
+        font-size: 18px;
         font-weight: 600;
-        overflow-wrap: anywhere;
-    }
-
-    .token code {
-        color: inherit;
-        font-family: var(--sl-font-mono);
-        font-size: inherit;
-    }
-
-    dl {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 0.125rem 1rem;
-        margin: 0.25rem 0 0;
-        font-size: 0.875rem;
-    }
-
-    dt {
-        color: var(--tr-ticket-faint);
-    }
-
-    dd {
-        margin: 0;
-        font-weight: 650;
         font-variant-numeric: tabular-nums;
     }
 
-    /* The stub, behind a row of punched holes in the page color. */
     .stub {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0.375rem;
-        padding: 1rem 1.25rem 1rem 0.75rem;
-        background-image: radial-gradient(circle, var(--tr-page) 2.5px, transparent 3px);
-        background-size: 8px 12px;
-        background-repeat: repeat-y;
-        background-position: left center;
-        font-family: var(--tr-display);
-        font-size: 0.9375rem;
-        font-stretch: 112%;
-        font-weight: 800;
-        line-height: 1.1;
-        text-align: center;
+        fill: #131838;
+        font-size: 17px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: central;
     }
 
     /* A carbon-blue rubber stamp. */
     .stamp {
-        position: absolute;
-        right: 6.5rem;
-        bottom: 1.125rem;
-        padding: 0.25rem 0.625rem;
-        border: 3px solid var(--tr-ticket-stamp);
-        border-radius: 5px;
-        color: var(--tr-ticket-stamp);
-        font-family: var(--tr-display);
-        font-size: 0.9375rem;
-        font-stretch: 125%;
-        font-weight: 850;
-        rotate: -8deg;
+        transform-box: fill-box;
+        transform-origin: center;
         opacity: 0.85;
         mix-blend-mode: multiply;
+    }
+
+    .stamp rect {
+        fill: none;
+        stroke: #2236a8;
+        stroke-width: 3;
+    }
+
+    .stamp text {
+        fill: #2236a8;
+        font-size: 16px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-variant-numeric: tabular-nums;
     }
 
     [data-waiting] .stamp {
@@ -183,20 +237,6 @@ const { kind, token, rows, stub, stamp, tilt = -2 } = Astro.props;
         to {
             opacity: 0.85;
             scale: 1;
-        }
-    }
-
-    @media (max-width: 30rem) {
-        .tr-ticket {
-            grid-template-columns: minmax(0, 1fr) 4.5rem;
-        }
-
-        .main {
-            padding-left: 1.5rem;
-        }
-
-        .stamp {
-            right: 5rem;
         }
     }
 

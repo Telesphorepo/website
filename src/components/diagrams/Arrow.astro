@@ -1,7 +1,19 @@
 ---
-/* A small arrow between two steps. Decorative: the order of the steps already says it. */
+/*
+ * A small arrow between two steps. Decorative: the order of the steps already says it.
+ * The box is 24 x 16 px. The shaft is a 2 px stroke on the middle line (y 8), so it covers the
+ * pixel rows 7 and 8 exactly. The head is a 45-degree chevron whose tip is the shaft end.
+ */
+const width = 24;
+const height = 16;
+const stroke = 2;
+const mid = height / 2;
+const start = stroke + 1;
+const tip = width - stroke - 2;
+const head = 5;
+const d = `M${start} ${mid}H${tip}M${tip - head} ${mid - head}L${tip} ${mid}L${tip - head} ${mid + head}`;
 ---
 
-<svg class="dg-arrow" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
-    <path d="M2 8h17M14 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<svg class="dg-arrow" width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" focusable="false">
+    <path d={d} fill="none" stroke="currentColor" stroke-width={stroke} stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

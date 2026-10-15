@@ -3,17 +3,16 @@
  * so Starlight's own components follow both themes. Starlight's styles sit in cascade layers,
  * so these unlayered rules win without extra specificity.
  *
- * The idea: a carbonless ticket book. Carbon-blue ink on paper, and a pink copy for every publish.
- * The pink ticket is the brand: the logo, the publish session in the diagrams, the current page.
- * Its perforation (a row of punched holes) is the one recurring motif. It separates diagram
- * captions and marks horizontal rules. Nothing else uses it.
+ * The idea: a gold admission ticket on carbon blue. The brand files are in src/assets/brand
+ * (copies of the Telesphorepo repo's branding/ folder). The landing page leans tactile: the hero
+ * is the skeuomorphic ticket, the primary button is a piece of gold foil, and the landing cards
+ * are paper with a fine grain. The docs pages stay flat and quiet.
  *
- * Palette: carbon blue (the page in dark, the ink in light), paper, ticket pink, and a canary
- * copy that marks the second series in charts. Two state colors only mark state: red for refused
- * or failed, green for done.
+ * Palette (branding/README.md): Carbon #131838 is the page in dark and the ink in light. Gold
+ * #E9B546 is the accent on Carbon. On paper, Gold Deep #A8760F marks graphics (3:1 or more) and a
+ * darker gold #7E5500 sets text (4.5:1 or more). Red marks refused or failed, green marks done.
  *
- * Type: Archivo for everything. Headings use its wide cut (font-stretch 108% to 125%), body text
- * its normal width. Code uses JetBrains Mono.
+ * Type: Geist for all text, Geist Mono for code only.
  *
  * Interaction: hover and the current item fill the whole element. Nothing uses a side border.
  */
@@ -27,25 +26,27 @@
     --tr-line-strong: #3c4682;
     --tr-muted: #a0a8d4;
     --tr-body: #d4d8f0;
-    --tr-heading: #f7f5ff;
-    --tr-accent-low: #3d2850;
-    --tr-accent: #ff9bb5;
-    --tr-accent-high: #ffc4d3;
-    --tr-link: #ffb3c7;
-    --tr-canary: #f5d66b;
+    --tr-heading: #f5f1e6;
+    --tr-accent-low: #3a3428;
+    --tr-accent: #e9b546;
+    --tr-accent-high: #f6d88a;
+    --tr-link: #e9b546;
     --tr-stamp: #ff7461;
     --tr-ok: #7ee0b6;
 
-    /* The ticket: the same pink card with dark ink in both themes. Its stamp is carbon blue. */
-    --tr-ticket: #ff9bb5;
-    --tr-ticket-hover: #ffb8ca;
-    --tr-ticket-ink: #2a0f27;
-    --tr-ticket-faint: #662a45;
-    --tr-ticket-stamp: #2236a8;
-    --tr-logo-mark: var(--tr-ticket);
+    /* Gold: the same foil with Carbon ink in both themes (9.18:1). */
+    --tr-gold: #e9b546;
+    --tr-gold-light: #f6d88a;
+    --tr-gold-dark: #cf972e;
+    --tr-gold-ink: #131838;
+    --tr-gold-faint: #5c3f08;
 
-    --tr-display: 'Archivo Variable', 'Arial', sans-serif;
-    --tr-display-stretch: 118%;
+    /*
+     * Paper: a fine grain over the card color, and a lift. Only the landing cards and the
+     * diagram frames use it.
+     */
+    --tr-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --tr-paper-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 0 rgb(5 7 26 / 0.5), 0 10px 24px -14px rgb(5 7 26 / 0.8);
 
     --sl-color-accent-low: var(--tr-accent-low);
     --sl-color-accent: var(--tr-accent);
@@ -62,7 +63,7 @@
 
     --sl-color-text: var(--tr-body);
     --sl-color-text-accent: var(--tr-link);
-    --sl-color-text-invert: var(--tr-ticket-ink);
+    --sl-color-text-invert: var(--tr-gold-ink);
     --sl-color-bg: var(--tr-page);
     --sl-color-bg-nav: var(--tr-page);
     --sl-color-bg-sidebar: var(--tr-page);
@@ -74,15 +75,15 @@
     /* Aside fills: one tint per kind. The title takes the matching strong color. */
     --tr-aside-note: #1f2c5e;
     --tr-aside-note-title: #a9c0ff;
-    --tr-aside-tip: #2b2459;
-    --tr-aside-tip-title: #d0b8ff;
-    --tr-aside-caution: #3a2c3a;
-    --tr-aside-caution-title: var(--tr-canary);
-    --tr-aside-danger: #40233f;
+    --tr-aside-tip: #183842;
+    --tr-aside-tip-title: #8fdcc9;
+    --tr-aside-caution: #3a3428;
+    --tr-aside-caution-title: var(--tr-gold);
+    --tr-aside-danger: #3f2228;
     --tr-aside-danger-title: #ff9c8f;
 
-    --sl-font: 'Archivo Variable', system-ui, sans-serif;
-    --sl-font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+    --sl-font: 'Geist', system-ui, sans-serif;
+    --sl-font-mono: 'Geist Mono', ui-monospace, monospace;
 
     --sl-text-h1: clamp(2.125rem, 1.75rem + 1.6vw, 3rem);
     --sl-text-h2: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
@@ -97,36 +98,36 @@
 }
 
 :root[data-theme='light'] {
-    --tr-page: #f6f7fc;
-    --tr-surface: #eceef8;
-    --tr-raised: #e2e5f4;
-    --tr-hover: #d8dcf0;
-    --tr-line: #d6daee;
-    --tr-line-strong: #b4bbdc;
-    --tr-muted: #4c5589;
-    --tr-body: #1e2766;
-    --tr-heading: #0d1450;
-    --tr-accent-low: #ffdde6;
-    --tr-accent: #c21e58;
-    --tr-accent-high: #9c1445;
-    --tr-link: #b3184f;
-    --tr-canary: #8f6b00;
-    --tr-stamp: #c0352a;
+    --tr-page: #f7f4ec;
+    --tr-surface: #efebe0;
+    --tr-raised: #e6e1d3;
+    --tr-hover: #ded8c8;
+    --tr-line: #ddd7c7;
+    --tr-line-strong: #c4bca6;
+    --tr-muted: #545a7e;
+    --tr-body: #2a3060;
+    --tr-heading: #131838;
+    --tr-accent-low: #f3e4bc;
+    --tr-accent: #a8760f;
+    --tr-accent-high: #7e5500;
+    --tr-link: #7e5500;
+    --tr-stamp: #b3261e;
     --tr-ok: #0f7048;
-    /* The mark takes a deeper pink on paper, so it keeps 4:1 against the page. */
-    --tr-logo-mark: #d9386d;
 
-    --tr-aside-note: #e1e8ff;
+    --tr-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .24 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --tr-paper-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 1px 0 rgb(110 90 40 / 0.18), 0 10px 22px -14px rgb(60 45 10 / 0.35);
+
+    --tr-aside-note: #e3e8f8;
     --tr-aside-note-title: #23399c;
-    --tr-aside-tip: #ece4ff;
-    --tr-aside-tip-title: #5a2fb0;
-    --tr-aside-caution: #fdf1cf;
-    --tr-aside-caution-title: #7a5a00;
-    --tr-aside-danger: #fde2e0;
+    --tr-aside-tip: #ddefea;
+    --tr-aside-tip-title: #0d5c4c;
+    --tr-aside-caution: #f6e7be;
+    --tr-aside-caution-title: #6b4800;
+    --tr-aside-danger: #f8e0dc;
     --tr-aside-danger-title: #a22a20;
 
-    --sl-color-gray-1: #141c5a;
-    --sl-color-gray-4: #8a92bf;
+    --sl-color-gray-1: #131838;
+    --sl-color-gray-4: #8d8a7c;
     --sl-color-gray-7: var(--tr-surface);
 
     color-scheme: light;
@@ -179,8 +180,8 @@ body {
 }
 
 ::selection {
-    background-color: var(--tr-ticket);
-    color: var(--tr-ticket-ink);
+    background-color: var(--tr-gold);
+    color: var(--tr-gold-ink);
 }
 
 :focus-visible {
@@ -197,12 +198,10 @@ body {
 /* Page titles, including the landing title */
 
 #_top {
-    font-family: var(--tr-display);
     font-size: var(--sl-text-h1);
-    font-stretch: 125%;
-    font-weight: 800;
-    letter-spacing: -0.015em;
-    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.06;
     color: var(--tr-heading);
     overflow-wrap: break-word;
 }
@@ -213,21 +212,18 @@ body {
     padding-top: 0;
 }
 
-/* Headings: the wide cut for h2, a narrower one for the levels under it. */
+/* Headings: tight tracking that grows with the size. */
 
 .sl-markdown-content :is(h1, h2, h3, h4, h5, h6):not(:where(.not-content *)) {
     color: var(--tr-heading);
-    font-stretch: 108%;
-    font-weight: 700;
-    letter-spacing: -0.005em;
+    font-weight: 600;
+    letter-spacing: -0.015em;
 }
 
 .sl-markdown-content h2:not(:where(.not-content *)) {
-    font-family: var(--tr-display);
-    font-stretch: var(--tr-display-stretch);
-    font-weight: 780;
-    letter-spacing: -0.012em;
-    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.15;
 }
 
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
@@ -266,7 +262,7 @@ body {
 
 .sl-markdown-content strong:not(:where(.not-content *)) {
     color: var(--tr-heading);
-    font-weight: 650;
+    font-weight: 600;
 }
 
 /* Inline code: a raised chip. */
@@ -275,7 +271,7 @@ body {
     padding: 0.125em 0.375em;
     border-radius: 4px;
     color: var(--tr-heading);
-    font-size: 0.84em;
+    font-size: 0.86em;
 }
 
 .sl-markdown-content a code:not(:where(.not-content *)) {
@@ -310,7 +306,7 @@ body {
     border-bottom: 0;
     background-color: var(--tr-raised);
     font-size: 0.8125rem;
-    font-weight: 650;
+    font-weight: 600;
     color: var(--tr-heading);
 }
 
@@ -338,16 +334,21 @@ body {
     white-space: nowrap;
 }
 
-/* Rules: a perforation, a row of punched holes. */
+/*
+ * The perforation: a row of the mark's slots, turned on their side. One tile is 12 x 4 px and
+ * holds one slot of 8 x 2 px with round ends at (2, 1), so the gap is 4 px, as in the mark
+ * (slot 4, gap 2, at half the scale). The rule and the diagram frames use it.
+ */
+:root {
+    --tr-perforation: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='4'%3E%3Crect x='2' y='1' width='8' height='2' rx='1'/%3E%3C/svg%3E");
+}
 
 .sl-markdown-content hr:not(:where(.not-content *)) {
-    height: 8px;
+    height: 4px;
     margin-block: 2.5rem;
     border: 0;
-    background-image: radial-gradient(circle, var(--tr-line-strong) 2px, transparent 2.5px);
-    background-size: 12px 8px;
-    background-repeat: repeat-x;
-    background-position: center;
+    background-color: var(--tr-line-strong);
+    mask: var(--tr-perforation) left center / 12px 4px repeat-x;
 }
 
 /* Quotes and details: a filled block, no side rule. */
@@ -402,10 +403,8 @@ body {
 }
 
 .starlight-aside__title {
-    font-family: var(--tr-display);
     font-size: 1rem;
-    font-stretch: 112%;
-    font-weight: 750;
+    font-weight: 600;
 }
 
 /* File trees: nested folders indent with no side rule. */
@@ -414,7 +413,7 @@ starlight-file-tree ul {
     border: 0;
 }
 
-/* Sidebar: wide group names, quiet links. Hover and the current page fill the whole row. */
+/* Sidebar: quiet links. Hover and the current page fill the whole row. */
 
 #starlight__sidebar ul ul li {
     border: 0;
@@ -423,10 +422,9 @@ starlight-file-tree ul {
 }
 
 #starlight__sidebar summary .large {
-    font-family: var(--tr-display);
     font-size: 0.9375rem;
-    font-stretch: 118%;
-    font-weight: 750;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--tr-heading);
 }
 
@@ -451,15 +449,15 @@ starlight-file-tree ul {
 
 #starlight__sidebar a[aria-current='page'],
 #starlight__sidebar a[aria-current='page']:focus {
-    background-color: var(--tr-ticket);
+    background-color: var(--tr-gold);
     box-shadow: none;
-    color: var(--tr-ticket-ink);
-    font-weight: 650;
+    color: var(--tr-gold-ink);
+    font-weight: 600;
 }
 
 #starlight__sidebar a[aria-current='page']:hover {
-    background-color: var(--tr-ticket-hover);
-    color: var(--tr-ticket-ink);
+    background-color: var(--tr-gold-light);
+    color: var(--tr-gold-ink);
 }
 
 /* Table of contents: no column rule. Hover and the current heading fill the whole row. */
@@ -469,10 +467,9 @@ starlight-file-tree ul {
 }
 
 starlight-toc h2 {
-    font-family: var(--tr-display);
     font-size: 0.9375rem;
-    font-stretch: 118%;
-    font-weight: 750;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     color: var(--tr-heading);
 }
 
@@ -528,7 +525,8 @@ mobile-starlight-toc details[open] .toggle {
     background-color: var(--tr-raised);
     box-shadow: none;
     color: var(--tr-heading);
-    font-weight: 700;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .sl-steps > li::after {
@@ -581,14 +579,17 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
 }
 
 .pagination-links .link-title {
-    font-family: var(--tr-display);
     font-size: 1.25rem;
-    font-stretch: 115%;
-    font-weight: 750;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     color: var(--tr-heading);
 }
 
-/* Buttons: the primary is the ticket, the secondary a filled block. Hover changes the fill. */
+/*
+ * Buttons. The primary is a piece of gold foil: a light top edge, a darker bottom edge, and a
+ * small cast shadow. A press moves it down 1 px and takes the shadow away. The secondary is a
+ * raised block in the page colors.
+ */
 
 .sl-link-button,
 .tr-button {
@@ -596,38 +597,70 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     align-items: center;
     gap: 0.5rem;
     border: 0;
-    border-radius: 999px;
-    padding: 0.75rem 1.375rem;
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
     font-size: 0.9375rem;
-    font-stretch: 110%;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.2;
+    letter-spacing: -0.005em;
     text-decoration: none;
-    transition: background-color 150ms ease;
+    transition: background-color 150ms ease, box-shadow 150ms ease, translate 80ms ease;
 }
 
 .sl-link-button.primary,
 .tr-button-primary {
-    background-color: var(--tr-ticket);
-    color: var(--tr-ticket-ink);
+    background-color: var(--tr-gold);
+    background-image: linear-gradient(180deg, var(--tr-gold-light) 0%, var(--tr-gold) 55%, var(--tr-gold-dark) 100%);
+    box-shadow:
+        inset 0 1px 0 rgb(255 248 225 / 0.7),
+        inset 0 -1px 0 rgb(110 71 8 / 0.45),
+        0 1px 0 rgb(5 7 26 / 0.35),
+        0 4px 10px -4px rgb(5 7 26 / 0.6);
+    color: var(--tr-gold-ink);
 }
 
 .sl-link-button.primary:hover,
 .tr-button-primary:hover {
-    background-color: var(--tr-ticket-hover);
-    color: var(--tr-ticket-ink);
+    background-color: var(--tr-gold-light);
+    background-image: linear-gradient(180deg, #fbe3a0 0%, var(--tr-gold-light) 50%, var(--tr-gold) 100%);
+    color: var(--tr-gold-ink);
 }
 
 .sl-link-button.secondary,
 .tr-button-secondary {
     background-color: var(--tr-raised);
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.07),
+        0 1px 0 rgb(5 7 26 / 0.4);
     color: var(--tr-heading);
+}
+
+:root[data-theme='light'] :is(.sl-link-button.secondary, .tr-button-secondary) {
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.8),
+        0 1px 0 rgb(110 90 40 / 0.25);
 }
 
 .sl-link-button.secondary:hover,
 .tr-button-secondary:hover {
     background-color: var(--tr-hover);
     color: var(--tr-heading);
+}
+
+:is(.sl-link-button, .tr-button):active {
+    translate: 0 1px;
+    box-shadow: inset 0 1px 2px rgb(5 7 26 / 0.35);
+}
+
+/*
+ * Paper: the landing cards and the diagram frames. The grain sits over the card color, and the
+ * lift is one shadow token per theme.
+ */
+
+.tr-paper {
+    background-color: var(--tr-surface);
+    background-image: var(--tr-grain);
+    box-shadow: var(--tr-paper-shadow);
 }
 
 /* Landing page: one wide column. The hero is a component (src/components/landing/Hero.astro). */
@@ -643,9 +676,9 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
 [data-has-hero] .sl-markdown-content h2:not(:where(.not-content *)) {
     max-width: 24ch;
     font-size: clamp(1.75rem, 1.25rem + 2.2vw, 2.75rem);
-    font-stretch: 122%;
-    font-weight: 800;
-    line-height: 1.06;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
     text-wrap: balance;
 }
 
@@ -707,7 +740,7 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
 .tr-entries {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.375rem;
 }
 
 .tr-entries a {
@@ -716,8 +749,10 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     column-gap: 1.5rem;
     align-items: center;
     padding: 1rem 1.25rem;
-    border-radius: 8px;
+    border-radius: 10px;
     background-color: var(--tr-surface);
+    background-image: var(--tr-grain);
+    box-shadow: var(--tr-paper-shadow);
     text-decoration: none;
     transition: background-color 150ms ease;
 }
@@ -738,11 +773,10 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
 
 .tr-entry-title {
     grid-area: 1 / 1;
-    font-family: var(--tr-display);
     font-size: 1.125rem;
-    font-stretch: 118%;
-    font-weight: 750;
-    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
     color: var(--tr-heading);
 }
 

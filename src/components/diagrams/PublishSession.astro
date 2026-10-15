@@ -24,10 +24,23 @@ const proofs = [
     },
 ];
 
-// The example timeline: a publish that takes 90 seconds, on the default 15-minute limit.
+/*
+ * The example timeline: a publish that takes 90 seconds, on the default 15-minute limit. The SVG
+ * has no viewBox, so its text keeps its size. Every x is a percentage of the width that the data
+ * gives, and every y is a whole pixel from the constants.
+ */
 const ttlMinutes = 15;
 const usedMinutes = 1.5;
-const usedPercent = (usedMinutes / ttlMinutes) * 100;
+const pct = (minutes: number) => `${(minutes / ttlMinutes) * 100}%`;
+const scale = [0, 5, 10, 15].map((m, i, all) => ({
+    x: pct(m),
+    label: m === 0 ? '0' : `${m} min`,
+    anchor: i === 0 ? 'start' : i === all.length - 1 ? 'end' : 'middle',
+}));
+const track = { height: 14, tick: 6, labelGap: 10 };
+const tickBottom = track.height + track.tick;
+const labelY = tickBottom + track.labelGap;
+const lifeHeight = labelY + 8;
 ---
 
 <Figure
@@ -79,15 +92,29 @@ const usedPercent = (usedMinutes / ttlMinutes) * 100;
         </li>
     </ol>
 
-    <div class="life" style={`--used: ${usedPercent}%`}>
+    <div class="life">
         <p class="life-title">One session, from open to close</p>
-        <div class="track">
-            <span class="used"></span>
-            <span class="dead"></span>
-        </div>
-        <div class="scale" aria-hidden="true">
-            <span>0</span><span>5 min</span><span>10 min</span><span>15 min</span>
-        </div>
+        <svg class="life-chart" width="100%" height={lifeHeight} aria-hidden="true">
+            <defs>
+                <pattern id="ps-dead" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                    <rect width="2" height="7" class="dead"/>
+                </pattern>
+                <clipPath id="ps-track">
+                    <rect width="100%" height={track.height} rx={track.height / 2}/>
+                </clipPath>
+            </defs>
+            <g clip-path="url(#ps-track)">
+                <rect class="track" width="100%" height={track.height}/>
+                <rect class="used" width={pct(usedMinutes)} height={track.height}/>
+                <rect x={pct(usedMinutes)} width={pct(ttlMinutes - usedMinutes)} height={track.height} fill="url(#ps-dead)"/>
+            </g>
+            {scale.map((s) => (
+                <>
+                    <line class="tick" x1={s.x} x2={s.x} y1={track.height} y2={tickBottom}/>
+                    <text x={s.x} y={labelY} text-anchor={s.anchor}>{s.label}</text>
+                </>
+            ))}
+        </svg>
         <p class="dg-note">A Gradle publish of 90 seconds, then the client closes the session. The token is dead for the other 13.5 minutes.</p>
     </div>
 </Figure>
@@ -110,19 +137,20 @@ const usedPercent = (usedMinutes / ttlMinutes) * 100;
         min-width: 0;
     }
 
+    /* The step titles are one line box tall: 1.25rem. */
     .step {
         color: var(--tr-heading);
-        font-family: var(--tr-display);
         font-size: 1rem;
-        font-stretch: 118%;
-        font-weight: 780;
-        line-height: 1.1;
+        font-weight: 600;
+        line-height: 1.25rem;
+        letter-spacing: -0.01em;
     }
 
+    /* An arrow sits on the step title row: its 16 px box is centered in the 1.25rem line box. */
     .link {
         display: flex;
         justify-content: center;
-        padding-top: 2.75rem;
+        padding-top: calc((1.25rem - 16px) / 2);
     }
 
     .proofs {
@@ -157,7 +185,7 @@ const usedPercent = (usedMinutes / ttlMinutes) * 100;
     }
 
     .token {
-        font-weight: 650;
+        font-weight: 500;
     }
 
     dl {
@@ -168,12 +196,12 @@ const usedPercent = (usedMinutes / ttlMinutes) * 100;
     }
 
     dt {
-        color: var(--tr-ticket-faint);
+        color: var(--tr-gold-faint);
     }
 
     dd {
         margin: 0;
-        font-weight: 650;
+        font-weight: 600;
     }
 
     /* The life of one session on the 15-minute scale. */
@@ -188,33 +216,38 @@ const usedPercent = (usedMinutes / ttlMinutes) * 100;
 
     .life-title {
         color: var(--tr-heading);
-        font-weight: 650;
+        font-weight: 600;
+    }
+
+    .life-chart {
+        display: block;
+        overflow: visible;
     }
 
     .track {
-        display: flex;
-        height: 0.875rem;
-        border-radius: 999px;
-        background-color: var(--tr-page);
-        overflow: hidden;
+        fill: var(--tr-page);
     }
 
     .used {
-        width: var(--used);
-        background-color: var(--tr-ticket);
+        fill: var(--tr-accent);
     }
 
     .dead {
-        flex: 1;
-        background-image: repeating-linear-gradient(-45deg, var(--tr-line) 0 2px, transparent 2px 7px);
+        fill: var(--tr-line-strong);
     }
 
-    .scale {
-        display: flex;
-        justify-content: space-between;
-        color: var(--tr-muted);
-        font-size: 0.75rem;
+    .tick {
+        stroke: var(--tr-line-strong);
+        stroke-width: 1;
+        shape-rendering: crispEdges;
+    }
+
+    .life-chart text {
+        fill: var(--tr-muted);
+        font-family: var(--sl-font);
+        font-size: 12px;
         font-variant-numeric: tabular-nums;
+        dominant-baseline: central;
     }
 
     /* Narrow panels: the steps run top to bottom. */

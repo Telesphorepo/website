@@ -4,6 +4,10 @@
  */
 import Arrow from './Arrow.astro';
 import Figure from './Figure.astro';
+
+// The write order badge: an 18 px disc. The digit is centered on the disc center.
+const badge = 18;
+const badgeMid = badge / 2;
 ---
 
 <Figure
@@ -22,8 +26,8 @@ import Figure from './Figure.astro';
             <p class="who">Uploads and deletes</p>
             <Arrow/>
             <div class="targets">
-                <span class="dg-node store store-new"><span class="order">1</span> New store</span>
-                <span class="dg-node store"><span class="order">2</span> Old store</span>
+                <span class="dg-node store store-new"><svg class="order" width={badge} height={badge} viewBox={`0 0 ${badge} ${badge}`} role="img" aria-label="1"><circle cx={badgeMid} cy={badgeMid} r={badgeMid}/><text x={badgeMid} y={badgeMid}>1</text></svg> New store</span>
+                <span class="dg-node store"><svg class="order" width={badge} height={badge} viewBox={`0 0 ${badge} ${badge}`} role="img" aria-label="2"><circle cx={badgeMid} cy={badgeMid} r={badgeMid}/><text x={badgeMid} y={badgeMid}>2</text></svg> Old store</span>
                 <p class="dg-note">If either fails, the request fails.</p>
             </div>
         </li>
@@ -70,7 +74,7 @@ import Figure from './Figure.astro';
 
     .who {
         color: var(--tr-heading);
-        font-weight: 650;
+        font-weight: 600;
     }
 
     .targets {
@@ -94,15 +98,20 @@ import Figure from './Figure.astro';
     }
 
     .order {
-        display: inline-grid;
-        place-items: center;
-        width: 1.125rem;
-        height: 1.125rem;
-        border-radius: 50%;
-        background-color: var(--tr-ticket);
-        color: var(--tr-ticket-ink);
-        font-size: 0.6875rem;
-        font-weight: 750;
+        flex: none;
+    }
+
+    .order circle {
+        fill: var(--tr-gold);
+    }
+
+    .order text {
+        fill: var(--tr-gold-ink);
+        font-family: var(--sl-font);
+        font-size: 11px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: central;
     }
 
     .targets .dg-note {

@@ -1,12 +1,17 @@
 ---
 /*
- * The Telesphorepo lockup (the ticket mark and the lettered wordmark) and the header links from
+ * The Telesphorepo lockup (the flat ticket mark and the wordmark, from src/assets/brand) and the header links from
  * starlight-utils. This replaces the starlight-utils SiteTitle override, so it also renders the
  * leading nav links that the starlight-utils route middleware puts in Astro.locals.starlightUtils.navLinks.
- * Below 30rem the header shows only the mark.
+ * Each brand file has fixed colors, so the header holds the dark and the light version and the theme
+ * shows one. Both draw at scale 0.75 (30 px tall), so on a 2x screen every edge of the mark falls
+ * on a whole device pixel. The lockup is 254.34 x 40 units, 190.76 x 30 px. Below 30rem the header
+ * shows only the mark, 48 x 30 px.
  */
-import Mark from '../../assets/logo-mark.svg';
-import Wordmark from '../../assets/logo-wordmark.svg';
+import Lockup from '../../assets/brand/lockup-horizontal.svg';
+import LockupOnDark from '../../assets/brand/lockup-horizontal-on-dark.svg';
+import Mark from '../../assets/brand/logo-mark.svg';
+import MarkOnLight from '../../assets/brand/logo-mark-on-light.svg';
 
 const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
 const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
@@ -14,8 +19,10 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
 
 <div class="tr-title-bar">
     <a href={siteTitleHref} class="tr-site-title" translate="no" aria-label={siteTitle}>
-        <Wordmark class="tr-lockup" width={184} height={22} aria-hidden="true"/>
-        <Mark class="tr-mark" width={30} height={30} aria-hidden="true"/>
+        <LockupOnDark class="tr-lockup tr-on-dark" aria-hidden="true"/>
+        <Lockup class="tr-lockup tr-on-light" aria-hidden="true"/>
+        <Mark class="tr-mark tr-on-dark" aria-hidden="true"/>
+        <MarkOnLight class="tr-mark tr-on-light" aria-hidden="true"/>
     </a>
     {navLinks.length > 0 && (
         <ul class="tr-nav-links">
@@ -48,14 +55,19 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
 
     .tr-lockup {
         display: block;
-        width: 184px;
-        height: auto;
+        width: calc(254.34px * 0.75);
+        height: 30px;
     }
 
     .tr-mark {
         display: none;
-        width: 30px;
+        width: 48px;
         height: 30px;
+    }
+
+    :global(:root[data-theme='light']) .tr-on-dark,
+    :global(:root:not([data-theme='light'])) .tr-on-light {
+        display: none !important;
     }
 
     .tr-nav-links {
@@ -72,7 +84,7 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
         padding: 0.375rem 0.75rem;
         border-radius: 999px;
         font-size: 0.875rem;
-        font-weight: 550;
+        font-weight: 500;
         color: var(--tr-muted);
         text-decoration: none;
         transition: color 150ms ease, background-color 150ms ease;

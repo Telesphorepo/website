@@ -31,7 +31,7 @@ const formats = [
 <ul class="tr-formats not-content" aria-label="Formats">
     {formats.map((format) => (
         <li>
-            <a href={format.href}>
+            <a class="tr-paper" href={format.href}>
                 <span class="name">{format.name}</span>
                 <code class="route">{format.route}</code>
                 <span class="text">{format.text}</span>
@@ -57,7 +57,6 @@ const formats = [
         height: 100%;
         padding: 1.25rem;
         border-radius: 12px;
-        background-color: var(--tr-surface);
         color: var(--tr-body);
         text-decoration: none;
         transition: background-color 150ms ease;
@@ -69,10 +68,9 @@ const formats = [
 
     .name {
         color: var(--tr-heading);
-        font-family: var(--tr-display);
         font-size: 1.375rem;
-        font-stretch: 122%;
-        font-weight: 820;
+        font-weight: 600;
+        letter-spacing: -0.025em;
         line-height: 1.05;
     }
 
