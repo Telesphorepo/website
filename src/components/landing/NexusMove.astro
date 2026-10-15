@@ -1,0 +1,161 @@
+---
+/*
+ * The move off Nexus, for the landing page: before, during and after. Each stage draws the same
+ * picture: your builds above the server they publish to, Nexus on the left and Telesphorepo on
+ * the right. The builds move from Nexus to Telesphorepo, and during the move Telesphorepo copies
+ * from Nexus. The Nexus migration guide in the docs has the steps in detail.
+ */
+import Arrow from '../diagrams/Arrow.astro';
+import Figure from '../diagrams/Figure.astro';
+
+type Server = 'nexus' | 'telesphorepo';
+
+const stages: { name: string; text: string; target: Server; copy: boolean }[] = [
+    { name: 'Before', text: 'Builds publish to Nexus.', target: 'nexus', copy: false },
+    { name: 'During', text: 'Telesphorepo copies new uploads. Builds still use Nexus.', target: 'nexus', copy: true },
+    { name: 'After', text: 'Builds publish to Telesphorepo.', target: 'telesphorepo', copy: false },
+];
+---
+
+<Figure
+    caption="Your builds keep working at every stage."
+    summary="Moving off Nexus has three stages. Before: builds publish to Nexus. During: Telesphorepo copies new uploads from Nexus, and builds still publish to Nexus. After: builds publish to Telesphorepo."
+>
+    <ol class="stages">
+        {stages.map((stage) => (
+            <li class="stage">
+                <p class="name">{stage.name}</p>
+                <div class:list={['scene', `to-${stage.target}`]} aria-hidden="true">
+                    <span class="node builds">Your builds</span>
+                    <span class="down"><Arrow/></span>
+                    <span class:list={['node', 'nexus', { idle: stage.target !== 'nexus' && !stage.copy }]}>Nexus</span>
+                    <span class="across">{stage.copy && <Arrow/>}</span>
+                    <span class:list={['node', 'telesphorepo', { idle: stage.target !== 'telesphorepo' && !stage.copy, live: stage.target === 'telesphorepo' }]}>Telesphorepo</span>
+                </div>
+                <p class="text">{stage.text}</p>
+            </li>
+        ))}
+    </ol>
+</Figure>
+
+<style>
+    .stages {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .stage {
+        display: grid;
+        grid-row: span 3;
+        grid-template-rows: subgrid;
+        row-gap: 0.875rem;
+        min-width: 0;
+        margin: 0;
+        padding: 1rem;
+        border-radius: 10px;
+        background-color: var(--tr-page);
+    }
+
+    .name {
+        color: var(--tr-heading);
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .text {
+        color: var(--tr-body);
+        text-wrap: pretty;
+    }
+
+    /*
+     * The picture: Nexus, a gap for the copy arrow, Telesphorepo. The builds and their arrow sit in
+     * the column of the server they publish to.
+     */
+    .scene {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 2.25rem minmax(0, 1fr);
+        grid-template-rows: auto 1.75rem auto;
+        align-items: center;
+        justify-items: stretch;
+    }
+
+    .node {
+        padding: 0.5rem 0.25rem;
+        border-radius: 8px;
+        background-color: var(--tr-raised);
+        color: var(--tr-heading);
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    .builds {
+        grid-row: 1;
+        background-color: var(--tr-surface);
+    }
+
+    .down {
+        display: flex;
+        grid-row: 2;
+        justify-content: center;
+        rotate: 90deg;
+    }
+
+    .to-nexus .builds,
+    .to-nexus .down {
+        grid-column: 1;
+    }
+
+    .to-telesphorepo .builds,
+    .to-telesphorepo .down {
+        grid-column: 3;
+    }
+
+    .nexus {
+        grid-row: 3;
+        grid-column: 1;
+    }
+
+    .across {
+        display: flex;
+        grid-row: 3;
+        grid-column: 2;
+        justify-content: center;
+    }
+
+    .telesphorepo {
+        grid-row: 3;
+        grid-column: 3;
+    }
+
+    .live {
+        background-color: var(--tr-gold);
+        color: var(--tr-gold-ink);
+        font-weight: 600;
+    }
+
+    .idle {
+        background-color: color-mix(in srgb, var(--tr-raised) 35%, transparent);
+        color: var(--tr-muted);
+        font-weight: 400;
+    }
+
+    @container (max-width: 40rem) {
+        .stages {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .stage {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .scene {
+            max-width: 22rem;
+        }
+    }
+</style>

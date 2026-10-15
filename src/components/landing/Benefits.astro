@@ -1,7 +1,7 @@
 ---
 /*
- * What you get, in groups. To add a benefit, add an item to a group. To add a group, add an
- * entry to the list. An item with an href is a link and fills on hover; an item without one is text.
+ * What you get, in groups of three benefits. Keep each group at three, so every row is full. An
+ * item with an href is a link and fills on hover; an item without one is text.
  *
  * Each group is its name beside a grid of paper tiles. A perforation, the brand's row of slots,
  * separates one group from the next.
@@ -19,31 +19,40 @@ interface Group {
 
 const groups: Group[] = [
     {
-        name: 'Publishing a leaked password cannot touch',
+        name: 'Safe publishing',
         items: [
             {
-                title: 'A new session for every publish',
-                text: 'An upload needs a publish session: a token for one repo that ends after 15 minutes. The Gradle plugin and the Maven extension get one and close it on every publish. A password or a read token only reads.',
+                title: 'A session for every publish',
+                text: 'An upload needs a token for one repo that ends after 15 minutes. Passwords only read.',
                 href: '/publishing/overview/',
             },
             {
-                title: 'A second factor for every new device',
-                text: 'A laptop enrolls its own key once. You approve it with an authenticator code or a passkey. A stolen password alone cannot add a device.',
+                title: 'A second factor for new devices',
+                text: 'A laptop enrolls its key once, with an authenticator code or a passkey.',
                 href: '/security/devices/',
             },
             {
                 title: 'CI with no stored secret',
-                text: 'GitHub Actions and Jenkins prove who they are with their own OIDC token. A trust policy names the repo, the branch and the workflow that may publish.',
+                text: 'GitHub Actions and Jenkins publish with their own identity tokens.',
                 href: '/security/trust-policies/',
             },
+        ],
+    },
+    {
+        name: 'Access control',
+        items: [
             {
-                title: 'Single sign-on for admins',
-                text: 'Admins sign in through your identity provider with OpenID Connect: Keycloak, Microsoft Entra, Google, Okta or any other. The provider decides who is an admin, and its MFA applies.',
+                title: 'Single sign-on',
+                text: 'Admins sign in through your OpenID Connect provider, with its MFA.',
                 href: '/security/sso/',
             },
             {
-                title: 'IP allow-lists per repo',
-                text: 'Limit who may read and who may publish to a repo, each with its own list of address ranges. A GitHub Actions preset stays current by itself; for other runners, add their fixed addresses as ranges.',
+                title: 'IP rules per repo',
+                text: 'Limit who may read and who may publish, by address range.',
+            },
+            {
+                title: 'Real client addresses',
+                text: 'Behind Caddy or Cloudflare, rate limits and logs see the real client.',
             },
         ],
     },
@@ -52,63 +61,36 @@ const groups: Group[] = [
         items: [
             {
                 title: 'One image, one binary',
-                text: 'The server, the web UI and the database run in one process. SQLite is inside, so there is no database server or search cluster to keep alive.',
+                text: 'The server, the web UI and SQLite run in one process.',
                 href: '/getting-started/install/',
             },
             {
                 title: 'Any storage, moved live',
-                text: 'Keep files on local disk or in any S3-compatible bucket: Cloudflare R2, SeaweedFS, AWS S3. Change the storage in Settings and the server copies every file while reads and uploads continue.',
+                text: 'Use local disk or any S3 bucket. Change it while uploads continue.',
                 href: '/operations/moving-storage/',
             },
             {
                 title: 'Settings in the UI',
-                text: 'Every setting is on the Settings page and applies without a restart. Secret settings are stored encrypted.',
+                text: 'Every setting applies without a restart.',
                 href: '/reference/settings/',
             },
-            {
-                title: 'Real client IPs behind Caddy and Cloudflare',
-                text: 'When requests arrive through a proxy, Settings offers to trust it in one click. For Cloudflare, pick the built-in Cloudflare preset. Its ranges refresh every day. Rate limits, IP rules and the audit log see the real client address, with no proxy tuning.',
-            },
+        ],
+    },
+    {
+        name: 'Day to day',
+        items: [
             {
                 title: 'Drop a folder to upload',
-                text: 'Drop a whole build folder, a Maven-layout tree or a folder of .deb files. The server finds the artifacts, checks each one strictly, and shows a preview. Nothing is stored until you confirm.',
+                text: 'The server finds the artifacts and shows a preview before it stores them.',
             },
-        ],
-    },
-    {
-        name: 'Fast at any size',
-        items: [
-            {
-                title: 'The same speed at a million files',
-                text: 'Every request uses an index, and lists page by key. In the scale test, no p95 moved by more than 21 µs from 100k to 1M assets.',
-            },
-        ],
-    },
-    {
-        name: 'Your server, your rules',
-        items: [
             {
                 title: 'Delete what you want',
-                text: 'Delete a file, a version or a whole folder from the UI. A deleted Debian package leaves the apt indexes by itself.',
-            },
-            {
-                title: 'IP addresses only in the audit log',
-                text: 'File lists show who uploaded, by username. Client IP addresses appear only in the admin audit log.',
+                text: 'Delete a file, a version or a folder. Debian indexes update by themselves.',
             },
             {
                 title: 'Open source',
-                text: 'The server is AGPL-3.0. The Gradle plugin and the Maven extension are MIT.',
+                text: 'The server is AGPL-3.0. The publisher clients are MIT.',
                 href: '/reference/licensing/',
-            },
-        ],
-    },
-    {
-        name: 'An easy way off Nexus',
-        items: [
-            {
-                title: 'Copy first, switch later',
-                text: 'Telesphorepo copies your Nexus 3 repos and keeps them up to date while your builds still publish to Nexus. When you are ready, switch your builds and press Cut over.',
-                href: '/operations/nexus-migration/',
             },
         ],
     },
@@ -186,22 +168,20 @@ const groups: Group[] = [
         text-wrap: balance;
     }
 
+    /* One row of three, or one column on a narrow screen. */
     .items {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.5rem;
         margin: 0;
         padding: 0;
         list-style: none;
     }
 
-    /* A group with one benefit: the tile fills the row; its text keeps a readable measure. */
-    .items > li:only-child {
-        grid-column: 1 / -1;
-    }
-
-    .items > li:only-child .text {
-        max-width: 62ch;
+    @media (min-width: 44rem) {
+        .items {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
     }
 
     .items li {

@@ -1,12 +1,12 @@
 ---
 title: Telesphorepo
-description: A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Debian packages and raw files. One binary with SQLite inside, the same speed at a million files, and a short-lived publish session for every upload.
+description: A new, lean, fast and secure artifact repository that you host yourself.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
-  title: The lean, fast artifact repository that guards every publish.
-  tagline: Telesphorepo is a new self-hosted home for Maven artifacts, Gradle plugins, Debian packages and raw files. One binary with SQLite inside runs all of it. It keeps its speed from 100k to a million files, and nothing publishes without a short-lived publish session.
+  title: A lean, fast, secure artifact repository.
+  tagline: Self-hosted in one binary, fast at any size, with a short-lived session for every publish.
   actions:
     - text: Read the docs
       link: /getting-started/introduction/
@@ -21,12 +21,10 @@ import Formats from '../../components/landing/Formats.astro';
 import Install from '../../components/landing/Install.astro';
 import ScaleTest from '../../components/landing/ScaleTest.astro';
 import Ticket from '../../components/landing/Ticket.astro';
-import PublishSession from '../../components/diagrams/PublishSession.astro';
-import NexusCutover from '../../components/diagrams/NexusCutover.astro';
+import PublishSteps from '../../components/landing/PublishSteps.astro';
+import NexusMove from '../../components/landing/NexusMove.astro';
 
 ## What you get
-
-A repository should hold your builds and stay out of your way. These are the parts that make it do that.
 
 <Benefits />
 
@@ -35,9 +33,9 @@ A repository should hold your builds and stay out of your way. These are the par
 
 ## Every publish gets its own ticket
 
-In many setups, a CI job holds a deploy password that never changes. Here, no long-lived credential can write. The client proves who it is, and the server issues a publish session: a token for one repo that ends after 15 minutes.
+No long-lived password can upload. Each publish gets a token for one repo that ends after 15 minutes.
 
-The Gradle plugin and the Maven extension do this on every publish, so you do not see it. GitHub Actions and Jenkins use their own identity tokens, so a CI job has no secret to leak. The publish log keeps every session for 30 days after it ends.
+The Gradle plugin, the Maven extension and CI do this for you on every publish.
 
 </div>
 <figure class="tr-ticket-figure not-content">
@@ -52,51 +50,37 @@ The Gradle plugin and the Maven extension do this on every publish, so you do no
 </figure>
 </div>
 
-<PublishSession />
+<PublishSteps />
 
-Read [how publishing works](/publishing/overview/), then set up the [Gradle plugin](/publishing/gradle-plugin/), the [Maven extension](/publishing/maven-extension/) or [GitHub Actions](/publishing/github-actions/).
+Read [how publishing works](/publishing/overview/).
 
 ## As fast at a million files as at a hundred thousand
 
-Every query on a request path uses an index, and lists page with keys, not offsets. So a request costs the same in a large repo as in a small one. The scale test checks this on every run of `go tool task test scale`. It seeds 100k synthetic assets, measures, seeds up to 1M, and measures again.
+Every request uses an index, so a large repo answers as fast as a small one. The scale test checks this on every run.
 
 <ScaleTest />
 
 ## One image. Nothing else to run.
 
-There is no database server and no search cluster. Search runs on an SQLite full-text index. The server, the web UI and the database run in one process. Settings live in the database and apply without a restart. To move the files from local disk to a bucket, change the storage on the Settings page. The server copies every file in the background while reads and uploads continue.
+There is no database server and no search cluster. The whole install is three things.
 
 <Install />
 
-Start the image with a volume for `/data`:
+Binaries for Linux, macOS and Windows are on [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases). The [install guide](/getting-started/install/) has every way to run it.
 
-```sh
-docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
-```
+## Formats
 
-On the first start, the server prints a generated `admin` password once to the container log. Read it, then open `http://localhost:8080` and sign in.
-
-```sh
-docker logs telesphorepo
-```
-
-Binaries for Linux, macOS and Windows are on the [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases) page. The [install guide](/getting-started/install/) has the other ways to run it.
-
-## Maven, Gradle plugins, Debian and raw today
-
-Each format is a plugin with its own routes and its own rules. More formats will come over time.
+Each format has its own routes and rules. More formats will follow.
 
 <Formats />
 
-## Leaving Nexus? Bring your repos with you.
+## Move off Nexus without downtime
 
-Nexus 3 needs a JVM and a database to run, and some of its upgrades are projects of their own. The move from OrientDB to H2 is one example: [its issue](https://github.com/sonatype/nexus-public/issues/449) was opened in 2024 and is still open.
+Telesphorepo copies your Nexus 3 repos and keeps them current. Switch your builds when you are ready.
 
-The move takes three steps, and your builds keep working the whole time.
+<NexusMove />
 
-<NexusCutover />
-
-The [Nexus migration guide](/operations/nexus-migration/) has each step in detail.
+Read the [Nexus migration guide](/operations/nexus-migration/).
 
 ## Read the docs
 

@@ -22,7 +22,7 @@ const items = [
 ---
 
 <Figure
-    caption="Back up the /data volume, and the bucket if you use S3. Unless you set TR_MASTER_KEY, /data also holds master.key, the key that encrypts secret settings."
+    caption="To back up, copy the /data volume, and the bucket if you use S3."
     summary="The whole install is three things. The binary, /telesphorepo, serves the web UI, the JSON API and the format routes on one port, 8080. One SQLite file, /data/telesphorepo.db, holds users, repos, settings and an index of every stored file. One blob store holds the file contents: /data/blobs/ on local disk, or any S3-compatible bucket such as Cloudflare R2, SeaweedFS or AWS S3."
 >
     <dl class="manifest">
