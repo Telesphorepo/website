@@ -21,9 +21,9 @@ The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it fo
 
 2. Open the server once through Caddy.
 
-3. Trust the proxy. Open **Settings**, then **Network and proxy**. The page asks "Is this your reverse proxy?" with the address of Caddy. Click **Trust this address**.
+3. Trust the proxy. Open **Settings** › **Network and proxy**. Under **Detected proxies**, click **Trust** on the row of Caddy. Click **Save**, then **Save changes**.
 
-4. Open **Settings**, then **General**. Set **Public base URL** to `https://repo.example.com`.
+4. Open **Settings** › **General**. Set **Public address** to `https://repo.example.com`, and click **Save**.
 
 </Steps>
 
@@ -32,14 +32,14 @@ Step 3 lets the server see the real address of each client. Rate limits and the 
 <details>
 <summary>Cloudflare in front</summary>
 
-On the **Network and proxy** page, tick the network list **Cloudflare**. If Caddy sits between Cloudflare and the server, trust the address of Caddy too.
+On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudflare**. If Caddy sits between Cloudflare and the server, also tick **Other addresses** and add the address of Caddy.
 
 </details>
 
 <details>
 <summary>Other proxies</summary>
 
-- Let the proxy accept request bodies up to the **Max upload size** of the server. The default is 2 GiB. Some proxies stop at 1 MiB.
+- Let the proxy accept request bodies up to the **Largest upload** of the server (**Settings** › **General**). The default is 2 GiB. Some proxies stop at 1 MiB.
 - Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, so use HTTPS for real use.
 
 </details>
@@ -51,9 +51,9 @@ The server keeps files on its local disk by default. To use a bucket, such as Cl
 <Steps>
 
 1. Create the bucket and an access key that can read, write and delete in it.
-2. Open **Settings**, then **Storage**. Enter the endpoint, the bucket and the keys.
-3. Click **Test**. The server writes, reads and deletes one test file.
-4. Save. If the server has files, it copies them to the bucket in the background. Downloads and uploads keep working during the copy.
+2. Open **Settings** › **Storage**. Under **Storage type**, choose **An S3 bucket** or **A Cloudflare R2 bucket**. Enter the **Address**, the **Bucket**, the **Access key ID** and the **Secret access key**.
+3. Click **Test connection**. The server writes, reads and deletes one test file.
+4. Click **Save** and confirm. If the server has files, it copies them to the bucket in the background. Downloads and uploads keep working during the copy.
 
 </Steps>
 
@@ -65,23 +65,23 @@ The server keeps files on its local disk by default. To use a bucket, such as Cl
 
 | Setting | Value |
 |---|---|
-| S3 endpoint | `https://<account>.r2.cloudflarestorage.com` |
-| S3 region | `auto` |
-| S3 path-style addressing | off |
+| Address | `https://<account>.r2.cloudflarestorage.com` |
+| Region | `auto` |
+| Path-style addresses | off |
 
 </TabItem>
 <TabItem label="SeaweedFS">
 
 | Setting | Value |
 |---|---|
-| S3 endpoint | `http://seaweedfs:8333` |
-| S3 region | any name, for example `us-east-1` |
-| S3 path-style addressing | on |
+| Address | `http://seaweedfs:8333` |
+| Region | any name, for example `us-east-1` |
+| Path-style addresses | on |
 
 </TabItem>
 </Tabs>
 
-By default, a download from S3 goes straight from the bucket to the client. If clients cannot reach the bucket, turn off **Redirect downloads to S3**.
+By default, a download from S3 goes straight from the bucket to the client. If clients cannot reach the bucket, turn off **Download from the bucket**.
 
 The old files stay where they were. Delete them yourself when the new storage works.
 

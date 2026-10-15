@@ -1,0 +1,23 @@
+---
+/*
+ * One block of steps for one answer to the questions of Choice.astro. Every other prop becomes a
+ * data-<key> attribute: <Path title="..." from="github" tool="maven"> shows only when the answer
+ * to "from" is github and the answer to "tool" is maven. A value can list several answers,
+ * separated by spaces. The title shows only without JavaScript, when every block is on the page.
+ */
+interface Props {
+    title: string;
+    level?: 2 | 3;
+    [key: string]: string | number | undefined;
+}
+
+const { title, level = 2, ...when } = Astro.props;
+const attrs = Object.fromEntries(Object.entries(when).map(([key, value]) => [`data-${key}`, value]));
+const id = Object.values(when).join('-').replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
+const Heading = level === 3 ? 'h3' : 'h2';
+---
+
+<section class="tr-path" {...attrs}>
+    <Heading class="tr-path-title" id={id}>{title}</Heading>
+    <slot />
+</section>

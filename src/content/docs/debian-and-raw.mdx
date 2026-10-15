@@ -1,15 +1,24 @@
 ---
-title: Debian and raw files
-description: Host a signed apt repository, or plain files at any path.
+title: Debian, raw and curl
+description: Host a signed apt repository or plain files, and publish with curl.
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
-Create the repository first. Open the **Repositories** page, click **New repository**, choose **A repository**, and pick the format **Debian** or **Raw**.
+Create the repository first. Open **Settings** › **Repositories** › **New repository**, and choose the format **Debian (apt)** or **Raw files**.
 
-To upload, you need a publish token. Open **Settings**, then **Tokens**, and click **New publish token**. CI jobs can get one too. See the `curl` scripts in [Publish from CI](/publish-from-ci/).
+To upload with `curl`, you need a publish token:
 
-You can also upload in the browser. Open the repository and click **Upload**.
+<Steps>
+
+1. Open **Settings** › **Tokens**, and click **New publish token**.
+2. Choose the repository, and click **Continue**.
+3. Confirm with your second factor, and click **Create token**.
+4. Copy the token. It starts with `trs_` and works for 15 minutes.
+
+</Steps>
+
+Publish tokens are for accounts with a password and **Publish** on the repository. You can also upload in the browser: open the repository and click **Upload**.
 
 ## Debian
 
@@ -48,7 +57,7 @@ The examples use a Debian repository named `apt`.
 <details>
 <summary>Private Debian repository</summary>
 
-apt needs your username and a read token. Create the token under **Settings**, **Tokens**. Each command below asks for the token at a hidden prompt.
+apt needs your username and a read token. Create the token under **Settings** › **Tokens** › **New read token**. It starts with `trp_`. Each command below asks for the token at a hidden prompt.
 
 Download the key with the token:
 
@@ -58,23 +67,21 @@ printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
   | sudo curl -fsSL -K - https://repo.example.com/debian/apt/key.asc -o /etc/apt/keyrings/telesphorepo.asc
 ```
 
-Give apt the token. The first `sudo` command makes the file readable by root only before the token goes in. `tee` writes to the file only, not to the terminal.
+Give apt the token. The `install` command makes the file readable by root only before the token goes in. `tee` writes to the file only, not to the terminal.
 
 ```sh
 printf 'Read token: '; read -rs READ_TOKEN; echo
-sudo install -m 600 /dev/null /etc/apt/auth.conf.d/telesphorepo.conf
-printf 'machine repo.example.com login YOUR_USERNAME password %s\n' "$READ_TOKEN" \
-  | sudo tee -a /etc/apt/auth.conf.d/telesphorepo.conf > /dev/null
+sudo install -m 600 /dev/null /etc/apt/auth.conf.d/apt.conf
+printf 'machine %s login YOUR_USERNAME password %s\n' https://repo.example.com/debian/apt "$READ_TOKEN" \
+  | sudo tee -a /etc/apt/auth.conf.d/apt.conf > /dev/null
 ```
-
-Write only the host after `machine`, with no `https://` and no path.
 
 </details>
 
 <details>
 <summary>Architectures and upload errors</summary>
 
-A new Debian repository takes the architectures `amd64` and `arm64`, and `all`. Change the list in the repository settings. An upload with another architecture fails.
+A new Debian repository takes the architectures `amd64`, `arm64` and `all`. Change the list on the **Format settings** tab of the repository settings. An upload with another architecture fails.
 
 An upload of the same package and version with other bytes answers `409`. Raise the version.
 
@@ -109,10 +116,92 @@ printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
 <details>
 <summary>Replace a file</summary>
 
-By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Format options**, enter:
+By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Format options**, enter this, then click **Save**:
 
 ```json
 {"overwrite": "allow"}
 ```
 
 </details>
+
+## Maven files with curl
+
+Upload a file to a Maven repository with a publish token:
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
+  https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+```
+
+## Publish with curl from CI
+
+A CI job trades its identity token for a publish token, then uploads. An admin adds a CI pipeline for the job first, as in [Publish](/publish/?from=github). The scripts need `curl` and `jq`.
+
+<Tabs>
+<TabItem label="GitHub Actions">
+
+```yaml title=".github/workflows/publish.yml"
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish to releases
+        run: |
+          OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            | curl -fsS -K - "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://repo.example.com" | jq -r .value)
+          echo "::add-mask::$OIDC"
+          SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC" \
+            | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
+          TOKEN=$(echo "$SESSION" | jq -r .token)
+          echo "::add-mask::$TOKEN"
+          ID=$(echo "$SESSION" | jq -r .id)
+          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID
+```
+
+</TabItem>
+<TabItem label="Jenkins">
+
+```groovy title="Jenkinsfile"
+pipeline {
+  agent any
+  stages {
+    stage('Publish to releases') {
+      steps {
+        // The token is good for 10 minutes, so only this stage gets it.
+        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+          sh '''
+            set +x
+            SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC_TOKEN" \\
+              | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
+            TOKEN=$(echo "$SESSION" | jq -r .token)
+            ID=$(echo "$SESSION" | jq -r .id)
+            close_session() { printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID; }
+            trap close_session EXIT
+            printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+          '''
+        }
+      }
+    }
+  }
+}
+```
+
+The Jenkins credential `telesphorepo-id-token` comes from the plugin **OpenID Connect Provider**, with the audience `https://repo.example.com`.
+
+</TabItem>
+</Tabs>
+
+The `DELETE` request ends the token. If you skip it, the token ends by itself after 15 minutes.
+
+Each script gives every token to `curl` on stdin, so no token is an argument of a process. The workflow hides each token in the job log with `::add-mask::`. The Jenkins script starts with `set +x` to keep the token out of the build log, and its `trap` ends the token also when the upload fails.

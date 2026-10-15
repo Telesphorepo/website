@@ -11,27 +11,22 @@ const sidebar = [
     {
         label: "leadingNavLinks",
         items: [
-            {label: "Docs", link: "/run-the-server"},
+            {label: "Docs", link: "/get-started"},
             {label: "Reference", link: "/reference"},
         ]
     },
+    {label: 'Get started', link: '/get-started'},
+    {label: 'Publish', link: '/publish'},
+    {label: 'Download packages', link: '/download'},
+    {label: 'Move from Nexus', link: '/move-from-nexus'},
     {
-        label: 'Start here',
+        label: 'Reference',
+        collapsed: true,
         items: [
-            {label: 'Run the server', link: '/run-the-server'},
-            {label: 'Use a repository', link: '/use-a-repository'},
-            {label: 'Publish from your computer', link: '/publish-from-your-computer'},
-            {label: 'Publish from CI', link: '/publish-from-ci'},
-            {label: 'Move from Nexus', link: '/move-from-nexus'},
-        ]
-    },
-    {
-        label: 'More',
-        items: [
-            {label: 'Debian and raw files', link: '/debian-and-raw'},
+            {label: 'Settings and commands', link: '/reference'},
+            {label: 'Debian, raw and curl', link: '/debian-and-raw'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
             {label: 'Run in production', link: '/production'},
-            {label: 'Reference', link: '/reference'},
         ]
     },
 ];
@@ -115,13 +110,13 @@ export default defineConfig({
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
             description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, Debian packages and raw files. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/run-the-server.md`.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/get-started.md`. The Publish and Download pages hold the steps for every choice, each under its own heading.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['publish-from-your-computer', 'publish-from-ci', 'people-and-sign-in'],
+                    paths: ['publish', 'people-and-sign-in'],
                     description: 'The Gradle plugin, the Maven extension, CI pipelines for GitHub Actions and Jenkins, accounts and two-step verification',
                 },
                 {

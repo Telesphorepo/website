@@ -10,11 +10,13 @@ import { Steps, Aside } from '@astrojs/starlight/components';
 <Steps>
 
 1. Open **Settings**, then **People**, and click **New account**. Enter a username and a password, then click **Create account**.
-2. On the page of the person, click **Give access**. Tick the repositories and choose **Download** or **Publish**.
+2. On the page of the person, click **Give access**. Tick the repositories, tick **Download files** or **Publish**, and click **Give access to 1 repository**.
 
 </Steps>
 
-**Publish** includes **Download**. Admins can reach every repository.
+**Publish** also ticks **Download files**. The other permissions are **Delete files**, **Edit settings**, **Manage access** and **CI pipelines**. A person with the server permission **All repositories** holds every permission on every repository.
+
+You can also start from the repository: open **Settings** › **Repositories** › the repository › **Access**, and click **Give access** under **People**.
 
 You can also add people from the command line, on the machine of the server:
 
@@ -30,10 +32,12 @@ Two-step verification protects the actions that matter:
 - Admins need it to sign in.
 - Everyone needs it to approve a computer and to create a publish token.
 
-Each person sets it up under **Settings**, **Sign-in and security**. Add an authenticator app or a passkey. Then create recovery codes and keep them in a safe place.
+Each person sets it up under **Settings** › **Sign-in and security**. Click **Add** on the **Authenticator app** row or the **Passkey** row. Then click **Generate codes** under **Recovery codes**, and keep the codes in a safe place.
+
+A single sign-on account approves a computer with a new single sign-on instead.
 
 <Aside type="caution">
-Passkeys need the **Public base URL**. Set it before anyone adds a passkey. If the host of the address changes later, the passkeys stop working.
+Passkeys need the **Public address** on **Settings** › **General**. Set it before anyone adds a passkey. If the host of the address changes later, the passkeys stop working.
 </Aside>
 
 <details>
@@ -68,8 +72,8 @@ Admins can sign in through an OpenID Connect provider, such as Keycloak, Entra I
 
 1. At your provider, create a confidential client with the redirect address `https://repo.example.com/api/auth/oidc/callback`.
 2. At your provider, create a group for the admins, for example `telesphorepo-admins`. Make the ID token carry the groups in a `groups` claim.
-3. Open **Settings**, then **Sign-in options**. Enter the issuer URL, the client ID and the client secret. Click **Test**.
-4. Under the admin rule, enter the group `telesphorepo-admins`. You can also list admin emails.
+3. Open **Settings** › **Sign-in options**. Enter the **Provider address**, the **App ID** and the **App secret**. Click **Test connection**.
+4. Under **Choose who becomes an administrator**, enter `telesphorepo-admins` in **Administrator groups**. You can also fill in **Administrator emails**.
 5. Save. The sign-in page now offers single sign-on.
 
 </Steps>
@@ -77,7 +81,7 @@ Admins can sign in through an OpenID Connect provider, such as Keycloak, Entra I
 <details>
 <summary>Turn off password sign-in for admins</summary>
 
-When single sign-on works, you can turn off **Password sign-in for admins** on the **Sign-in options** page. Sign in once through single sign-on first.
+When single sign-on works, you can turn off **Password sign-in for administrators** on the **Sign-in options** page. Sign in once through single sign-on first.
 
 If single sign-on breaks later, start the server with `-e TR_ADMIN_PASSWORD_LOGIN=true`. The local admin can then sign in with the password again.
 

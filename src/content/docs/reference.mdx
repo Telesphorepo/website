@@ -32,7 +32,7 @@ A change to these variables needs a restart.
 
 ## Settings
 
-Change settings in the web UI under **Settings**. A change applies at once.
+Change settings in the web UI, on the pages **General**, **Storage**, **Sign-in options** and **Network and proxy** under **Settings**. A change applies at once.
 
 You can also force any setting from the environment. The name is `TR_` plus the key in capitals, with `_` for each `.`. For example, `s3.bucket` becomes `TR_S3_BUCKET`. The web UI then shows the setting as read only.
 
@@ -41,12 +41,12 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 
 | Key | Default | What it sets |
 |---|---|---|
-| `base_url` | none | The address that clients use |
+| `base_url` | none | The address that clients use (**Public address** on the General page) |
 | `log.level` | `info` | The log level |
 | `max_upload_size` | `2GiB` | The largest upload |
 | `max_json_size` | `1MiB` | The largest API request body |
 | `nexus.sync_interval` | `15m` | The time between two Nexus syncs, at least `1m` |
-| `storage` | `fs` | `fs` for the local disk, `s3` for a bucket |
+| `storage` | `fs` | `fs` for the local disk, `s3` or `r2` for a bucket |
 | `fs.root` | `blobs/` in the data folder | The folder for files on the local disk |
 | `s3.endpoint`, `s3.bucket`, `s3.access_key_id`, `s3.secret_access_key` | none | The bucket and its keys |
 | `s3.region` | `auto` | The region of the bucket |

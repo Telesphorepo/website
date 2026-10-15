@@ -1,0 +1,300 @@
+---
+title: Download packages
+description: Use a Telesphorepo repository in a Gradle or Maven build.
+tableOfContents: false
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+In the blocks, put your server's address in place of `https://your-server`, and your repository's name in place of `your-repo`. The **Use this repository** tab of your repository shows the same blocks with your values filled in.
+
+<Choice questions={[
+    {key: 'tool', label: 'Which build tool?', options: [
+        {value: 'gradle-kts', label: 'Gradle (Kotlin)'},
+        {value: 'gradle-groovy', label: 'Gradle (Groovy)'},
+        {value: 'maven', label: 'Maven'},
+    ]},
+    {key: 'access', label: 'Who can download from the repository?', options: [
+        {value: 'public', label: 'Anyone'},
+        {value: 'private', label: 'Only signed-in people'},
+    ]},
+]} />
+
+<Path title="Gradle (Kotlin), anyone can download" tool="gradle-kts" access="public">
+
+<Steps>
+
+1. Paste this into `build.gradle.kts`, with your package in `dependencies`.
+
+   ```kotlin title="build.gradle.kts"
+   repositories {
+       maven {
+           name = "telesphorepo"
+           url = uri("https://your-server/maven/your-repo")
+       }
+       mavenCentral()
+   }
+
+   dependencies {
+       implementation("com.example:my-lib:1.0.0")
+   }
+   ```
+
+2. Run this.
+
+   ```sh
+   ./gradlew build
+   ```
+
+</Steps>
+
+Done when Gradle prints `BUILD SUCCESSFUL`.
+
+</Path>
+
+<Path title="Gradle (Groovy), anyone can download" tool="gradle-groovy" access="public">
+
+<Steps>
+
+1. Paste this into `build.gradle`, with your package in `dependencies`.
+
+   ```groovy title="build.gradle"
+   repositories {
+       maven {
+           name = 'telesphorepo'
+           url = 'https://your-server/maven/your-repo'
+       }
+       mavenCentral()
+   }
+
+   dependencies {
+       implementation 'com.example:my-lib:1.0.0'
+   }
+   ```
+
+2. Run this.
+
+   ```sh
+   ./gradlew build
+   ```
+
+</Steps>
+
+Done when Gradle prints `BUILD SUCCESSFUL`.
+
+</Path>
+
+<Path title="Maven, anyone can download" tool="maven" access="public">
+
+<Steps>
+
+1. Paste this into `pom.xml`, inside `<project>`, with your package.
+
+   ```xml title="pom.xml"
+   <repositories>
+     <repository>
+       <id>your-repo</id>
+       <url>https://your-server/maven/your-repo</url>
+     </repository>
+   </repositories>
+
+   <dependencies>
+     <dependency>
+       <groupId>com.example</groupId>
+       <artifactId>my-lib</artifactId>
+       <version>1.0.0</version>
+     </dependency>
+   </dependencies>
+   ```
+
+2. Run this.
+
+   ```sh
+   mvn package
+   ```
+
+</Steps>
+
+Done when Maven prints `BUILD SUCCESS`.
+
+</Path>
+
+<Path title="Gradle (Kotlin), only signed-in people can download" tool="gradle-kts" access="private">
+
+<Steps>
+
+1. Make a read token, and copy it.
+
+   **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**.
+
+2. Paste your username and the token into `~/.gradle/gradle.properties`.
+
+   ```properties title="~/.gradle/gradle.properties"
+   telesphorepoUsername=YOUR_USERNAME
+   telesphorepoPassword=YOUR_READ_TOKEN
+   ```
+
+3. Paste this into `build.gradle.kts`, with your package in `dependencies`.
+
+   ```kotlin title="build.gradle.kts"
+   repositories {
+       maven {
+           name = "telesphorepo"
+           url = uri("https://your-server/maven/your-repo")
+           credentials(PasswordCredentials::class)
+       }
+       mavenCentral()
+   }
+
+   dependencies {
+       implementation("com.example:my-lib:1.0.0")
+   }
+   ```
+
+4. Run this.
+
+   ```sh
+   ./gradlew build
+   ```
+
+</Steps>
+
+Done when Gradle prints `BUILD SUCCESSFUL`.
+
+</Path>
+
+<Path title="Gradle (Groovy), only signed-in people can download" tool="gradle-groovy" access="private">
+
+<Steps>
+
+1. Make a read token, and copy it.
+
+   **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**.
+
+2. Paste your username and the token into `~/.gradle/gradle.properties`.
+
+   ```properties title="~/.gradle/gradle.properties"
+   telesphorepoUsername=YOUR_USERNAME
+   telesphorepoPassword=YOUR_READ_TOKEN
+   ```
+
+3. Paste this into `build.gradle`, with your package in `dependencies`.
+
+   ```groovy title="build.gradle"
+   repositories {
+       maven {
+           name = 'telesphorepo'
+           url = 'https://your-server/maven/your-repo'
+           credentials(PasswordCredentials)
+       }
+       mavenCentral()
+   }
+
+   dependencies {
+       implementation 'com.example:my-lib:1.0.0'
+   }
+   ```
+
+4. Run this.
+
+   ```sh
+   ./gradlew build
+   ```
+
+</Steps>
+
+Done when Gradle prints `BUILD SUCCESSFUL`.
+
+</Path>
+
+<Path title="Maven, only signed-in people can download" tool="maven" access="private">
+
+<Steps>
+
+1. Make a read token, and copy it.
+
+   **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**.
+
+2. Paste your username and the token into `~/.m2/settings.xml`.
+
+   ```xml title="~/.m2/settings.xml"
+   <settings>
+     <servers>
+       <server>
+         <id>your-repo</id>
+         <username>YOUR_USERNAME</username>
+         <password>YOUR_READ_TOKEN</password>
+       </server>
+     </servers>
+   </settings>
+   ```
+
+3. Paste this into `pom.xml`, inside `<project>`, with your package.
+
+   ```xml title="pom.xml"
+   <repositories>
+     <repository>
+       <id>your-repo</id>
+       <url>https://your-server/maven/your-repo</url>
+     </repository>
+   </repositories>
+
+   <dependencies>
+     <dependency>
+       <groupId>com.example</groupId>
+       <artifactId>my-lib</artifactId>
+       <version>1.0.0</version>
+     </dependency>
+   </dependencies>
+   ```
+
+4. Run this.
+
+   ```sh
+   mvn package
+   ```
+
+</Steps>
+
+Done when Maven prints `BUILD SUCCESS`.
+
+</Path>
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**Gradle or Maven cannot find the package.** Use the group, the name and the version of a package in the repository. Open the package in the web UI to see its line.
+
+**401 when you download.** The repository is for signed-in people only. Choose **Only signed-in people** above. Check the username and the read token.
+
+**There is no New read token button.** Read tokens are for accounts with a password. A single sign-on account cannot make one.
+
+**Maven refuses an `http://` address.** Maven allows `http://` only for `localhost`. Serve the server over HTTPS. See [Run in production](/production/).
+
+**`~/.m2/settings.xml` already has `<servers>`.** Add only the `<server>` part to it.
+
+**`pom.xml` already has `<repositories>` or `<dependencies>`.** Add only the inner part to it.
+
+**A CI job must download from a private repository.** Keep the read token in a CI secret. For Gradle, set `ORG_GRADLE_PROJECT_telesphorepoUsername` and `ORG_GRADLE_PROJECT_telesphorepoPassword`. For Maven, write `${env.REPO_USERNAME}` and `${env.REPO_TOKEN}` in the `<server>` part, and set those variables.
+
+**The repository holds a Gradle plugin.** Put the repository in `pluginManagement`, at the top of the settings file:
+
+```kotlin title="settings.gradle.kts"
+pluginManagement {
+    repositories {
+        maven {
+            name = "telesphorepo"
+            url = uri("https://your-server/maven/your-repo")
+        }
+        gradlePluginPortal()
+    }
+}
+```
+
+**You need a Debian package or a plain file.** See [Debian, raw and curl](/debian-and-raw/).
+
+</details>

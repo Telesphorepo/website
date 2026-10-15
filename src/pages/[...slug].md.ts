@@ -13,7 +13,7 @@ import {unified} from 'unified';
 import {remove} from 'unist-util-remove';
 import {hasMarkdownCopy, markdownPath, pagePath} from '../components/qol/markdown-path';
 
-// Every docs page as Markdown, at its URL with `.md` added: /run-the-server/ is /run-the-server.md.
+// Every docs page as Markdown, at its URL with `.md` added: /get-started/ is /get-started.md.
 // The route renders the page body with the container API and converts the HTML to Markdown.
 export const prerender = true;
 
@@ -100,9 +100,10 @@ const toMarkdown = unified()
     })
     .use(function removeDecoration() {
         return (tree: Root) => {
-            // Icons, buttons, scripts, and heading links carry no text for a reader.
+            // Icons, buttons, scripts, heading links and the choice buttons (every choice is in the copy)
+            // carry no text for a reader.
             const decoration = new Set<unknown>(selectAll(
-                'svg, button, script, style, link, .sl-anchor-link, .sr-only',
+                'svg, button, script, style, link, .sl-anchor-link, .sr-only, .tr-choice',
                 tree,
             ));
             remove(tree, (node) => node.type === 'comment' || decoration.has(node));
