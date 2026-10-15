@@ -42,8 +42,8 @@ First, set up the build as in [Publish from your computer](/publish-from-your-co
      publish:
        runs-on: ubuntu-latest
        steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-java@v4
+         - uses: actions/checkout@v7
+         - uses: actions/setup-java@v6
            with:
              distribution: temurin
              java-version: 21
@@ -67,8 +67,8 @@ First, set up the build as in [Publish from your computer](/publish-from-your-co
      publish:
        runs-on: ubuntu-latest
        steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-java@v4
+         - uses: actions/checkout@v7
+         - uses: actions/setup-java@v6
            with:
              distribution: temurin
              java-version: 21
@@ -223,7 +223,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Publish to releases
         run: |
           OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
