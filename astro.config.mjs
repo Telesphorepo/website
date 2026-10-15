@@ -11,66 +11,27 @@ const sidebar = [
     {
         label: "leadingNavLinks",
         items: [
-            {label: "Docs", link: "/getting-started/introduction"},
-            {label: "Reference", link: "/reference/http-api"},
+            {label: "Docs", link: "/run-the-server"},
+            {label: "Reference", link: "/reference"},
         ]
     },
     {
-        label: 'Getting started',
+        label: 'Start here',
         items: [
-            {label: 'Introduction', link: '/getting-started/introduction'},
-            {label: 'Install', link: '/getting-started/install'},
-            {label: 'First run', link: '/getting-started/first-run'},
-            {label: 'Configuration', link: '/getting-started/configuration'},
+            {label: 'Run the server', link: '/run-the-server'},
+            {label: 'Use a repository', link: '/use-a-repository'},
+            {label: 'Publish from your computer', link: '/publish-from-your-computer'},
+            {label: 'Publish from CI', link: '/publish-from-ci'},
+            {label: 'Move from Nexus', link: '/move-from-nexus'},
         ]
     },
     {
-        label: 'Repositories',
+        label: 'More',
         items: [
-            {label: 'Maven and Gradle', link: '/repositories/maven-gradle'},
-            {label: 'Debian', link: '/repositories/debian'},
-            {label: 'Raw files', link: '/repositories/raw'},
-            {label: 'Browsing and search', link: '/repositories/browsing-and-search'},
-        ]
-    },
-    {
-        label: 'Publishing',
-        items: [
-            {label: 'Overview', link: '/publishing/overview'},
-            {label: 'Gradle plugin', link: '/publishing/gradle-plugin'},
-            {label: 'Maven extension', link: '/publishing/maven-extension'},
-            {label: 'GitHub Actions', link: '/publishing/github-actions'},
-            {label: 'Jenkins', link: '/publishing/jenkins'},
-            {label: 'Manual sessions', link: '/publishing/manual-sessions'},
-        ]
-    },
-    {
-        label: 'Security',
-        items: [
-            {label: 'Accounts and 2FA', link: '/security/accounts-and-2fa'},
-            {label: 'Devices', link: '/security/devices'},
-            {label: 'Read tokens', link: '/security/read-tokens'},
-            {label: 'Trust policies', link: '/security/trust-policies'},
-            {label: 'Single sign-on', link: '/security/sso'},
-        ]
-    },
-    {
-        label: 'Operations',
-        items: [
-            {label: 'Storage', link: '/operations/storage'},
-            {label: 'Moving storage', link: '/operations/moving-storage'},
-            {label: 'Nexus migration', link: '/operations/nexus-migration'},
-            {label: 'Backups and data', link: '/operations/backups-and-data'},
-            {label: 'Upgrading', link: '/operations/upgrading'},
-        ]
-    },
-    {
-        label: 'Reference',
-        items: [
-            {label: 'HTTP API', link: '/reference/http-api'},
-            {label: 'Settings', link: '/reference/settings'},
-            {label: 'CLI', link: '/reference/cli'},
-            {label: 'Licensing', link: '/reference/licensing'},
+            {label: 'Debian and raw files', link: '/debian-and-raw'},
+            {label: 'People and sign-in', link: '/people-and-sign-in'},
+            {label: 'Run in production', link: '/production'},
+            {label: 'Reference', link: '/reference'},
         ]
     },
 ];
@@ -154,19 +115,19 @@ export default defineConfig({
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
             description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, Debian packages and raw files. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/getting-started/install.md`.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/run-the-server.md`.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['publishing/**', 'security/**'],
-                    description: 'Publish sessions, the Gradle plugin, the Maven extension, CI trust policies, accounts and second factors',
+                    paths: ['publish-from-your-computer', 'publish-from-ci', 'people-and-sign-in'],
+                    description: 'The Gradle plugin, the Maven extension, CI pipelines for GitHub Actions and Jenkins, accounts and two-step verification',
                 },
                 {
                     label: 'Operations',
-                    paths: ['operations/**', 'reference/**'],
-                    description: 'Storage, storage moves, Nexus migration, backups, upgrades, the HTTP API, settings and the CLI',
+                    paths: ['production', 'move-from-nexus', 'reference'],
+                    description: 'HTTPS, storage, backups, upgrades, the move from Nexus, commands, environment variables and settings',
                 },
             ],
         })],

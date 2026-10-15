@@ -1,0 +1,85 @@
+---
+title: Reference
+description: Commands, environment variables, settings and licenses.
+---
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `telesphorepo serve` | Runs the server. `telesphorepo` with no command does the same. |
+| `telesphorepo dev` | Runs a local server with demo repositories and demo data. Add `--empty` for empty repositories. |
+| `telesphorepo user add NAME [--admin]` | Creates a user. It asks for the password. |
+| `telesphorepo user passwd NAME` | Sets a new password and signs the user out everywhere. |
+| `telesphorepo user reset-2fa NAME` | Removes every second factor of the user. |
+| `telesphorepo version` | Prints the version. |
+| `telesphorepo help [command]` | Shows the help of a command. |
+
+In the container, put `docker exec -it telesphorepo /telesphorepo` before the command. The `user` commands change the database in `TR_DATA_DIR`.
+
+## Environment variables
+
+No variable is required.
+
+| Variable | Default | What it sets |
+|---|---|---|
+| `TR_DATA_DIR` | `./data`, `/data` in the image | The folder for the database, the files and the master key |
+| `TR_LISTEN` | `:8080` | The listen address |
+| `TR_MASTER_KEY` | a file in the data folder | The key that encrypts secret settings: 32 bytes, base64 |
+| `TR_BOOTSTRAP_ADMIN_USER`, `TR_BOOTSTRAP_ADMIN_PASSWORD` | `admin` and a random password | The first admin. The server reads them only while it has no users |
+
+A change to these variables needs a restart.
+
+## Settings
+
+Change settings in the web UI under **Settings**. A change applies at once.
+
+You can also force any setting from the environment. The name is `TR_` plus the key in capitals, with `_` for each `.`. For example, `s3.bucket` becomes `TR_S3_BUCKET`. The web UI then shows the setting as read only.
+
+<details>
+<summary>All settings</summary>
+
+| Key | Default | What it sets |
+|---|---|---|
+| `base_url` | none | The address that clients use |
+| `log.level` | `info` | The log level |
+| `max_upload_size` | `2GiB` | The largest upload |
+| `max_json_size` | `1MiB` | The largest API request body |
+| `nexus.sync_interval` | `15m` | The time between two Nexus syncs, at least `1m` |
+| `storage` | `fs` | `fs` for the local disk, `s3` for a bucket |
+| `fs.root` | `blobs/` in the data folder | The folder for files on the local disk |
+| `s3.endpoint`, `s3.bucket`, `s3.access_key_id`, `s3.secret_access_key` | none | The bucket and its keys |
+| `s3.region` | `auto` | The region of the bucket |
+| `s3.prefix` | none | A prefix for every object name |
+| `s3.path_style` | `false` | Path-style addresses, for SeaweedFS and MinIO |
+| `s3.redirect` | `true` | Send downloads straight from the bucket |
+| `presign_ttl` | `5m` | How long a bucket download link works |
+| `cookie.secure` | `true` | Send the session cookie over HTTPS only |
+| `session_ttl` | `168h` | How long a web session lasts |
+| `trusted_proxies` | none | The reverse proxies that the server trusts |
+| `audit.retention` | `8760h` | How long the audit log keeps events |
+| `publish.session_ttl` | `15m` | How long a publish token works, at most `1h` |
+| `publish.device_ttl` | `2160h` | How long an approved computer can publish |
+| `oidc.issuer`, `oidc.client_id`, `oidc.client_secret` | none | The single sign-on provider |
+| `oidc.redirect_url` | `base_url` + `/api/auth/oidc/callback` | The redirect address at the provider |
+| `oidc.scopes` | `openid profile email` | The scopes to ask for |
+| `oidc.admin_claim` | `groups` | The claim that holds the admin group |
+| `oidc.admin_values`, `oidc.admin_emails` | none | Who becomes an admin |
+| `oidc.session_ttl` | `12h` | How long a single sign-on session lasts |
+| `admin_password_login` | `true` | Let admins sign in with a password |
+| `deb.debounce` | `2s` | How long Debian waits before it builds the indexes |
+| `deb.max_delay` | `30s` | The longest wait before the indexes build |
+
+</details>
+
+## HTTP API
+
+The web UI uses a JSON API under `/api/`. The full list of routes is in [SPEC.md](https://github.com/Telesphorepo/Telesphorepo/blob/main/SPEC.md#http-surface) in the source repository.
+
+`GET /healthz` answers `ok` when the server runs. Use it for health checks.
+
+## Licenses
+
+The server is [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Gradle plugin and the Maven extension are [MIT](https://github.com/Telesphorepo/clients).
+
+Your artifacts stay yours. Files that you store on the server do not fall under the AGPL. If you change the server and let other people use it over a network, offer them the source of your changed version.

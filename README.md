@@ -15,7 +15,7 @@ bun run build    # production build in dist/
 bun run preview  # serve the production build
 ```
 
-The pages are in `src/content/docs/<section>/<page>.md(x)`. The sidebar is in `astro.config.mjs`.
+The pages are in `src/content/docs/<page>.mdx`. The sidebar is in `astro.config.mjs`.
 The theme is in `src/styles/custom.css`. The fonts are Geist, and Geist Mono for code, from
 `@fontsource/geist` and `@fontsource/geist-mono`. The landing page components are in
 `src/components/landing/`. The diagrams are in `src/components/diagrams/`, and any docs page can

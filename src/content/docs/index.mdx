@@ -1,41 +1,31 @@
 ---
 title: Telesphorepo
-description: A new, lean, fast and secure artifact repository that you host yourself.
+description: A lean, self-hosted artifact repository for Maven, Gradle, Debian and raw files.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
   title: A lean, fast, secure artifact repository.
-  tagline: Self-hosted in one binary, fast at any size, with a short-lived session for every publish.
+  tagline: One binary for Maven, Gradle, Debian and raw files. Every publish gets a token that ends within 15 minutes.
   actions:
-    - text: Read the docs
-      link: /getting-started/introduction/
+    - text: Get started
+      link: /run-the-server/
       variant: primary
     - text: Source on GitHub
       link: https://github.com/Telesphorepo/Telesphorepo
       variant: secondary
 ---
 
-import Benefits from '../../components/landing/Benefits.astro';
-import Formats from '../../components/landing/Formats.astro';
-import Install from '../../components/landing/Install.astro';
-import ScaleTest from '../../components/landing/ScaleTest.astro';
 import Ticket from '../../components/landing/Ticket.astro';
-import PublishSteps from '../../components/landing/PublishSteps.astro';
-import NexusMove from '../../components/landing/NexusMove.astro';
-
-## What you get
-
-<Benefits />
 
 <div class="tr-split tr-section">
 <div>
 
-## Every publish gets its own ticket
+## No password can publish
 
-No long-lived password can upload. Each publish gets a token for one repo that ends after 15 minutes.
+A password or a read token can only download. Each publish gets its own token for one repository, and the token ends within 15 minutes.
 
-The Gradle plugin, the Maven extension and CI do this for you on every publish.
+The Gradle plugin, the Maven extension and your CI get the token for you.
 
 </div>
 <figure class="tr-ticket-figure not-content">
@@ -46,67 +36,27 @@ The Gradle plugin, the Maven extension and CI do this for you on every publish.
         stub={['One repo', '15 min']}
         stamp="Closed 14:03:41"
     />
-    <figcaption>An example session. The Gradle plugin closed it after a 90-second publish.</figcaption>
+    <figcaption>An example token. The Gradle plugin closed it after a 90-second publish.</figcaption>
 </figure>
 </div>
 
-<PublishSteps />
+## Start here
 
-Read [how publishing works](/publishing/overview/).
-
-## As fast at a million files as at a hundred thousand
-
-Every request uses an index, so a large repo answers as fast as a small one. The scale test checks this on every run.
-
-<ScaleTest />
-
-## One image. Nothing else to run.
-
-There is no database server and no search cluster. The whole install is three things.
-
-<Install />
-
-Binaries for Linux, macOS and Windows are on [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases). The [install guide](/getting-started/install/) has every way to run it.
-
-## Formats
-
-Each format has its own routes and rules. More formats will follow.
-
-<Formats />
-
-## Move off Nexus without downtime
-
-Telesphorepo copies your Nexus 3 repos and keeps them current. Switch your builds when you are ready.
-
-<NexusMove />
-
-Read the [Nexus migration guide](/operations/nexus-migration/).
-
-## Read the docs
-
-<nav class="tr-entries not-content" aria-label="Read the docs">
-    <a href="/getting-started/install/">
-        <span class="tr-entry-title">Install</span>
-        <span class="tr-entry-text">Run Telesphorepo in a container or as a binary.</span>
+<nav class="tr-entries not-content" aria-label="Start here">
+    <a href="/run-the-server/">
+        <span class="tr-entry-title">Run the server</span>
+        <span class="tr-entry-text">Start it, sign in and create a repository.</span>
     </a>
-    <a href="/publishing/overview/">
-        <span class="tr-entry-title">Publishing</span>
-        <span class="tr-entry-text">Publish sessions, the Gradle plugin, the Maven extension and CI.</span>
+    <a href="/use-a-repository/">
+        <span class="tr-entry-title">Use a repository</span>
+        <span class="tr-entry-text">Download dependencies in Gradle and Maven.</span>
     </a>
-    <a href="/security/trust-policies/">
-        <span class="tr-entry-title">Trust policies</span>
-        <span class="tr-entry-text">Let GitHub Actions and Jenkins publish with no stored secret.</span>
+    <a href="/publish-from-your-computer/">
+        <span class="tr-entry-title">Publish</span>
+        <span class="tr-entry-text">From your computer, then from GitHub Actions or Jenkins.</span>
     </a>
-    <a href="/operations/nexus-migration/">
-        <span class="tr-entry-title">Nexus migration</span>
-        <span class="tr-entry-text">Copy your Nexus 3 repos, then cut over.</span>
-    </a>
-    <a href="/reference/http-api/">
-        <span class="tr-entry-title">HTTP API</span>
-        <span class="tr-entry-text">Every route the server answers.</span>
-    </a>
-    <a href="https://github.com/Telesphorepo/Telesphorepo">
-        <span class="tr-entry-title">Source code</span>
-        <span class="tr-entry-text">The server is AGPL-3.0. The publisher clients are MIT.</span>
+    <a href="/move-from-nexus/">
+        <span class="tr-entry-title">Move from Nexus</span>
+        <span class="tr-entry-text">Copy your Nexus 3 repositories, then switch over.</span>
     </a>
 </nav>

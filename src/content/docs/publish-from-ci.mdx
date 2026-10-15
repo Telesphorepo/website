@@ -1,0 +1,292 @@
+---
+title: Publish from CI
+description: Publish from GitHub Actions or Jenkins with no stored secret.
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+A CI job publishes with no password and no stored secret. The job shows its identity token to the server. An admin tells the server which jobs to trust. This is a **CI pipeline** in the web UI.
+
+First, set up the build as in [Publish from your computer](/publish-from-your-computer/): the plugin or the extension, and the repository. In CI, the plugin and the extension never wait for a browser. A job with no identity token fails and the message tells you what to add.
+
+## GitHub Actions
+
+<Steps>
+
+1. Create the CI pipeline. This needs an admin.
+
+   - Open **Settings**, then **CI pipelines**, and click **New CI pipeline**.
+   - Under **Where the job runs**, choose **GitHub Actions**.
+   - In **GitHub repository**, enter the owner and name, for example `acme/app`.
+   - In **Tags**, enter `v*`. Only tag pushes such as `v1.0.0` can then publish.
+   - In **Workflow file**, enter `publish.yml`.
+   - Under **Repositories it can publish to**, tick `releases`.
+   - Click **Create CI pipeline**.
+
+2. Add the workflow to your GitHub repository.
+
+   <Tabs syncKey="ci-build">
+   <TabItem label="Gradle">
+
+   ```yaml title=".github/workflows/publish.yml"
+   name: Publish
+   on:
+     push:
+       tags: ["v*"]
+
+   permissions:
+     id-token: write
+     contents: read
+
+   jobs:
+     publish:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-java@v4
+           with:
+             distribution: temurin
+             java-version: 21
+         - run: ./gradlew publish
+   ```
+
+   </TabItem>
+   <TabItem label="Maven">
+
+   ```yaml title=".github/workflows/publish.yml"
+   name: Publish
+   on:
+     push:
+       tags: ["v*"]
+
+   permissions:
+     id-token: write
+     contents: read
+
+   jobs:
+     publish:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-java@v4
+           with:
+             distribution: temurin
+             java-version: 21
+         - run: mvn -B deploy
+   ```
+
+   </TabItem>
+   </Tabs>
+
+3. Push a tag:
+
+   ```sh
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+</Steps>
+
+The line `id-token: write` lets the job get its identity token. Without it, the publish fails.
+
+## Jenkins
+
+<Steps>
+
+1. In Jenkins, install the **OpenID Connect Provider** plugin.
+
+2. In Jenkins, add a credential of the kind **OpenID Connect id token**.
+
+   - **ID:** `telesphorepo-id-token`
+   - **Audience:** `https://repo.example.com`, the address of your Telesphorepo server
+
+3. Create the CI pipeline. This needs an admin.
+
+   - Open **Settings**, then **CI pipelines**, and click **New CI pipeline**.
+   - Under **Where the job runs**, choose **Jenkins**.
+   - In **Jenkins address**, enter the address where you open Jenkins, for example `https://jenkins.example.com`.
+   - In **Jobs**, enter the full job name with its folders, for example `team/app`.
+   - Under **Repositories it can publish to**, tick `releases`.
+   - Click **Create CI pipeline**.
+
+4. Tell the build where to find the token.
+
+   <Tabs syncKey="build">
+   <TabItem label="Gradle (Kotlin)">
+
+   Add `oidcTokenEnv` to the `telesphorepo` block:
+
+   ```kotlin title="settings.gradle.kts"
+   telesphorepo {
+       url = "https://repo.example.com"
+       repository = "releases"
+       oidcTokenEnv = "OIDC_TOKEN"
+   }
+   ```
+
+   </TabItem>
+   <TabItem label="Gradle (Groovy)">
+
+   Add `oidcTokenEnv` to the `telesphorepo` block:
+
+   ```groovy title="settings.gradle"
+   telesphorepo {
+       url = 'https://repo.example.com'
+       repository = 'releases'
+       oidcTokenEnv = 'OIDC_TOKEN'
+   }
+   ```
+
+   </TabItem>
+   <TabItem label="Maven">
+
+   Nothing to change. The Jenkinsfile passes `-Dtelesphorepo.oidcTokenEnv=OIDC_TOKEN`.
+
+   </TabItem>
+   </Tabs>
+
+5. Add the publish stage to the `Jenkinsfile`.
+
+   <Tabs syncKey="ci-build">
+   <TabItem label="Gradle">
+
+   ```groovy title="Jenkinsfile"
+   pipeline {
+     agent any
+     stages {
+       stage('Publish') {
+         steps {
+           withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+             sh './gradlew publish'
+           }
+         }
+       }
+     }
+   }
+   ```
+
+   </TabItem>
+   <TabItem label="Maven">
+
+   ```groovy title="Jenkinsfile"
+   pipeline {
+     agent any
+     stages {
+       stage('Publish') {
+         steps {
+           withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+             sh 'mvn -B deploy -Dtelesphorepo.oidcTokenEnv=OIDC_TOKEN'
+           }
+         }
+       }
+     }
+   }
+   ```
+
+   </TabItem>
+   </Tabs>
+
+</Steps>
+
+<details>
+<summary>The server cannot reach Jenkins</summary>
+
+The server downloads the public keys of Jenkins to check the token. If Jenkins is on a private network, paste the keys into the CI pipeline instead.
+
+1. Open `https://jenkins.example.com/oidc/.well-known/openid-configuration` and find `jwks_uri`.
+2. Open the `jwks_uri` address and copy the JSON.
+3. Paste it into **Jenkins keys** in the CI pipeline and save.
+
+Paste the keys again when Jenkins changes them.
+
+</details>
+
+<details>
+<summary>Publish without Gradle or Maven</summary>
+
+Trade the identity token for a publish token with `curl`, then upload. The scripts need `curl` and `jq`.
+
+<Tabs>
+<TabItem label="GitHub Actions">
+
+```yaml title=".github/workflows/publish.yml"
+name: Publish
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish to releases
+        run: |
+          OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            | curl -fsS -K - "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://repo.example.com" | jq -r .value)
+          echo "::add-mask::$OIDC"
+          SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC" \
+            | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
+          TOKEN=$(echo "$SESSION" | jq -r .token)
+          echo "::add-mask::$TOKEN"
+          ID=$(echo "$SESSION" | jq -r .id)
+          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
+            https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID
+```
+
+</TabItem>
+<TabItem label="Jenkins">
+
+```groovy title="Jenkinsfile"
+pipeline {
+  agent any
+  stages {
+    stage('Publish to releases') {
+      steps {
+        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+          sh '''
+            set +x
+            SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC_TOKEN" \\
+              | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
+            TOKEN=$(echo "$SESSION" | jq -r .token)
+            ID=$(echo "$SESSION" | jq -r .id)
+            close_session() { printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID; }
+            trap close_session EXIT
+            printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \\
+              https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+          '''
+        }
+      }
+    }
+  }
+}
+```
+
+</TabItem>
+</Tabs>
+
+The `DELETE` request ends the token. If you skip it, the token ends by itself after 15 minutes.
+
+The scripts give each token to `curl` on stdin. `printf` is a shell builtin, and `curl -K -` reads its settings from stdin, so no token is in an argument of a process. The workflow runs `::add-mask::` on each token as soon as it has it, so GitHub hides the token in the job log. Jenkins prints each command of an `sh` step, so the Jenkins script starts with `set +x` to keep the token out of the build log. Its `trap` ends the token also when the upload fails. A Groovy `'''` string reads a backslash as an escape, so the Jenkins script doubles each backslash.
+
+</details>
+
+<details>
+<summary>Common errors</summary>
+
+- **"GitHub Actions gave this job no identity token"**: add `id-token: write` under `permissions`.
+- **"Jenkins gave this build no identity token"**: run the publish inside `withCredentials` with the credential `telesphorepo-id-token`, as in step 5. For Gradle, also add `oidcTokenEnv` as in step 4.
+- **The server refuses the token.** Check that **Public base URL** in **Settings**, **General** is the same address as the `url` of the build. The token names this address.
+- **The server refuses the token on a second try.** The server takes each identity token once. Run the job again to get a new token.
+- **No CI pipeline matches.** Check the repository, tag, workflow file or job name in the CI pipeline. Check that the pipeline is on and lists the repository.
+
+</details>
+
+<Aside type="caution">
+Anyone who can push a matching tag or change a matching job can publish. Protect your tags and branches.
+</Aside>

@@ -13,7 +13,7 @@ import {unified} from 'unified';
 import {remove} from 'unist-util-remove';
 import {hasMarkdownCopy, markdownPath, pagePath} from '../components/qol/markdown-path';
 
-// Every docs page as Markdown, at its URL with `.md` added: /getting-started/install/ is /getting-started/install.md.
+// Every docs page as Markdown, at its URL with `.md` added: /run-the-server/ is /run-the-server.md.
 // The route renders the page body with the container API and converts the HTML to Markdown.
 export const prerender = true;
 

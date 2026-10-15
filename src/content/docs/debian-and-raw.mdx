@@ -1,0 +1,118 @@
+---
+title: Debian and raw files
+description: Host a signed apt repository, or plain files at any path.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+Create the repository first. Open the **Repositories** page, click **New repository**, choose **A repository**, and pick the format **Debian** or **Raw**.
+
+To upload, you need a publish token. Open **Settings**, then **Tokens**, and click **New publish token**. CI jobs can get one too. See the `curl` scripts in [Publish from CI](/publish-from-ci/).
+
+You can also upload in the browser. Open the repository and click **Upload**.
+
+## Debian
+
+The examples use a Debian repository named `apt`.
+
+<Steps>
+
+1. Upload a package. The path names the distribution (`stable`) and the component (`main`). Paste the publish token at the hidden prompt, so it stays out of the shell history and the process list.
+
+   ```sh
+   printf 'Publish token: '; read -rs TOKEN; echo
+   printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-package_1.0.0_amd64.deb \
+     https://repo.example.com/debian/apt/upload/stable/main
+   ```
+
+   The server builds and signs the indexes about 2 seconds later.
+
+2. On each machine that installs, add the key and the source:
+
+   ```sh
+   sudo mkdir -p /etc/apt/keyrings
+   sudo curl -fsSL https://repo.example.com/debian/apt/key.asc -o /etc/apt/keyrings/telesphorepo.asc
+   echo "deb [signed-by=/etc/apt/keyrings/telesphorepo.asc] https://repo.example.com/debian/apt stable main" \
+     | sudo tee /etc/apt/sources.list.d/telesphorepo.list
+   ```
+
+3. Install:
+
+   ```sh
+   sudo apt update
+   sudo apt install my-package
+   ```
+
+</Steps>
+
+<details>
+<summary>Private Debian repository</summary>
+
+apt needs your username and a read token. Create the token under **Settings**, **Tokens**. Each command below asks for the token at a hidden prompt.
+
+Download the key with the token:
+
+```sh
+printf 'Read token: '; read -rs READ_TOKEN; echo
+printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
+  | sudo curl -fsSL -K - https://repo.example.com/debian/apt/key.asc -o /etc/apt/keyrings/telesphorepo.asc
+```
+
+Give apt the token. The first `sudo` command makes the file readable by root only before the token goes in. `tee` writes to the file only, not to the terminal.
+
+```sh
+printf 'Read token: '; read -rs READ_TOKEN; echo
+sudo install -m 600 /dev/null /etc/apt/auth.conf.d/telesphorepo.conf
+printf 'machine repo.example.com login YOUR_USERNAME password %s\n' "$READ_TOKEN" \
+  | sudo tee -a /etc/apt/auth.conf.d/telesphorepo.conf > /dev/null
+```
+
+Write only the host after `machine`, with no `https://` and no path.
+
+</details>
+
+<details>
+<summary>Architectures and upload errors</summary>
+
+A new Debian repository takes the architectures `amd64` and `arm64`, and `all`. Change the list in the repository settings. An upload with another architecture fails.
+
+An upload of the same package and version with other bytes answers `409`. Raise the version.
+
+</details>
+
+## Raw files
+
+A raw repository keeps any file at any path. The examples use a raw repository named `files`.
+
+Upload:
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T app-1.2.0.tar.gz \
+  https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
+```
+
+Download:
+
+```sh
+curl -fL -O https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
+```
+
+For a private repository, give `curl` your username and a read token on stdin:
+
+```sh
+printf 'Read token: '; read -rs READ_TOKEN; echo
+printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
+  | curl -fL -K - -O https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
+```
+
+<details>
+<summary>Replace a file</summary>
+
+By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Format options**, enter:
+
+```json
+{"overwrite": "allow"}
+```
+
+</details>

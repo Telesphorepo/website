@@ -1,12 +1,11 @@
 ---
 /*
- * The move off Nexus, for the landing page: before, during and after. Each stage draws the same
- * picture: your builds above the server they publish to, Nexus on the left and Telesphorepo on
- * the right. The builds move from Nexus to Telesphorepo, and during the move Telesphorepo copies
- * from Nexus. The Nexus migration guide in the docs has the steps in detail.
+ * The move off Nexus: before, during and after. Each stage draws the same picture: your builds
+ * above the server they publish to, Nexus on the left and Telesphorepo on the right. The builds
+ * move from Nexus to Telesphorepo, and during the move Telesphorepo copies from Nexus.
  */
-import Arrow from '../diagrams/Arrow.astro';
-import Figure from '../diagrams/Figure.astro';
+import Arrow from './Arrow.astro';
+import Figure from './Figure.astro';
 
 type Server = 'nexus' | 'telesphorepo';
 

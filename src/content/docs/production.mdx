@@ -1,0 +1,162 @@
+---
+title: Run in production
+description: HTTPS, storage, backups and upgrades.
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+## Serve over HTTPS
+
+The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it for HTTPS. [Caddy](https://caddyserver.com) gets a certificate for you.
+
+<Steps>
+
+1. Save this as `Caddyfile` and start Caddy:
+
+   ```text title="Caddyfile"
+   repo.example.com {
+       reverse_proxy localhost:8080
+   }
+   ```
+
+2. Open the server once through Caddy.
+
+3. Trust the proxy. Open **Settings**, then **Network and proxy**. The page asks "Is this your reverse proxy?" with the address of Caddy. Click **Trust this address**.
+
+4. Open **Settings**, then **General**. Set **Public base URL** to `https://repo.example.com`.
+
+</Steps>
+
+Step 3 lets the server see the real address of each client. Rate limits and the audit log need it.
+
+<details>
+<summary>Cloudflare in front</summary>
+
+On the **Network and proxy** page, tick the network list **Cloudflare**. If Caddy sits between Cloudflare and the server, trust the address of Caddy too.
+
+</details>
+
+<details>
+<summary>Other proxies</summary>
+
+- Let the proxy accept request bodies up to the **Max upload size** of the server. The default is 2 GiB. Some proxies stop at 1 MiB.
+- Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, so use HTTPS for real use.
+
+</details>
+
+## Store files in S3
+
+The server keeps files on its local disk by default. To use a bucket, such as Cloudflare R2, AWS S3 or SeaweedFS:
+
+<Steps>
+
+1. Create the bucket and an access key that can read, write and delete in it.
+2. Open **Settings**, then **Storage**. Enter the endpoint, the bucket and the keys.
+3. Click **Test**. The server writes, reads and deletes one test file.
+4. Save. If the server has files, it copies them to the bucket in the background. Downloads and uploads keep working during the copy.
+
+</Steps>
+
+<details>
+<summary>Values for R2 and SeaweedFS</summary>
+
+<Tabs>
+<TabItem label="Cloudflare R2">
+
+| Setting | Value |
+|---|---|
+| S3 endpoint | `https://<account>.r2.cloudflarestorage.com` |
+| S3 region | `auto` |
+| S3 path-style addressing | off |
+
+</TabItem>
+<TabItem label="SeaweedFS">
+
+| Setting | Value |
+|---|---|
+| S3 endpoint | `http://seaweedfs:8333` |
+| S3 region | any name, for example `us-east-1` |
+| S3 path-style addressing | on |
+
+</TabItem>
+</Tabs>
+
+By default, a download from S3 goes straight from the bucket to the client. If clients cannot reach the bucket, turn off **Redirect downloads to S3**.
+
+The old files stay where they were. Delete them yourself when the new storage works.
+
+</details>
+
+## Keep the master key safe
+
+The server encrypts secret settings with a master key. By default it writes the key to `master.key` in the data volume. Without the key, the server cannot read the S3 secret, the single sign-on secret, the signing keys and the authenticator apps.
+
+To keep the key out of the volume, create one before the first start and pass it in:
+
+```sh
+openssl rand -base64 32
+```
+
+```sh
+docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
+  -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
+  ghcr.io/telesphorepo/telesphorepo:latest
+```
+
+Do not change `TR_MASTER_KEY` later.
+
+## Back up
+
+Back up the data volume, and the bucket if you use S3. The simplest safe backup stops the server for a moment:
+
+```sh
+docker stop telesphorepo
+docker run --rm -v telesphorepo-data:/data -v "$PWD":/backup alpine \
+  tar czf /backup/telesphorepo-$(date +%F).tar.gz -C /data .
+docker start telesphorepo
+```
+
+<details>
+<summary>Back up while the server runs</summary>
+
+Copy the database with the SQLite backup command. The image has no `sqlite3`, so run it on the host:
+
+```sh
+sqlite3 /path/to/data/telesphorepo.db ".backup '/backups/telesphorepo.db'"
+```
+
+Then copy `master.key` and the `blobs/` folder. Do not copy only `telesphorepo.db` from a running server.
+
+For S3, use the versioning or the replication of your bucket.
+
+</details>
+
+## Upgrade
+
+<Steps>
+
+1. Back up.
+2. Pull the new image and start a new container on the same volume:
+
+   ```sh
+   docker pull ghcr.io/telesphorepo/telesphorepo:latest
+   docker stop telesphorepo
+   docker rm telesphorepo
+   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+3. Check that it runs:
+
+   ```sh
+   curl http://localhost:8080/healthz
+   ```
+
+   The answer is `ok`.
+
+</Steps>
+
+Pass the same `-e` variables as before. The server updates its database when it starts. An older version cannot start on that database again, so restore the backup to go back.
+
+<Aside>
+All settings live in the database. Change them in **Settings**. Each change applies at once, with no restart. See [Reference](/reference/) for the environment variables.
+</Aside>

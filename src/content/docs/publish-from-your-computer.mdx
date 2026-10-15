@@ -1,0 +1,236 @@
+---
+title: Publish from your computer
+description: Publish to Telesphorepo from Gradle or Maven, with no password in the build.
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+A password cannot publish to Telesphorepo. Each publish gets a token for one repository that ends within 15 minutes. The Gradle plugin and the Maven extension get this token for you.
+
+Before you start, check two things:
+
+- Your account can publish to the repository. An admin gives this on the **Access** tab of the repository.
+- You have two-step verification. You need it once, to approve your computer. To set it up, open **Settings**, then **Sign-in and security**.
+
+You need Java 17 or later.
+
+<Tabs syncKey="build">
+<TabItem label="Gradle (Kotlin)">
+
+<Steps>
+
+1. Add the plugin at the top of `settings.gradle.kts`. Only a `pluginManagement` block can come before it. If the file has a `plugins` block, add the `id` line to it.
+
+   ```kotlin title="settings.gradle.kts"
+   plugins {
+       id("com.telesphorepo.publish") version "0.1.0"
+   }
+
+   telesphorepo {
+       url = "https://repo.example.com"
+       repository = "releases"
+   }
+   ```
+
+   The plugin publishes each Java project of the build to `releases`. The build file needs no `publishing` block. It needs only a `group` and a `version`, for example `group = "com.example"` and `version = "1.0.0"`.
+
+2. Publish:
+
+   ```sh
+   ./gradlew publish
+   ```
+
+   The first time on this computer, Gradle prints a line like this and opens the link in your browser:
+
+   ```text
+   Open https://repo.example.com/#/device?code=ABCD-EFGH and approve code ABCD-EFGH
+   ```
+
+   Sign in. Check that the code is the same as in your terminal. Enter the code from your authenticator app, then click **Approve device**. The publish then continues.
+
+</Steps>
+
+</TabItem>
+<TabItem label="Gradle (Groovy)">
+
+<Steps>
+
+1. Add the plugin at the top of `settings.gradle`. Only a `pluginManagement` block can come before it. If the file has a `plugins` block, add the `id` line to it.
+
+   ```groovy title="settings.gradle"
+   plugins {
+       id 'com.telesphorepo.publish' version '0.1.0'
+   }
+
+   telesphorepo {
+       url = 'https://repo.example.com'
+       repository = 'releases'
+   }
+   ```
+
+   The plugin publishes each Java project of the build to `releases`. The build file needs no `publishing` block. It needs only a `group` and a `version`, for example `group = 'com.example'` and `version = '1.0.0'`.
+
+2. Publish:
+
+   ```sh
+   ./gradlew publish
+   ```
+
+   The first time on this computer, Gradle prints a line like this and opens the link in your browser:
+
+   ```text
+   Open https://repo.example.com/#/device?code=ABCD-EFGH and approve code ABCD-EFGH
+   ```
+
+   Sign in. Check that the code is the same as in your terminal. Enter the code from your authenticator app, then click **Approve device**. The publish then continues.
+
+</Steps>
+
+</TabItem>
+<TabItem label="Maven">
+
+You need Maven 3.9 or later.
+
+<Steps>
+
+1. Add the extension. Create this file in the project root:
+
+   ```xml title=".mvn/extensions.xml"
+   <extensions>
+     <extension>
+       <groupId>com.telesphorepo</groupId>
+       <artifactId>telesphorepo-maven-extension</artifactId>
+       <version>0.1.0</version>
+     </extension>
+   </extensions>
+   ```
+
+2. Name your server. Create this file, or add the line to it:
+
+   ```text title=".mvn/maven.config"
+   -Dtelesphorepo.url=https://repo.example.com
+   ```
+
+3. Tell Maven where to deploy. Add this to `pom.xml`, inside `<project>`:
+
+   ```xml title="pom.xml"
+   <distributionManagement>
+     <repository>
+       <id>releases</id>
+       <url>https://repo.example.com/maven/releases</url>
+     </repository>
+     <snapshotRepository>
+       <id>releases</id>
+       <url>https://repo.example.com/maven/releases</url>
+     </snapshotRepository>
+   </distributionManagement>
+   ```
+
+   Do not add a password to `settings.xml`.
+
+4. Publish:
+
+   ```sh
+   mvn deploy
+   ```
+
+   The first time on this computer, Maven prints a line like this and opens the link in your browser:
+
+   ```text
+   [WARNING] Telesphorepo: Open https://repo.example.com/#/device?code=ABCD-EFGH and approve code ABCD-EFGH
+   ```
+
+   Sign in. Check that the code is the same as in your terminal. Enter the code from your authenticator app, then click **Approve device**. The build then continues.
+
+</Steps>
+
+</TabItem>
+</Tabs>
+
+Your computer stays approved for 90 days. After that, the next publish asks you to approve it again.
+
+The Gradle plugin and the Maven extension share one key per server, in `~/.telesphorepo/`. One approval covers both tools.
+
+Next, [publish from CI](/publish-from-ci/).
+
+<details>
+<summary>Publish a Gradle plugin</summary>
+
+A Gradle plugin project uses `java-gradle-plugin`. That plugin makes the publications, and the Telesphorepo plugin adds the repository. The build file needs no `publishing` block.
+
+</details>
+
+<details>
+<summary>Keep a Gradle project out of publishing</summary>
+
+Add this to the build file of that project:
+
+```kotlin title="build.gradle.kts"
+tasks.withType<PublishToMavenRepository>().configureEach { enabled = false }
+```
+
+A project with a `publishing` block of its own keeps its publications. If the block names a repository on the server, the plugin adds no second one.
+
+</details>
+
+<details>
+<summary>Approve your computer without a publish</summary>
+
+Gradle:
+
+```sh
+./gradlew telesphorepoLogin
+```
+
+Maven:
+
+```sh
+mvn com.telesphorepo:telesphorepo-maven-plugin:login
+```
+
+Both keep a device that the server still accepts. They ask for a new approval only when the server does not accept the saved device.
+
+</details>
+
+<details>
+<summary>Publish without Gradle or Maven</summary>
+
+Get a publish token in the web UI, then upload with `curl`.
+
+1. Open **Settings**, then **Tokens**. Under **Publish tokens**, click **New publish token**.
+2. Choose the repository and enter the code from your authenticator app.
+3. Copy the token. It starts with `trs_` and works for 15 minutes.
+
+Use the token as the password. Any username works. Paste the token at the hidden prompt, so it stays out of the shell history and the process list.
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
+  https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
+```
+
+You can also upload files in the browser. Open the repository and click **Upload**.
+
+</details>
+
+<details>
+<summary>Remove an approved computer</summary>
+
+Open **Settings**, then **Devices**, and revoke the device. Do this when you lose a laptop. The key file on the laptop then stops working.
+
+</details>
+
+<details>
+<summary>Common errors</summary>
+
+- **"The repository ... does not exist"**: check the repository name in `settings.gradle(.kts)` or the URL in `<distributionManagement>`.
+- **"The server refused device"**: delete the file that the message names and publish again. The publish then asks you to approve the computer again.
+- **Gradle says that the groupId cannot be empty**: set `group` and `version` in the build file.
+- **401 on upload with a password in the build**: remove the credentials from the repository. Passwords cannot publish.
+- **409 on upload**: the release file is already on the server with other bytes. A release never changes. Publish a new version.
+
+</details>
+
+<Aside>
+A version that ends in `-SNAPSHOT` can be published again and again. A release version cannot change after the first publish.
+</Aside>
