@@ -23,7 +23,7 @@ The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it fo
 
 3. Trust the proxy. Open **Settings** › **Network and proxy**. Under **Detected proxies**, click **Trust** on the row of Caddy. Click **Save**, then **Save changes**.
 
-4. Open **Settings** › **General**. Set **Public address** to `https://repo.example.com`, and click **Save**.
+4. Open **Settings** › **General**. Set **Public base URL** to `https://repo.example.com`, and click **Save**.
 
 </Steps>
 
@@ -39,7 +39,7 @@ On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudfl
 <details>
 <summary>Other proxies</summary>
 
-- Let the proxy accept request bodies up to the **Largest upload** of the server (**Settings** › **General**). The default is 2 GiB. Some proxies stop at 1 MiB.
+- Let the proxy accept request bodies up to the **Max upload size** of the server (**Settings** › **General**). The default is 2 GiB. Some proxies stop at 1 MiB.
 - Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, so use HTTPS for real use.
 
 </details>
@@ -51,7 +51,7 @@ The server keeps files on its local disk by default. To use a bucket, such as Cl
 <Steps>
 
 1. Create the bucket and an access key that can read, write and delete in it.
-2. Open **Settings** › **Storage**. Under **Storage type**, choose **An S3 bucket** or **A Cloudflare R2 bucket**. Enter the **Address**, the **Bucket**, the **Access key ID** and the **Secret access key**.
+2. Open **Settings** › **Storage**. Under **Storage type**, choose **An S3 bucket**. Enter the **Address**, the **Region**, the **Bucket**, the **Access key ID** and the **Secret access key**. Leave the **Address** empty for AWS S3.
 3. Click **Test connection**. The server writes, reads and deletes one test file.
 4. Click **Save** and confirm. If the server has files, it copies them to the bucket in the background. Downloads and uploads keep working during the copy.
 
@@ -66,7 +66,7 @@ The server keeps files on its local disk by default. To use a bucket, such as Cl
 | Setting | Value |
 |---|---|
 | Address | `https://<account>.r2.cloudflarestorage.com` |
-| Region | `auto` |
+| Region | leave it empty, or `auto` |
 | Path-style addresses | off |
 
 </TabItem>
@@ -84,6 +84,8 @@ The server keeps files on its local disk by default. To use a bucket, such as Cl
 By default, a download from S3 goes straight from the bucket to the client. If clients cannot reach the bucket, turn off **Download from the bucket**.
 
 The old files stay where they were. Delete them yourself when the new storage works.
+
+With an address and no region, the server signs requests for the region `auto`, which R2 needs. AWS needs a real region, for example `us-east-1`.
 
 </details>
 
@@ -155,7 +157,7 @@ For S3, use the versioning or the replication of your bucket.
 
 </Steps>
 
-Pass the same `-e` variables as before. The server updates its database when it starts. An older version cannot start on that database again, so restore the backup to go back.
+Pass the same `-e` variables as before. The server checks the structure of its database when it starts. It refuses to start on a database with another structure. To go back to an older version, restore the backup.
 
 <Aside>
 All settings live in the database. Change them in **Settings**. Each change applies at once, with no restart. See [Reference](/reference/) for the environment variables.

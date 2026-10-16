@@ -1,20 +1,35 @@
 ---
 title: People and sign-in
-description: Add people, give access, set up two-step verification and single sign-on.
+description: Add people, give permissions, set up two-step verification and single sign-on.
 ---
 
 import { Steps, Aside } from '@astrojs/starlight/components';
 
-## Add people and give access
+## Add people and give permissions
 
 <Steps>
 
 1. Open **Settings**, then **People**, and click **New account**. Enter a username and a password, then click **Create account**.
-2. On the page of the person, click **Give access**. Tick the repositories, tick **Download files** or **Publish**, and click **Give access to 1 repository**.
+2. On the page of the person, click **Give access**. Tick the repositories, tick **Download** or **Publish**, and click **Give access to 1 repository**.
 
 </Steps>
 
-**Publish** also ticks **Download files**. The other permissions are **Delete files**, **Edit settings**, **Manage access** and **CI pipelines**. A person with the server permission **All repositories** holds every permission on every repository.
+**Publish** also ticks **Download**. The other repository permissions are **Delete files**, **Edit settings**, **Manage access** and **Manage CI pipelines**. A person with the server permission **All repositories** holds every permission on every repository.
+
+On the same page, under **Server permissions**, you give a person a part of the server. Each permission names what it opens:
+
+| Server permission | What the person can do |
+|---|---|
+| **All repositories** | Create and delete repositories, and hold every repository permission on every repository |
+| **Manage people** | Create, disable and enable accounts, reset passwords, and give server permissions |
+| **General settings** | Change the settings on **Settings** › **General** |
+| **Read the audit log** | See the **Activity** page |
+| **Manage networks and proxy** | Change the network lists and the trusted proxies |
+| **Manage signing keys** | Create, import and delete signing keys |
+| **Manage sign-in options** | Change single sign-on and password sign-in |
+| **Manage the Nexus migration** | Copy repositories from Nexus |
+
+A person gives only the permissions that the person holds. The server keeps at least one person with **Manage people**.
 
 You can also start from the repository: open **Settings** › **Repositories** › the repository › **Access**, and click **Give access** under **People**.
 
@@ -25,19 +40,21 @@ docker exec -it telesphorepo /telesphorepo user add alice
 docker exec -it telesphorepo /telesphorepo user add bob --admin
 ```
 
+A person added with `--admin` holds every server permission.
+
 ## Two-step verification
 
 Two-step verification protects the actions that matter:
 
-- Admins need it to sign in.
+- A person who manages needs it to sign in. That is anyone with a permission other than **Download** and **Publish**.
 - Everyone needs it to approve a computer and to create a publish token.
 
 Each person sets it up under **Settings** › **Sign-in and security**. Click **Add** on the **Authenticator app** row or the **Passkey** row. Then click **Generate codes** under **Recovery codes**, and keep the codes in a safe place.
 
-A single sign-on account approves a computer with a new single sign-on instead.
+A single sign-on account has no second step. It approves a computer with a new single sign-on instead.
 
 <Aside type="caution">
-Passkeys need the **Public address** on **Settings** › **General**. Set it before anyone adds a passkey. If the host of the address changes later, the passkeys stop working.
+Passkeys need the **Public base URL** on **Settings** › **General**. Set it before anyone adds a passkey. If the host of the address changes later, the passkeys stop working.
 </Aside>
 
 <details>
@@ -56,7 +73,7 @@ The person sets up a new factor at the next sign-in.
 <details>
 <summary>Someone forgot the password</summary>
 
-An admin can set a new password on the page of the person, with **Reset password**. Or use the command line:
+A person with **Manage people** can set a new password on the page of the person, with **Reset password**. Or use the command line:
 
 ```sh
 docker exec -it telesphorepo /telesphorepo user passwd alice
@@ -64,32 +81,46 @@ docker exec -it telesphorepo /telesphorepo user passwd alice
 
 </details>
 
-## Single sign-on for admins
+## Single sign-on
 
-Admins can sign in through an OpenID Connect provider, such as Keycloak, Entra ID or Google. Every person who signs in this way is an admin. People who publish keep accounts with a password.
+People can sign in through an OpenID Connect provider, such as Keycloak, Entra ID or Google. Anyone at the provider can sign in. The first sign-in makes an account with no permissions.
 
 <Steps>
 
 1. At your provider, create a confidential client with the redirect address `https://repo.example.com/api/auth/oidc/callback`.
-2. At your provider, create a group for the admins, for example `telesphorepo-admins`. Make the ID token carry the groups in a `groups` claim.
-3. Open **Settings** › **Sign-in options**. Enter the **Provider address**, the **App ID** and the **App secret**. Click **Test connection**.
-4. Under **Choose who becomes an administrator**, enter `telesphorepo-admins` in **Administrator groups**. You can also fill in **Administrator emails**.
-5. Save. The sign-in page now offers single sign-on.
+2. Open **Settings** › **Sign-in options**. Under **Connect your provider**, enter the **Provider address**, the **App ID** and the **App secret**. Click **Test connection**.
+3. Click **Save**. The sign-in page now offers single sign-on.
 
 </Steps>
 
+Now choose how people get permissions. There are two ways.
+
+- **On this server.** Leave **Group field** empty. Give permissions on the **People** page, as for any account.
+- **From the provider.** The provider decides. Do these steps:
+
+<Steps>
+
+1. At your provider, create a group for each role, for example `repo-admins`. Make the ID token carry the groups in a field, for example `groups`.
+2. On the **Sign-in options** page, under **Permissions from the provider**, enter the name of that field in **Group field**.
+3. Under **Permissions by group**, click **Add a group**. Enter the group, tick its server permissions, and click **Add group**.
+4. Click **Save**.
+
+</Steps>
+
+With a **Group field**, each sign-in sets the server permissions of the person to the permissions of all their groups. Nobody changes these permissions on the server, and the **People** page shows them as read only. A change that would leave nobody with **Manage people** does not apply, and the log says so. Repository permissions stay on the server, for every account.
+
 <details>
-<summary>Turn off password sign-in for admins</summary>
+<summary>Let only people who publish use a password</summary>
 
-When single sign-on works, you can turn off **Password sign-in for administrators** on the **Sign-in options** page. Sign in once through single sign-on first.
+When single sign-on works, you can set **Password sign-in** on the **Sign-in options** page to **Only people who publish; people who manage use single sign-on**. A person who manages the server or a repository then signs in with single sign-on only. People who only download and publish keep their password. Sign in once through single sign-on first.
 
-If single sign-on breaks later, start the server with `-e TR_ADMIN_PASSWORD_LOGIN=true`. The local admin can then sign in with the password again.
+If single sign-on breaks later, start the server with `-e TR_SIGNIN_PASSWORD_LOGIN=all`. Every local account can then sign in with the password again.
 
 </details>
 
 <details>
-<summary>Keycloak: the groups claim</summary>
+<summary>Keycloak: the groups field</summary>
 
-Add a **Group Membership** mapper to the client scope of the client. Turn off **Full group path**, so that the value is `telesphorepo-admins` and not `/telesphorepo-admins`.
+Add a **Group Membership** mapper to the client scope of the client. Turn off **Full group path**, so that the value is `repo-admins` and not `/repo-admins`. Enter `groups` in **Group field**. For Keycloak realm roles, enter `realm_access.roles` instead.
 
 </details>

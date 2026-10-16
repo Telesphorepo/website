@@ -81,7 +81,7 @@ printf 'machine %s login YOUR_USERNAME password %s\n' https://repo.example.com/d
 <details>
 <summary>Architectures and upload errors</summary>
 
-A new Debian repository takes the architectures `amd64`, `arm64` and `all`. Change the list on the **Format settings** tab of the repository settings. An upload with another architecture fails.
+A new Debian repository takes the architectures `amd64` and `arm64`, and packages for `all`. Change the list in **Architectures** on the **Format settings** tab of the repository settings. An upload with another architecture fails. The server builds the package lists of an added architecture, and removes those of a removed one.
 
 An upload of the same package and version with other bytes answers `409`. Raise the version.
 
@@ -116,11 +116,7 @@ printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
 <details>
 <summary>Replace a file</summary>
 
-By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Format options**, enter this, then click **Save**:
-
-```json
-{"overwrite": "allow"}
-```
+By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Replace files**, choose `allow`, then click **Save**.
 
 </details>
 

@@ -41,15 +41,15 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 
 | Key | Default | What it sets |
 |---|---|---|
-| `base_url` | none | The address that clients use (**Public address** on the General page) |
+| `base_url` | none | The address that clients use (**Public base URL** on the General page) |
 | `log.level` | `info` | The log level |
-| `max_upload_size` | `2GiB` | The largest upload |
+| `max_upload_size` | `2GiB` | The largest upload (**Max upload size**) |
 | `max_json_size` | `1MiB` | The largest API request body |
 | `nexus.sync_interval` | `15m` | The time between two Nexus syncs, at least `1m` |
-| `storage` | `fs` | `fs` for the local disk, `s3` or `r2` for a bucket |
+| `storage` | `fs` | `fs` for the local disk, `s3` for a bucket (R2 and SeaweedFS are S3 buckets) |
 | `fs.root` | `blobs/` in the data folder | The folder for files on the local disk |
-| `s3.endpoint`, `s3.bucket`, `s3.access_key_id`, `s3.secret_access_key` | none | The bucket and its keys |
-| `s3.region` | `auto` | The region of the bucket |
+| `s3.endpoint`, `s3.bucket`, `s3.access_key_id`, `s3.secret_access_key` | none | The bucket and its keys. An empty `s3.endpoint` means AWS |
+| `s3.region` | none | The region of the bucket. AWS needs it. With an endpoint and no region, the server uses `auto` |
 | `s3.prefix` | none | A prefix for every object name |
 | `s3.path_style` | `false` | Path-style addresses, for SeaweedFS and MinIO |
 | `s3.redirect` | `true` | Send downloads straight from the bucket |
@@ -63,12 +63,14 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 | `oidc.issuer`, `oidc.client_id`, `oidc.client_secret` | none | The single sign-on provider |
 | `oidc.redirect_url` | `base_url` + `/api/auth/oidc/callback` | The redirect address at the provider |
 | `oidc.scopes` | `openid profile email` | The scopes to ask for |
-| `oidc.admin_claim` | `groups` | The claim that holds the admin group |
-| `oidc.admin_values`, `oidc.admin_emails` | none | Who becomes an admin |
+| `oidc.permission_claim` | none | The claim of the sign-in token whose values give server permissions |
+| `oidc.permission_map` | `{}` | For each value of the claim, the server permissions it gives, such as `{"repo-admins": ["repositories.all"]}` |
 | `oidc.session_ttl` | `12h` | How long a single sign-on session lasts |
-| `admin_password_login` | `true` | Let admins sign in with a password |
-| `deb.debounce` | `2s` | How long Debian waits before it builds the indexes |
-| `deb.max_delay` | `30s` | The longest wait before the indexes build |
+| `signin.password_login` | `all` | `all`: every local account can sign in with a password. `publishers`: a person who manages signs in with single sign-on only |
+| `index.debounce` | `2s` | How long the server waits before it builds the indexes of a repository again |
+| `index.max_delay` | `30s` | The longest wait before the indexes build |
+| `blobs.gc_grace` | `1h` | How long a file that no repository uses stays on the storage |
+| `upload.session_ttl` | `24h` | How long a resumable upload can wait for its next part |
 
 </details>
 

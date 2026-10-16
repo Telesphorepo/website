@@ -244,7 +244,7 @@ Done when the build log ends with `Finished: SUCCESS`.
 
 **Jenkins gave this build no identity token.** Check the binding: the variable is `OIDC_TOKEN` and the credential is `telesphorepo-id-token`.
 
-**The server refuses the job's token.** The **Audience** of the Jenkins credential must be the address of your server. Your server admin must also set the **Public address** on **Settings** › **General**.
+**The server refuses the job's token.** The **Audience** of the Jenkins credential must be the address of your server. Your server admin must also set the **Public base URL** on **Settings** › **General**.
 
 **The token is too old.** The server takes a job's token for 10 minutes only. A freestyle job gets its token when the build starts. If the build takes longer, use a Jenkinsfile: it gets the token only for the publish stage.
 
