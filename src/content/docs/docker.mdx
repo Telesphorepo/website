@@ -1,0 +1,206 @@
+---
+title: Docker and Helm
+description: Push and pull container images, Helm charts and other OCI files with Docker, Podman, Helm and ORAS.
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+An admin first makes a repository with the format **Docker** (see [Run the server](/run-the-server/#make-a-docker-repository)). The name of the repository is the first part of the image name:
+
+```text
+repo.example.com/docker/team/app:1.0
+```
+
+Here `repo.example.com` is the server, `docker` is the repository, and `team/app:1.0` is the image and its tag. Put your own values in the commands below. The **Use this repository** tab of the repository shows the same commands with your values.
+
+## Pull an image
+
+<Tabs>
+<TabItem label="Docker">
+
+```sh
+docker pull repo.example.com/docker/team/app:1.0
+```
+
+</TabItem>
+<TabItem label="Podman">
+
+```sh
+podman pull repo.example.com/docker/team/app:1.0
+```
+
+</TabItem>
+<TabItem label="Helm">
+
+```sh
+helm pull oci://repo.example.com/docker/mychart --version 0.1.0
+```
+
+</TabItem>
+</Tabs>
+
+Anyone can pull from a public repository. For a private repository, make a read token and log in once:
+
+<Steps>
+
+1. Open **Settings** › **Tokens**, and click **New read token**.
+2. Log in. Paste the token at the hidden prompt.
+
+   ```sh
+   printf 'Read token: '; read -rs READ_TOKEN; echo
+   printf '%s' "$READ_TOKEN" | docker login repo.example.com -u YOUR_USERNAME --password-stdin
+   ```
+
+</Steps>
+
+Helm and ORAS read the same login. With Podman, run `podman login` in place of `docker login`.
+
+A repository can also be a **proxy** of Docker Hub, GitHub Container Registry or Quay. Pull from it in the same way. The server keeps a copy of each image that people pull.
+
+## Push an image from your computer
+
+Install the Telesphorepo credential helper once. Download `docker-credential-telesphorepo` for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases), unpack it, and put it on your `PATH`.
+
+<Steps>
+
+1. Enroll your computer. Give the public address of the server.
+
+   ```sh
+   docker-credential-telesphorepo login https://repo.example.com
+   ```
+
+2. Click **Approve device** in the browser. The first time, the page may ask for two-step verification.
+
+3. Push.
+
+   ```sh
+   docker tag app repo.example.com/docker/team/app:1.0
+   docker push repo.example.com/docker/team/app:1.0
+   ```
+
+</Steps>
+
+Done when `docker push` prints the digest of the image.
+
+After step 2, you do not run `docker login`. Docker, buildx, Podman, Helm and ORAS ask the helper for a token. Each push gets its own token for one repository, and the token ends within 15 minutes. An approval lasts 90 days, unless someone removes the device.
+
+To push a Helm chart:
+
+```sh
+helm push mychart-0.1.0.tgz oci://repo.example.com/docker
+```
+
+<details>
+<summary>Push with a publish token, with no helper</summary>
+
+<Steps>
+
+1. Open **Settings** › **Tokens**, and click **New publish token**. Choose the repository, then confirm with your second factor.
+2. Log in with the token, push, and log out. Paste the token at the hidden prompt.
+
+   ```sh
+   printf 'Publish token: '; read -rs TOKEN; echo
+   printf '%s' "$TOKEN" | docker login repo.example.com -u publish --password-stdin
+   docker push repo.example.com/docker/team/app:1.0
+   docker logout repo.example.com
+   ```
+
+</Steps>
+
+A publish token works for the time of its session, 15 minutes by default. The push must end within that time. A password or a read token cannot push.
+
+</details>
+
+## Push an image from CI
+
+A CI job trades its identity token for a publish token when it logs in. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The job needs Docker. The log in comes right before the push, so the identity token is still fresh.
+
+<Tabs>
+<TabItem label="GitHub Actions">
+
+```yaml title=".github/workflows/publish.yml"
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: docker build -t repo.example.com/docker/team/app:${GITHUB_SHA} .
+      - name: Push
+        run: |
+          OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            | curl -fsS -K - "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://repo.example.com" | jq -r .value)
+          echo "::add-mask::$OIDC"
+          printf '%s' "$OIDC" | docker login repo.example.com -u oidc --password-stdin
+          docker push repo.example.com/docker/team/app:${GITHUB_SHA}
+          docker logout repo.example.com
+```
+
+</TabItem>
+<TabItem label="Jenkins">
+
+```groovy title="Jenkinsfile"
+pipeline {
+  agent any
+  stages {
+    stage('Build') {
+      steps {
+        sh 'docker build -t repo.example.com/docker/team/app:${GIT_COMMIT:-$BUILD_NUMBER} .'
+      }
+    }
+    stage('Push') {
+      steps {
+        // The token is good for 10 minutes, so only this stage gets it.
+        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+          sh '''
+            set +x
+            printf '%s' "$OIDC_TOKEN" | docker login repo.example.com -u oidc --password-stdin
+            docker push repo.example.com/docker/team/app:${GIT_COMMIT:-$BUILD_NUMBER}
+            docker logout repo.example.com
+          '''
+        }
+      }
+    }
+  }
+}
+```
+
+The Jenkins credential `telesphorepo-id-token` comes from the plugin **OpenID Connect Provider**, with the audience `https://repo.example.com`.
+
+</TabItem>
+</Tabs>
+
+If your admin set a separate push address, use that address in `docker login` and `docker push`. The **Publish** tab of the repository shows both files with the right address.
+
+The identity token of CI pulls public images only. To build from a private image, log in with a read token before the build.
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**`name unknown` or `404` on a push or a pull.** Name an image inside the repository: `repo.example.com/docker/team/app`, not `repo.example.com/docker`.
+
+**`publishing needs a publish session`.** You logged in with a password or a read token. These cannot push. Use the credential helper, a publish token or CI.
+
+**`denied` or `403` on a push.** You cannot publish to this repository yet. Ask your server admin for **Publish**.
+
+**The push stops with `413` or a timeout on a large layer.** A proxy in front of the server limits the size of one request. Ask your admin to set the push address. See [Run in production](/production/#push-large-images).
+
+**The push says the token ended.** The push took longer than the publish session. Ask your admin to raise **publish.session_ttl**, up to one hour.
+
+**Docker cannot reach an `http://` server.** Add the host to `insecure-registries` in `/etc/docker/daemon.json`, or serve the server over HTTPS.
+
+**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer, run `docker logout repo.example.com`.
+
+**The registry must be at the root of a host.** Docker cannot use an address with a path, such as `https://example.com/repo`. Give the server its own host name.
+
+</details>

@@ -11,6 +11,7 @@ const sidebar = [
     {label: 'Publish a package', link: '/publish'},
     {label: 'Set up a project', link: '/set-up'},
     {label: 'Download packages', link: '/download'},
+    {label: 'Docker and Helm', link: '/docker'},
     {label: 'Run the server', link: '/run-the-server'},
     {
         label: 'Reference',
@@ -46,7 +47,7 @@ export default defineConfig({
     site: 'https://docs.telesphorepo.com',
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
+        description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, Docker images, Helm charts, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
@@ -113,15 +114,15 @@ export default defineConfig({
             }
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
-            description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, Debian packages and raw files. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
+            description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, Docker images and Helm charts, Debian packages and raw files. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
             details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish.md`. The Set up a project, Download packages and Run the server pages hold the steps for every choice, each under its own heading.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['publish', 'set-up', 'people-and-sign-in'],
-                    description: 'The Gradle plugin, the Maven extension, the setup command, CI for GitHub Actions and Jenkins, accounts and two-step verification',
+                    paths: ['publish', 'set-up', 'docker', 'people-and-sign-in'],
+                    description: 'The Gradle plugin, the Maven extension, the setup command, Docker and Helm pushes, CI for GitHub Actions and Jenkins, accounts and two-step verification',
                 },
                 {
                     label: 'Operations',

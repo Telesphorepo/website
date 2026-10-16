@@ -71,6 +71,9 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 | `index.max_delay` | `30s` | The longest wait before the indexes build |
 | `blobs.gc_grace` | `1h` | How long a file that no repository uses stays on the storage |
 | `upload.session_ttl` | `24h` | How long a resumable upload can wait for its next part |
+| `docker.push_url` | none | The address that Docker push commands and CI files use (**Docker push address**), such as `https://push.example.com`. Only a scheme and a host |
+| `docker.link_grace` | `24h` | How long a Docker layer that no image uses stays before the server removes it, at least `1s` |
+| `tls.cert_file`, `tls.key_file` | none | A certificate and a key (PEM) for HTTPS in the server. Set both or neither. They apply at the next start |
 
 </details>
 
@@ -82,6 +85,6 @@ The web UI uses a JSON API under `/api/`. The full list of routes is in [SPEC.md
 
 ## Licenses
 
-The server is [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Gradle plugin and the Maven extension are [MIT](https://github.com/Telesphorepo/clients).
+The server and the Docker credential helper are [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Gradle plugin and the Maven extension are [MIT](https://github.com/Telesphorepo/clients).
 
 Your artifacts stay yours. Files that you store on the server do not fall under the AGPL. If you change the server and let other people use it over a network, offer them the source of your changed version.

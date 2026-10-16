@@ -124,6 +124,24 @@ CI jobs cannot publish without the public address. For HTTPS, see [Run in produc
 
 </Steps>
 
+## Make a Docker repository
+
+A Docker repository holds container images, Helm charts and other OCI files.
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, then click **New repository**.
+
+2. Type a name, such as `docker`. It is the first part of every image name.
+
+3. Choose **Docker**. Choose **Hosted** to push images to it. Choose **Proxy** to keep copies of Docker Hub, GitHub Container Registry or Quay. Choose **Group** to join several repositories.
+
+4. Click **Create repository**.
+
+</Steps>
+
+Docker needs the server at the root of a host, such as `https://repo.example.com`. It cannot use an address with a path. For large images and the push address, see [Run in production](/production/#push-large-images). People push and pull as in [Docker and Helm](/docker/).
+
 ## Give people Publish
 
 <Steps>
@@ -142,7 +160,7 @@ CI jobs cannot publish without the public address. For HTTPS, see [Run in produc
 
 To add a person first, open **Settings** › **People** and click **New account**. See [People and sign-in](/people-and-sign-in/).
 
-Then send people two links: [Set up a project](/set-up/) for the first person on a project, and [Publish a package](/publish/) for everyone.
+Then send people two links: [Set up a project](/set-up/) for the first person on a project, and [Publish a package](/publish/) for everyone. For Docker and Helm, send [Docker and Helm](/docker/).
 
 ## Add a CI pipeline
 

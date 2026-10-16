@@ -44,6 +44,29 @@ On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudfl
 
 </details>
 
+## Push large images
+
+Docker, Podman, Helm and ORAS send each image layer in one request. A proxy that limits the size of a request stops a large layer. Cloudflare allows 100 MB for each request on the Free and Pro plans.
+
+<Steps>
+
+1. In your DNS, add a second name for the server that does not go through the proxy. In Cloudflare, make the record **DNS only**. Example: `push.example.com`. Serve it over HTTPS, as in the steps above.
+
+2. Open **Settings** › **General**. Set **Docker push address** to `https://push.example.com`, and click **Save**.
+
+</Steps>
+
+Pulls keep the main address. The commands and the CI files that the server shows then push to the push address. People enroll the credential helper with the main address, as before.
+
+<details>
+<summary>HTTP/2 and TLS</summary>
+
+The server speaks HTTP/1.1 and HTTP/2. Behind a reverse proxy, the server also takes HTTP/2 without TLS, for a proxy that sends it. A proxy that sends HTTP/1.1 works too, so you need no change.
+
+To let the server do TLS itself, set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to a certificate and a key (PEM files). Both are needed. The server loads a renewed certificate without a restart. Turning TLS on or off needs a restart.
+
+</details>
+
 ## Store files in S3
 
 The server keeps files on its local disk by default. To use a bucket, such as Cloudflare R2, AWS S3 or SeaweedFS:
