@@ -46,18 +46,32 @@ On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudfl
 
 ## Push large images
 
-Docker, Podman, Helm and ORAS send each image layer in one request. A proxy that limits the size of a request stops a large layer. Cloudflare allows 100 MB for each request on the Free and Pro plans.
+Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. Not behind Cloudflare? You have nothing to do.
+
+To push larger layers, let the layers skip Cloudflare. People still push to the main address. The server tells the client to send the layers to a second address: the upload address. Nobody changes a command.
+
+<Aside type="caution">
+This makes the IP address of your server public.
+</Aside>
 
 <Steps>
 
-1. In your DNS, add a second name for the server that does not go through the proxy. In Cloudflare, make the record **DNS only**. Example: `push.example.com`. Serve it over HTTPS, as in the steps above.
+1. In Cloudflare, add a second name for your server, for example `upload.example.com`. Make the record **DNS only**. Serve it over HTTPS, as in the steps above.
 
-2. Open **Settings** › **General**. Set **Docker push address** to `https://push.example.com`, and click **Save**.
+2. Open the port of that name in the firewall of your server, for the computers that push.
+
+3. Open **Settings** › **General**. Under **Docker**, set **Docker upload address** to `https://upload.example.com`. Turn on **Expose the origin IP for Docker uploads**. Click **Save**.
 
 </Steps>
 
-Pulls keep the main address. The commands and the CI files that the server shows then push to the push address. People enroll the credential helper with the main address, as before.
+Pulls, logins and the credential helper keep the main address.
 
+ORAS and Helm 4 send layers only to the address in the command. Push with them to the upload address:
+
+```sh
+helm push mychart-0.1.0.tgz oci://upload.example.com/docker
+oras push upload.example.com/docker/team/art:1.0 file.txt
+```
 <details>
 <summary>HTTP/2 and TLS</summary>
 

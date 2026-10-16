@@ -71,7 +71,8 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 | `index.max_delay` | `30s` | The longest wait before the indexes build |
 | `blobs.gc_grace` | `1h` | How long a file that no repository uses stays on the storage |
 | `upload.session_ttl` | `24h` | How long a resumable upload can wait for its next part |
-| `docker.push_url` | none | The address that Docker push commands and CI files use (**Docker push address**), such as `https://push.example.com`. Only a scheme and a host |
+| `docker.direct_uploads` | `false` | Send the layer bytes of a push to `docker.upload_url` (**Expose the origin IP for Docker uploads**). Behind Cloudflare, it lets a layer be larger than 100 MB. It makes the IP address of the server public |
+| `docker.upload_url` | none | The DNS-only name or address of the server that takes the layer bytes (**Docker upload address**), such as `https://upload.example.com`. Only a scheme and a host. Needed when `docker.direct_uploads` is on |
 | `docker.link_grace` | `24h` | How long a Docker layer that no image uses stays before the server removes it, at least `1s` |
 | `tls.cert_file`, `tls.key_file` | none | A certificate and a key (PEM) for HTTPS in the server. Set both or neither. They apply at the next start |
 

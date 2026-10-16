@@ -82,6 +82,8 @@ Install the Telesphorepo credential helper once. Download `docker-credential-tel
 
 Done when `docker push` prints the digest of the image.
 
+Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. For larger layers, see [Push large images](/production/#push-large-images).
+
 After step 2, you do not run `docker login`. Docker, buildx, Podman, Helm and ORAS ask the helper for a token. Each push gets its own token for one repository, and the token ends within 15 minutes. An approval lasts 90 days, unless someone removes the device.
 
 To push a Helm chart:
@@ -178,8 +180,6 @@ The Jenkins credential `telesphorepo-id-token` comes from the plugin **OpenID Co
 </TabItem>
 </Tabs>
 
-If your admin set a separate push address, use that address in `docker login` and `docker push`. The **Publish** tab of the repository shows both files with the right address.
-
 The identity token of CI pulls public images only. To build from a private image, log in with a read token before the build.
 
 ## If something goes wrong
@@ -193,7 +193,9 @@ The identity token of CI pulls public images only. To build from a private image
 
 **`denied` or `403` on a push.** You cannot publish to this repository yet. Ask your server admin for **Publish**.
 
-**The push stops with `413` or a timeout on a large layer.** A proxy in front of the server limits the size of one request. Ask your admin to set the push address. See [Run in production](/production/#push-large-images).
+**The push stops with `413` or a timeout on a large layer.** Behind Cloudflare (Free and Pro plans), each layer must be under 100 MB. Ask your admin to turn on direct uploads. You keep the same commands. See [Run in production](/production/#push-large-images).
+
+**ORAS or Helm says the upload `Location` is on a different host.** Your admin turned on direct uploads. Push with ORAS and Helm to the upload address, for example `helm push mychart-0.1.0.tgz oci://upload.example.com/docker`. The **Use this repository** tab shows the right address.
 
 **The push says the token ended.** The push took longer than the publish session. Ask your admin to raise **publish.session_ttl**, up to one hour.
 
