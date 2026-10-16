@@ -3,19 +3,53 @@ title: Reference
 description: Commands, environment variables, settings and licenses.
 ---
 
-## Commands
+## Server commands
 
 | Command | What it does |
 |---|---|
-| `telesphorepo serve` | Runs the server. `telesphorepo` with no command does the same. |
-| `telesphorepo dev` | Runs a local server with demo repositories and demo data. Add `--empty` for empty repositories. |
-| `telesphorepo user add NAME [--admin]` | Creates a user. It asks for the password. |
-| `telesphorepo user passwd NAME` | Sets a new password and signs the user out everywhere. |
-| `telesphorepo user reset-2fa NAME` | Removes every second factor of the user. |
-| `telesphorepo version` | Prints the version. |
-| `telesphorepo help [command]` | Shows the help of a command. |
+| `telesphorepo-server serve` | Runs the server. `telesphorepo-server` with no command does the same. |
+| `telesphorepo-server dev` | Runs a local server with demo repositories and demo data. Add `--empty` for empty repositories. |
+| `telesphorepo-server user add NAME [--admin]` | Creates a user. It asks for the password. |
+| `telesphorepo-server user passwd NAME` | Sets a new password and signs the user out everywhere. |
+| `telesphorepo-server user reset-2fa NAME` | Removes every second factor of the user. |
+| `telesphorepo-server version` | Prints the version. |
+| `telesphorepo-server help [command]` | Shows the help of a command. |
 
-In the container, put `docker exec -it telesphorepo /telesphorepo` before the command. The `user` commands change the database in `TR_DATA_DIR`.
+In the container, put `docker exec -it telesphorepo /telesphorepo-server` before the command. The `user` commands change the database in `TR_DATA_DIR`.
+
+## CLI commands
+
+The server serves the Telesphorepo CLI of its own version. Install it with `curl -fsSL https://repo.example.com/install.sh | sh`, or on Windows with `& ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))`.
+
+| Command | What it does |
+|---|---|
+| `telesphorepo setup LINK` | Sets up the project of this folder from the setup line of the **Publish to this repository** tab. It approves the computer and writes `telesphorepo.toml`. For a Docker repository, it adds the credential helper to the Docker config. |
+| `telesphorepo publish [FILE...]` | Publishes the project of this folder: Gradle, Maven or a Helm chart. For a raw or Debian repository, it uploads each FILE. |
+| `telesphorepo login SERVER` | Approves this computer for a server, with no project. |
+| `telesphorepo logout [SERVER]` | Revokes the approval of this computer, and removes its files and its Docker helper entries. |
+| `telesphorepo status` | Shows the approvals of this computer and the project of this folder. It shows no secret. |
+| `telesphorepo update [SERVER]` | Installs the CLI of the server. A newer CLI stays, because it works with an older server. |
+| `telesphorepo version` | Prints the version. |
+| `telesphorepo help [command]` | Shows the help of a command, with examples. |
+
+The CLI keeps the key of each approved computer in `~/.telesphorepo/<server>/device.json`. Only you can read the file.
+
+### telesphorepo.toml
+
+| Key | What it sets |
+|---|---|
+| `server` | The address of the server |
+| `repo` | The repository |
+| `kind` | `maven` or `gradle`, when the folder holds both |
+| `path` | The folder in a raw repository |
+| `dist`, `component` | The distribution and the component of a Debian repository |
+
+### CI variables
+
+| Variable | What it sets |
+|---|---|
+| `OIDC_TOKEN` | The identity token of a Jenkins job. Its audience must be the address of the server. GitHub Actions needs no variable: the job needs `id-token: write`. |
+| `TELESPHOREPO_SERVER` | The server of the Docker credential helper in CI |
 
 ## Environment variables
 
@@ -86,6 +120,6 @@ The web UI uses a JSON API under `/api/`. The full list of routes is in [SPEC.md
 
 ## Licenses
 
-The server and the Docker credential helper are [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Gradle plugin and the Maven extension are [MIT](https://github.com/Telesphorepo/clients).
+The server is [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Telesphorepo CLI and its Docker credential helper are [MIT](https://github.com/Telesphorepo/Telesphorepo/tree/main/cmd/telesphorepo).
 
 Your artifacts stay yours. Files that you store on the server do not fall under the AGPL. If you change the server and let other people use it over a network, offer them the source of your changed version.

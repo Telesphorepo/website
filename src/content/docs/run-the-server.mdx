@@ -64,14 +64,14 @@ This page is for the server admin.
 
 <Steps>
 
-1. Download the file for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases).
+1. Download the `telesphorepo-server` file for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases).
 
 2. Unpack the file.
 
 3. Start the server, and copy the admin password that it shows.
 
    ```sh
-   ./telesphorepo serve
+   ./telesphorepo-server serve
    ```
 
 </Steps>
@@ -200,7 +200,7 @@ To copy your Nexus 3 repositories, see [Move from Nexus](/move-from-nexus/).
 
 **The log shows no password.** Wait a few seconds, then run the log command again.
 
-**You lost the admin password.** Run `docker exec -it telesphorepo /telesphorepo user passwd admin`, and type a new one.
+**You lost the admin password.** Run `docker exec -it telesphorepo /telesphorepo-server user passwd admin`, and type a new one.
 
 **You want to pick the first admin yourself.** Set `TR_BOOTSTRAP_ADMIN_USER` and `TR_BOOTSTRAP_ADMIN_PASSWORD` on the first start. The server reads them only while it has no users.
 

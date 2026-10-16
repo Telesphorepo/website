@@ -59,19 +59,27 @@ A repository can also be a **proxy** of Docker Hub, GitHub Container Registry or
 
 ## Push an image from your computer
 
-Install the Telesphorepo credential helper once. Download `docker-credential-telesphorepo` for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases), unpack it, and put it on your `PATH`.
+You do this once for each computer. The Telesphorepo CLI has a credential helper for Docker.
 
 <Steps>
 
-1. Enroll your computer. Give the public address of the server.
+1. Open the Docker repository in the web UI, then the **Publish to this repository** tab.
+
+2. Click **Set up a project**, and confirm with your second factor.
+
+3. Copy the line for your system. Paste it in a terminal, then press Enter.
 
    ```sh
-   docker-credential-telesphorepo login https://repo.example.com
+   curl -fsSL https://repo.example.com/install.sh | sh -s -- setup 'https://repo.example.com/#/setup/trsu_...'
    ```
 
-2. Click **Approve device** in the browser. The first time, the page may ask for two-step verification.
+   The line installs the CLI and approves this computer. It works once, for 10 minutes.
 
-3. Push.
+4. The CLI asks `Add the credential helper to ~/.docker/config.json? [y/N]`. Type `y`.
+
+   The CLI adds one entry under `credHelpers` for the server, and keeps every other entry.
+
+5. Push.
 
    ```sh
    docker tag app repo.example.com/docker/team/app:1.0
@@ -84,13 +92,39 @@ Done when `docker push` prints the digest of the image.
 
 Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. For larger layers, see [Push large images](/production/#push-large-images).
 
-After step 2, you do not run `docker login`. Docker, buildx, Podman, Helm and ORAS ask the helper for a token. Each push gets its own token for one repository, and the token ends within 15 minutes. An approval lasts 90 days, unless someone removes the device.
+After step 4, you do not run `docker login`. Docker, buildx, Podman, Helm and ORAS ask the helper for a token. Each push gets its own token for one repository, and the token ends within 15 minutes. An approval lasts 90 days, unless someone removes the device.
 
 To push a Helm chart:
 
 ```sh
 helm push mychart-0.1.0.tgz oci://repo.example.com/docker
 ```
+
+A chart folder can also publish with the CLI. Run the setup line in the folder that holds `Chart.yaml`. The CLI writes `telesphorepo.toml`. Then `telesphorepo publish` packages the chart and pushes it.
+
+<details>
+<summary>Add the helper by hand</summary>
+
+Install the CLI, and approve the computer:
+
+```sh
+curl -fsSL https://repo.example.com/install.sh | sh
+telesphorepo login https://repo.example.com
+```
+
+Add this entry to `~/.docker/config.json`:
+
+```json title="~/.docker/config.json"
+{
+  "credHelpers": {
+    "repo.example.com": "telesphorepo"
+  }
+}
+```
+
+`telesphorepo logout` removes the entry and the approval of the computer.
+
+</details>
 
 <details>
 <summary>Push with a publish token, with no helper</summary>
@@ -115,7 +149,7 @@ A publish token works for the time of its session, 15 minutes by default. The pu
 
 ## Push an image from CI
 
-A CI job trades its identity token for a publish token when it logs in. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The job needs Docker. The log in comes right before the push, so the identity token is still fresh.
+The credential helper of the CLI trades the identity token of the CI job for a publish token at each push. The job runs no `docker login`. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The job needs Docker. The **Publish to this repository** tab shows the same files with your values.
 
 <Tabs>
 <TabItem label="GitHub Actions">
@@ -123,7 +157,7 @@ A CI job trades its identity token for a publish token when it logs in. An admin
 ```yaml title=".github/workflows/publish.yml"
 on:
   push:
-    tags: ["v*"]
+    branches: ["main"]
 
 permissions:
   id-token: write
@@ -134,16 +168,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Build
-        run: docker build -t repo.example.com/docker/team/app:${GITHUB_SHA} .
-      - name: Push
+      - run: docker build -t "repo.example.com/docker/app:$GITHUB_SHA" .
+      - run: curl -fsSL https://repo.example.com/install.sh | sh
+      - name: Publish to docker
         run: |
-          OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            | curl -fsS -K - "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://repo.example.com" | jq -r .value)
-          echo "::add-mask::$OIDC"
-          printf '%s' "$OIDC" | docker login repo.example.com -u oidc --password-stdin
-          docker push repo.example.com/docker/team/app:${GITHUB_SHA}
-          docker logout repo.example.com
+          export DOCKER_CONFIG="$(mktemp -d)"
+          printf '%s\n' '{"credHelpers":{"repo.example.com":"telesphorepo"}}' > "$DOCKER_CONFIG/config.json"
+          docker push "repo.example.com/docker/app:$GITHUB_SHA"
+        env:
+          TELESPHOREPO_SERVER: "https://repo.example.com"
 ```
 
 </TabItem>
@@ -155,19 +188,22 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh 'docker build -t repo.example.com/docker/team/app:${GIT_COMMIT:-$BUILD_NUMBER} .'
+        sh 'docker build -t "repo.example.com/docker/app:${GIT_COMMIT:-$BUILD_NUMBER}" .'
       }
     }
-    stage('Push') {
+    stage('Publish to docker') {
       steps {
-        // The token is good for 10 minutes, so only this stage gets it.
-        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-          sh '''
-            set +x
-            printf '%s' "$OIDC_TOKEN" | docker login repo.example.com -u oidc --password-stdin
-            docker push repo.example.com/docker/team/app:${GIT_COMMIT:-$BUILD_NUMBER}
-            docker logout repo.example.com
-          '''
+        withEnv(['TELESPHOREPO_SERVER=https://repo.example.com']) {
+          // The token is good for 10 minutes, so only this stage gets it.
+          withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+            sh '''
+              curl -fsSL https://repo.example.com/install.sh | sh
+              export PATH="$HOME/.local/bin:$PATH"
+              export DOCKER_CONFIG="$(mktemp -d)"
+              printf '%s\\n' '{"credHelpers":{"repo.example.com":"telesphorepo"}}' > "$DOCKER_CONFIG/config.json"
+              docker push "repo.example.com/docker/app:${GIT_COMMIT:-$BUILD_NUMBER}"
+            '''
+          }
         }
       }
     }
@@ -180,7 +216,7 @@ The Jenkins credential `telesphorepo-id-token` comes from the plugin **OpenID Co
 </TabItem>
 </Tabs>
 
-The identity token of CI pulls public images only. To build from a private image, log in with a read token before the build.
+Change `app` to the name of your image. The identity token of CI pulls public images only. To build from a private image, log in with a read token before the build.
 
 ## If something goes wrong
 
@@ -201,7 +237,11 @@ The identity token of CI pulls public images only. To build from a private image
 
 **Docker cannot reach an `http://` server.** Add the host to `insecure-registries` in `/etc/docker/daemon.json`, or serve the server over HTTPS.
 
-**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer, run `docker logout repo.example.com`.
+**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
+
+**`credentials not found in native keychain` on a push.** The computer has no approval for this server, or the approval ended. Run `telesphorepo login https://repo.example.com`, then push again.
+
+**The CI push says that the helper has no credential.** Check `id-token: write` in the workflow, or the `OIDC_TOKEN` binding in Jenkins. `TELESPHOREPO_SERVER` must be the address of your server.
 
 **The registry must be at the root of a host.** Docker cannot use an address with a path, such as `https://example.com/repo`. Give the server its own host name.
 

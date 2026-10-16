@@ -122,7 +122,7 @@ export default defineConfig({
                 {
                     label: 'Publishing',
                     paths: ['publish', 'set-up', 'docker', 'people-and-sign-in'],
-                    description: 'The Gradle plugin, the Maven extension, the setup command, Docker and Helm pushes, CI for GitHub Actions and Jenkins, accounts and two-step verification',
+                    description: 'The Telesphorepo CLI (setup, publish and the Docker credential helper), Docker and Helm pushes, CI for GitHub Actions and Jenkins, accounts and two-step verification',
                 },
                 {
                     label: 'Operations',

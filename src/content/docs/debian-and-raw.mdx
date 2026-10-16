@@ -1,11 +1,61 @@
 ---
 title: Debian, raw and curl
-description: Host a signed apt repository or plain files, and publish with curl.
+description: Host a signed apt repository or plain files, and publish with the Telesphorepo CLI or curl.
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 Create the repository first. Open **Settings** › **Repositories** › **New repository**, and choose the format **Debian (apt)** or **Raw files**.
+
+## Set up a project
+
+<Steps>
+
+1. Open the repository in the web UI, then the **Publish to this repository** tab.
+
+2. Click **Set up a project**, and confirm with your second factor.
+
+3. Open a terminal in the project folder. Paste the line, then press Enter.
+
+   ```sh
+   curl -fsSL https://repo.example.com/install.sh | sh -s -- setup 'https://repo.example.com/#/setup/trsu_...'
+   ```
+
+   The CLI asks for the folder of a raw repository, or the distribution and the component of a Debian repository. It writes the answers to `telesphorepo.toml`.
+
+4. Commit `telesphorepo.toml`.
+
+</Steps>
+
+For a Debian repository named `apt`, the file is this:
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "apt"
+dist = "stable"
+component = "main"
+```
+
+For a raw repository named `files`, `path` is the folder in the repository:
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "files"
+path = "app"
+```
+
+Then publish the files with the CLI, on your computer or in CI:
+
+```sh
+telesphorepo publish my-package_1.0.0_amd64.deb
+telesphorepo publish app-1.2.0.tar.gz
+```
+
+The CLI sends a file of 64 MiB or more in parts, and sends a failed part again.
+
+In CI, the CLI publishes with the identity token of the job. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The **Publish to this repository** tab shows the CI files.
+
+## Publish tokens
 
 To upload with `curl`, you need a publish token:
 
@@ -26,7 +76,7 @@ The examples use a Debian repository named `apt`.
 
 <Steps>
 
-1. Upload a package. The path names the distribution (`stable`) and the component (`main`). Paste the publish token at the hidden prompt, so it stays out of the shell history and the process list.
+1. Upload a package with `telesphorepo publish my-package_1.0.0_amd64.deb`, or with `curl`. The path names the distribution (`stable`) and the component (`main`). Paste the publish token at the hidden prompt, so it stays out of the shell history and the process list.
 
    ```sh
    printf 'Publish token: '; read -rs TOKEN; echo
@@ -91,7 +141,7 @@ An upload of the same package and version with other bytes answers `409`. Raise 
 
 A raw repository keeps any file at any path. The examples use a raw repository named `files`.
 
-Upload:
+Upload with `telesphorepo publish app-1.2.0.tar.gz`, or with `curl` and a publish token:
 
 ```sh
 printf 'Publish token: '; read -rs TOKEN; echo
@@ -129,75 +179,3 @@ printf 'Publish token: '; read -rs TOKEN; echo
 printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
   https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
 ```
-
-## Publish with curl from CI
-
-A CI job trades its identity token for a publish token, then uploads. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The scripts need `curl` and `jq`.
-
-<Tabs>
-<TabItem label="GitHub Actions">
-
-```yaml title=".github/workflows/publish.yml"
-on:
-  push:
-    tags: ["v*"]
-
-permissions:
-  id-token: write
-  contents: read
-
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Publish to releases
-        run: |
-          OIDC=$(printf 'header = "Authorization: Bearer %s"\n' "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            | curl -fsS -K - "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://repo.example.com" | jq -r .value)
-          echo "::add-mask::$OIDC"
-          SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC" \
-            | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
-          TOKEN=$(echo "$SESSION" | jq -r .token)
-          echo "::add-mask::$TOKEN"
-          ID=$(echo "$SESSION" | jq -r .id)
-          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
-          printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID
-```
-
-</TabItem>
-<TabItem label="Jenkins">
-
-```groovy title="Jenkinsfile"
-pipeline {
-  agent any
-  stages {
-    stage('Publish to releases') {
-      steps {
-        // The token is good for 10 minutes, so only this stage gets it.
-        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-          sh '''
-            set +x
-            SESSION=$(printf '{"token":"%s","repo":"releases"}' "$OIDC_TOKEN" \\
-              | curl -fsS -H 'Content-Type: application/json' --data @- https://repo.example.com/api/publish/sessions/oidc)
-            TOKEN=$(echo "$SESSION" | jq -r .token)
-            ID=$(echo "$SESSION" | jq -r .id)
-            close_session() { printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -X DELETE https://repo.example.com/api/publish/sessions/$ID; }
-            trap close_session EXIT
-            printf 'user = "publish:%s"\\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
-          '''
-        }
-      }
-    }
-  }
-}
-```
-
-The Jenkins credential `telesphorepo-id-token` comes from the plugin **OpenID Connect Provider**, with the audience `https://repo.example.com`.
-
-</TabItem>
-</Tabs>
-
-The `DELETE` request ends the token. If you skip it, the token ends by itself after 15 minutes.
-
-Each script gives every token to `curl` on stdin, so no token is an argument of a process. The workflow hides each token in the job log with `::add-mask::`. The Jenkins script starts with `set +x` to keep the token out of the build log, and its `trap` ends the token also when the upload fails.

@@ -5,51 +5,36 @@ tableOfContents: false
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-import Choice from '../../components/choice/Choice.astro';
-import Path from '../../components/choice/Path.astro';
 
-<Choice questions={[
-    {key: 'build', label: 'Which build tool?', options: [
-        {value: 'gradle', label: 'Gradle'},
-        {value: 'maven', label: 'Maven'},
-    ]},
-]} />
-
-<Path title="Gradle" build="gradle">
+The project folder holds `telesphorepo.toml`. One command publishes it, for Gradle and for Maven.
 
 <Steps>
 
-1. Run the publish command.
+1. Install the Telesphorepo CLI once. Your server's address is the `server` line of `telesphorepo.toml`.
 
    ```sh
-   ./gradlew publish
+   curl -fsSL https://repo.example.com/install.sh | sh
    ```
 
-2. The first time, click **Approve device** in the browser.
+   On Windows:
+
+   ```powershell
+   & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
+   ```
+
+2. In the project folder, run the publish command.
+
+   ```sh
+   telesphorepo publish
+   ```
+
+3. The first time, the CLI prints a link and a code. Open the link, then click **Approve device**.
 
 </Steps>
 
-Done when Gradle prints `BUILD SUCCESSFUL`.
+Done when Gradle prints `BUILD SUCCESSFUL`, or Maven prints `BUILD SUCCESS`.
 
-</Path>
-
-<Path title="Maven" build="maven">
-
-<Steps>
-
-1. Run the publish command.
-
-   ```sh
-   mvn deploy
-   ```
-
-2. The first time, click **Approve device** in the browser.
-
-</Steps>
-
-Done when Maven prints `BUILD SUCCESS`.
-
-</Path>
+The CLI runs `./gradlew publish` or `mvn deploy` for you, with your wrapper when the project has one. It prints the command before it runs it. It gives the build a publish token for this one repository, and ends the token when the build ends.
 
 Project not set up yet? [Set up a project](/set-up/).
 
@@ -57,6 +42,8 @@ Project not set up yet? [Set up a project](/set-up/).
 
 <details>
 <summary>Find your problem, then do the fix</summary>
+
+**`no telesphorepo.toml in this folder or above`.** The project is not set up, or the file is not committed. [Set up a project](/set-up/), or pull the latest commit.
 
 **The browser page asks for two-step verification.** Click **Set up two-step verification**. Add your phone app, then approve.
 
@@ -66,13 +53,19 @@ Project not set up yet? [Set up a project](/set-up/).
 
 **409 when you publish.** That version is already on the server. Raise the version. You can publish a `-SNAPSHOT` version again and again.
 
-**The server refused the device.** Delete the file that the message names. Publish again and approve again. An approval lasts 90 days, unless someone removes the device.
+**The server refused the device.** Run `telesphorepo login` with your server's address, and approve again. An approval lasts 90 days, unless someone removes the device.
+
+**The CLI says that it needs a newer CLI.** Answer `Y` to update, or run `telesphorepo update`. The CLI then runs the command again.
+
+**The CLI says that it needs a newer server.** Ask your server admin to update the server.
 
 **You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop.
 
-**You want to approve the computer before you publish.** In the project folder, run `./gradlew telesphorepoLogin` or `mvn com.telesphorepo:telesphorepo-maven-plugin:login`.
+**You want to approve the computer before you publish.** Run `telesphorepo login https://repo.example.com`.
 
-**Gradle says `Task 'publish' not found`.** Add the `java` or `java-library` plugin to the build file.
+**You want to see what the CLI will run.** Run `telesphorepo status` in the project folder.
+
+**Gradle says that no project applies `maven-publish`.** Add the `maven-publish` plugin to the build file of each project to publish.
 
 **One project must not publish.** Add this line to the build file of that project:
 
@@ -80,6 +73,6 @@ Project not set up yet? [Set up a project](/set-up/).
 tasks.withType<PublishToMavenRepository>().configureEach { enabled = false }
 ```
 
-**You publish without Gradle or Maven.** See [Debian, raw and curl](/debian-and-raw/).
+**You publish a Debian package or a plain file.** See [Debian, raw and curl](/debian-and-raw/).
 
 </details>

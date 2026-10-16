@@ -36,8 +36,8 @@ You can also start from the repository: open **Settings** › **Repositories** �
 You can also add people from the command line, on the machine of the server:
 
 ```sh
-docker exec -it telesphorepo /telesphorepo user add alice
-docker exec -it telesphorepo /telesphorepo user add bob --admin
+docker exec -it telesphorepo /telesphorepo-server user add alice
+docker exec -it telesphorepo /telesphorepo-server user add bob --admin
 ```
 
 A person added with `--admin` holds every server permission.
@@ -63,7 +63,7 @@ Passkeys need the **Public base URL** on **Settings** › **General**. Set it be
 Remove the factors of the person on the machine of the server:
 
 ```sh
-docker exec -it telesphorepo /telesphorepo user reset-2fa alice
+docker exec -it telesphorepo /telesphorepo-server user reset-2fa alice
 ```
 
 The person sets up a new factor at the next sign-in.
@@ -76,7 +76,7 @@ The person sets up a new factor at the next sign-in.
 A person with **Manage people** can set a new password on the page of the person, with **Reset password**. Or use the command line:
 
 ```sh
-docker exec -it telesphorepo /telesphorepo user passwd alice
+docker exec -it telesphorepo /telesphorepo-server user passwd alice
 ```
 
 </details>

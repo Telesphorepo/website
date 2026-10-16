@@ -25,18 +25,18 @@ import Ticket from '../../components/landing/Ticket.astro';
 
 A password or a read token can only download. Each publish gets its own token for one repository, and the token ends within 15 minutes.
 
-The Gradle plugin, the Maven extension and your CI get the token for you.
+One command, `telesphorepo publish`, gets the token for Gradle, Maven, Helm, Debian and raw files, on your computer and in CI. Docker gets it from the same CLI.
 
 </div>
 <figure class="tr-ticket-figure not-content">
     <Ticket
         kind="Publish session"
         token="trs_9c1e4b7a02f3_..."
-        rows={[['repo', 'releases'], ['via', 'device, Gradle'], ['opened', '14:02:11'], ['expires', '14:17:11']]}
+        rows={[['repo', 'releases'], ['via', 'device, CLI'], ['opened', '14:02:11'], ['expires', '14:17:11']]}
         stub={['One repo', '15 min']}
         stamp="Closed 14:03:41"
     />
-    <figcaption>An example token. The Gradle plugin closed it after a 90-second publish.</figcaption>
+    <figcaption>An example token. The CLI closed it after a 90-second Gradle publish.</figcaption>
 </figure>
 </div>
 
