@@ -19,12 +19,12 @@ In the container, put `docker exec -it telesphorepo /telesphorepo-server` before
 
 ## CLI commands
 
-The server serves the Telesphorepo CLI of its own version. Install it with `curl -fsSL https://repo.example.com/install.sh | sh`, or on Windows with `& ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))`.
+The server serves the Telesphorepo CLI of its own version. Install it with `curl -fsSL https://repo.example.com/install.sh | sh`, or on Windows with `& ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))`. See [Install the CLI](/install-cli/).
 
 | Command | What it does |
 |---|---|
 | `telesphorepo setup LINK` | Sets up the project of this folder from the setup line of the **Publish to this repository** tab. It approves the computer and writes `telesphorepo.toml`. For a Docker repository, it adds the credential helper to the Docker config. |
-| `telesphorepo publish [FILE...]` | Publishes the project of this folder: Gradle, Maven or a Helm chart. For a raw or Debian repository, it uploads each FILE. |
+| `telesphorepo publish [FILE...]` | Publishes the project of this folder: Gradle, Maven, npm, Python, Cargo, .NET or a Helm chart. For a raw or Debian repository, it uploads each FILE. For Python and .NET, FILE names wheels, sdists or `.nupkg` files to upload with no build. |
 | `telesphorepo login SERVER` | Approves this computer for a server, with no project. |
 | `telesphorepo logout [SERVER]` | Revokes the approval of this computer, and removes its files and its Docker helper entries. |
 | `telesphorepo status` | Shows the approvals of this computer and the project of this folder. It shows no secret. |
@@ -111,6 +111,23 @@ You can also force any setting from the environment. The name is `TR_` plus the 
 | `tls.cert_file`, `tls.key_file` | none | A certificate and a key (PEM) for HTTPS in the server. Set both or neither. They apply at the next start |
 
 </details>
+
+## Repository addresses
+
+The examples use the server `https://repo.example.com` and a repository named `REPO`.
+
+| Format | Kinds | Address for clients |
+|---|---|---|
+| Maven / Gradle | hosted, proxy, group | `https://repo.example.com/maven/REPO` |
+| npm | hosted, proxy, group | `https://repo.example.com/npm/REPO/` |
+| Python (PyPI) | hosted, proxy, group | `https://repo.example.com/pypi/REPO/simple/` to install, `https://repo.example.com/pypi/REPO/` to upload |
+| Cargo (Rust) | hosted, proxy, group | `sparse+https://repo.example.com/cargo/REPO/index/` |
+| NuGet | hosted, proxy, group | `https://repo.example.com/nuget/REPO/index.json` |
+| Docker | hosted, proxy, group | `repo.example.com/REPO/IMAGE:TAG`, at the root of the host |
+| Debian (apt) | hosted, proxy | `https://repo.example.com/debian/REPO` |
+| Raw files | hosted | `https://repo.example.com/raw/REPO` |
+
+A proxy keeps a copy of each file that people download from its remote. A group serves its members in order, and takes no uploads. In a group of npm, Python, Cargo or NuGet repositories, the first member that has a package name owns it: the group serves every version of that name from that member only, so a public package cannot shadow a private one. A Maven group merges `maven-metadata.xml` over its members, so the versions of all members show. A Docker group serves each file from the first member that has it, and lists the tags of all members.
 
 ## HTTP API
 

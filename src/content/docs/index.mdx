@@ -1,12 +1,12 @@
 ---
 title: Telesphorepo
-description: A lean, self-hosted artifact repository for Maven, Gradle, Docker, Debian and raw files.
+description: A lean, self-hosted artifact repository for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian and raw files.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
   title: A lean, fast, secure artifact repository.
-  tagline: One binary for Maven, Gradle, Docker, Debian and raw files. Every publish gets a token that ends within 15 minutes.
+  tagline: One binary for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian and raw files. Every publish gets a token that ends within 15 minutes.
   actions:
     - text: Get started
       link: /run-the-server/
@@ -25,7 +25,7 @@ import Ticket from '../../components/landing/Ticket.astro';
 
 A password or a read token can only download. Each publish gets its own token for one repository, and the token ends within 15 minutes.
 
-One command, `telesphorepo publish`, gets the token for Gradle, Maven, Helm, Debian and raw files, on your computer and in CI. Docker gets it from the same CLI.
+One command, `telesphorepo publish`, gets the token for Gradle, Maven, npm, Python, Cargo, .NET, Helm, Debian and raw files, on your computer and in CI. Docker gets it from the same CLI.
 
 </div>
 <figure class="tr-ticket-figure not-content">
@@ -51,9 +51,9 @@ One command, `telesphorepo publish`, gets the token for Gradle, Maven, Helm, Deb
         <span class="tr-entry-title">Set up a project</span>
         <span class="tr-entry-text">One person does this once for each project.</span>
     </a>
-    <a href="/docker/">
-        <span class="tr-entry-title">Docker and Helm</span>
-        <span class="tr-entry-text">Push and pull images and charts.</span>
+    <a href="/install-cli/">
+        <span class="tr-entry-title">Install the CLI</span>
+        <span class="tr-entry-text">One command on Linux, macOS or Windows.</span>
     </a>
     <a href="/run-the-server/">
         <span class="tr-entry-title">Run the server</span>
@@ -62,5 +62,38 @@ One command, `telesphorepo publish`, gets the token for Gradle, Maven, Helm, Deb
     <a href="/move-from-nexus/">
         <span class="tr-entry-title">Move from Nexus</span>
         <span class="tr-entry-text">Copy your Nexus 3 repositories, then switch over.</span>
+    </a>
+</nav>
+
+## By format
+
+<nav class="tr-entries not-content" aria-label="By format">
+    <a href="/download/">
+        <span class="tr-entry-title">Gradle and Maven</span>
+        <span class="tr-entry-text">Use a repository in a Gradle or Maven build.</span>
+    </a>
+    <a href="/npm/">
+        <span class="tr-entry-title">npm, pnpm, Yarn and Bun</span>
+        <span class="tr-entry-text">Install and publish JavaScript packages.</span>
+    </a>
+    <a href="/python/">
+        <span class="tr-entry-title">Python</span>
+        <span class="tr-entry-text">Install with pip, uv or Poetry. Publish with the CLI, twine, uv or Poetry.</span>
+    </a>
+    <a href="/cargo/">
+        <span class="tr-entry-title">Rust and Cargo</span>
+        <span class="tr-entry-text">A sparse registry for your crates, and a cache of crates.io.</span>
+    </a>
+    <a href="/nuget/">
+        <span class="tr-entry-title">.NET and NuGet</span>
+        <span class="tr-entry-text">Restore and push NuGet packages with dotnet.</span>
+    </a>
+    <a href="/docker/">
+        <span class="tr-entry-title">Docker and Helm</span>
+        <span class="tr-entry-text">Push and pull images and charts.</span>
+    </a>
+    <a href="/debian-and-raw/">
+        <span class="tr-entry-title">Debian, raw and curl</span>
+        <span class="tr-entry-text">A signed apt repository, and plain files.</span>
     </a>
 </nav>

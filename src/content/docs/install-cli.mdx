@@ -1,0 +1,167 @@
+---
+title: Install the CLI
+description: Install the Telesphorepo CLI from your server on Linux, macOS or Windows, and keep it up to date.
+tableOfContents: false
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+Each Telesphorepo server serves the CLI of its own version. Install it from the server that you publish to. In the commands, put your server's address in place of `https://repo.example.com`. The **Install the CLI** page of the web UI shows the same lines with your address filled in.
+
+<Choice questions={[
+    {key: 'os', label: 'Which computer?', options: [
+        {value: 'unix', label: 'macOS or Linux'},
+        {value: 'windows', label: 'Windows'},
+    ]},
+]} />
+
+<Path title="macOS or Linux" os="unix">
+
+<Steps>
+
+1. Run this in a terminal.
+
+   ```sh
+   curl -fsSL https://repo.example.com/install.sh | sh
+   ```
+
+   The script downloads the CLI for your system and CPU from the server, and checks its SHA-256. It installs `telesphorepo` into `~/.local/bin`, with `docker-credential-telesphorepo` next to it.
+
+2. If `~/.local/bin` is not on your `PATH`, the script asks to add it to the startup file of your shell. Type `y`.
+
+   With no terminal, as in CI, the script does not ask. It prints the line to add instead.
+
+3. Open a new terminal, and check the install.
+
+   ```sh
+   telesphorepo version
+   ```
+
+</Steps>
+
+Done when the CLI prints its version.
+
+</Path>
+
+<Path title="Windows" os="windows">
+
+<Steps>
+
+1. Run this in PowerShell.
+
+   ```powershell
+   & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
+   ```
+
+   The script downloads the CLI for your CPU from the server, and checks its SHA-256. It installs `telesphorepo.exe` into `%LOCALAPPDATA%\Programs\telesphorepo`, with `docker-credential-telesphorepo.exe` next to it, and adds that folder to your user `PATH`.
+
+2. Check the install. The PowerShell window of the install finds the CLI at once. Other terminals find it once you open them again.
+
+   ```powershell
+   telesphorepo version
+   ```
+
+</Steps>
+
+Done when the CLI prints its version.
+
+The script runs in Windows PowerShell 5.1 and in PowerShell 7. PowerShell on Linux and macOS installs into `~/.local/bin`.
+
+</Path>
+
+## Run a command after the install
+
+Put the CLI command after the install line. The CLI runs it once the install is done. This is how the setup line of the **Publish to this repository** tab works:
+
+```sh
+curl -fsSL https://repo.example.com/install.sh | sh -s -- setup 'https://repo.example.com/#/setup/trsu_...'
+```
+
+```powershell
+& ([scriptblock]::Create((irm https://repo.example.com/install.ps1))) setup 'https://repo.example.com/#/setup/trsu_...'
+```
+
+## Install in CI
+
+Add the install line as a step before `telesphorepo publish`. In GitHub Actions, the script puts `~/.local/bin` on the `PATH` of the later steps. In Jenkins and other CI, add the folder to the `PATH` of the same shell:
+
+```sh
+curl -fsSL https://repo.example.com/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+telesphorepo publish
+```
+
+The CI files that the CLI writes hold these lines already. See [Set up a project](/set-up/).
+
+## Update the CLI
+
+```sh
+telesphorepo update
+```
+
+The CLI installs the CLI of the server: the server of the project in this folder, else the server that you name (`telesphorepo update https://repo.example.com`), else the one server that this computer is approved for. A CLI that is the same as the server's or newer stays, because a newer CLI works with an older server.
+
+When a server needs a newer CLI, the CLI says so and asks to update. Answer `Y`. The CLI updates, then runs your command again.
+
+## Download by hand
+
+The server keeps the CLI archives at `https://repo.example.com/cli/`, with a `SHA256SUMS` file:
+
+| System | Archive |
+|---|---|
+| Linux, x86-64 | `telesphorepo_linux_amd64.tar.gz` |
+| Linux, ARM | `telesphorepo_linux_arm64.tar.gz` |
+| macOS, Intel | `telesphorepo_darwin_amd64.tar.gz` |
+| macOS, Apple silicon | `telesphorepo_darwin_arm64.tar.gz` |
+| Windows, x86-64 | `telesphorepo_windows_amd64.zip` |
+| Windows, ARM | `telesphorepo_windows_arm64.zip` |
+
+<Steps>
+
+1. Download the archive for your system, and `SHA256SUMS`.
+
+   ```sh
+   curl -fLO https://repo.example.com/cli/telesphorepo_linux_amd64.tar.gz
+   curl -fLO https://repo.example.com/cli/SHA256SUMS
+   ```
+
+2. Check the archive. Its line must say `OK`.
+
+   ```sh
+   grep telesphorepo_linux_amd64.tar.gz SHA256SUMS | sha256sum -c
+   ```
+
+   On macOS, use `shasum -a 256 -c` in place of `sha256sum -c`. On Windows, compare the output of `Get-FileHash telesphorepo_windows_amd64.zip` with the line in `SHA256SUMS`.
+
+3. Unpack the archive, and put `telesphorepo` in a folder on your `PATH`.
+
+4. For Docker, Podman and Helm, make the second name of the CLI in the same folder.
+
+   ```sh
+   ln -s telesphorepo docker-credential-telesphorepo
+   ```
+
+   On Windows, copy `telesphorepo.exe` to `docker-credential-telesphorepo.exe`.
+
+</Steps>
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**`telesphorepo` is not found in a new terminal.** Add the install folder to your `PATH`: `~/.local/bin` on Linux and macOS, `%LOCALAPPDATA%\Programs\telesphorepo` on Windows. For `zsh`, add `export PATH="$HOME/.local/bin:$PATH"` to `~/.zshrc`. For `bash`, add it to `~/.bashrc`.
+
+**The script says that the SHA-256 differs.** The download does not match the file that the server named, and the script installed nothing. Run the line again. If it fails again, a proxy between you and the server may cache an old file. Ask your server admin.
+
+**The script says that the server has no CLI for your system.** The server has the CLI for Linux, macOS and Windows on x86-64 and ARM only.
+
+**The server answers that this build has no CLI downloads.** The server was built without the CLI. Ask your server admin to run an official image or release.
+
+**`telesphorepo update` says that it cannot write the folder.** It names the folder and the install line. Run the install line again, or fix the rights of the folder.
+
+**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
+
+</details>

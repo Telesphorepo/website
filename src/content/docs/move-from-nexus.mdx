@@ -35,8 +35,13 @@ Telesphorepo only reads from Nexus. It never changes Nexus.
    | `https://nexus.example.com/repository/maven-releases/` | `https://repo.example.com/maven/maven-releases` |
    | `https://nexus.example.com/repository/apt-hosted/` | `https://repo.example.com/debian/apt-hosted` |
    | `https://nexus.example.com/repository/raw-files/` | `https://repo.example.com/raw/raw-files` |
+   | `https://nexus.example.com/repository/npm-hosted/` | `https://repo.example.com/npm/npm-hosted/` |
+   | `https://nexus.example.com/repository/pypi-hosted/simple/` | `https://repo.example.com/pypi/pypi-hosted/simple/` |
+   | `https://nexus.example.com/repository/nuget-hosted/index.json` | `https://repo.example.com/nuget/nuget-hosted/index.json` |
 
-   See [Download packages](/download/) for the build blocks.
+   A Cargo repository becomes `sparse+https://repo.example.com/cargo/<name>/index/`, and a Docker repository `repo.example.com/<name>/IMAGE:TAG`. See [Repository addresses](/reference/#repository-addresses).
+
+   See the page of each format for the client setup, for example [Gradle and Maven](/download/) or [npm](/npm/).
 
 5. Prepare publishing. Set up each project as in [Set up a project](/set-up/). Keep publishing to Nexus for now.
 
@@ -60,10 +65,15 @@ Back up the data of Telesphorepo before the first sync. See [Run in production](
 | Nexus repository | Telesphorepo repository |
 |---|---|
 | Maven hosted (`maven2`) | Maven, every file at its path |
+| npm hosted | npm. Each tarball becomes a version, with the dist-tags of Nexus |
+| PyPI hosted | Python (PyPI). Each wheel and sdist, with its metadata |
+| Cargo hosted | Cargo (Rust). Each `.crate`, with the index entry from its `Cargo.toml` |
+| NuGet hosted | NuGet. Each `.nupkg`, as a push |
+| Docker hosted | Docker. Each tag and manifest, with the layers that it names |
 | Raw hosted | Raw, every file at its path |
 | Apt hosted | Debian. Telesphorepo copies the `.deb` files into the component `main` and builds its own indexes |
-| Maven proxy, apt proxy | A proxy of the same remote |
-| Maven group | A group of the copied members |
+| A proxy of Maven, npm, PyPI, Cargo, NuGet, Docker or apt | A proxy of the same remote |
+| A group of Maven, npm, PyPI, Cargo, NuGet or Docker | A group of the copied members |
 
 The table of repositories marks each repository that Telesphorepo cannot copy, with the reason. A repository that is offline in Nexus cannot be copied.
 

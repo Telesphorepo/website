@@ -1,0 +1,226 @@
+---
+title: Rust and Cargo
+description: Use a Telesphorepo Cargo registry in Rust builds, and publish crates with the Telesphorepo CLI.
+tableOfContents: false
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+An admin first makes a repository with the format **Cargo (Rust)** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `crates`, so the registry index is this:
+
+```text
+sparse+https://repo.example.com/cargo/crates/index/
+```
+
+Cargo 1.68 or later reads it. A private repository needs Cargo 1.74 or later. Put your own values in the blocks below. The **Use this repository** tab of the repository shows the same blocks with your values.
+
+<Choice questions={[
+    {key: 'repokind', label: 'What does the repository hold?', options: [
+        {value: 'hosted', label: 'Only your own crates'},
+        {value: 'group', label: 'crates.io crates too'},
+    ]},
+    {key: 'access', label: 'Who can download from the repository?', options: [
+        {value: 'public', label: 'Anyone'},
+        {value: 'private', label: 'Only signed-in people'},
+    ]},
+]} />
+
+## Use crates
+
+<Steps>
+
+1. Name the registry in `.cargo/config.toml` of the project, or in `~/.cargo/config.toml` for every project.
+
+   <Path title="Your own crates, anyone can download" repokind="hosted" access="public" level={4}>
+
+   ```toml title=".cargo/config.toml"
+   [registries.crates]
+   index = "sparse+https://repo.example.com/cargo/crates/index/"
+   ```
+
+   </Path>
+
+   <Path title="Your own crates, only signed-in people" repokind="hosted" access="private" level={4}>
+
+   ```toml title=".cargo/config.toml"
+   [registries.crates]
+   index = "sparse+https://repo.example.com/cargo/crates/index/"
+   credential-provider = "cargo:token"
+   ```
+
+   Cargo refuses a private registry that has no credential provider, so keep the `credential-provider` line.
+
+   </Path>
+
+   <Path title="crates.io crates too, anyone can download" repokind="group" access="public" level={4}>
+
+   ```toml title=".cargo/config.toml"
+   [registries.crates]
+   index = "sparse+https://repo.example.com/cargo/crates/index/"
+
+   [source.crates-io]
+   replace-with = "crates"
+   ```
+
+   Cargo then fetches every crate of crates.io through this repository.
+
+   </Path>
+
+   <Path title="crates.io crates too, only signed-in people" repokind="group" access="private" level={4}>
+
+   ```toml title=".cargo/config.toml"
+   [registries.crates]
+   index = "sparse+https://repo.example.com/cargo/crates/index/"
+   credential-provider = "cargo:token"
+
+   [source.crates-io]
+   replace-with = "crates"
+   ```
+
+   Cargo then fetches every crate of crates.io through this repository. Cargo refuses a private registry that has no credential provider, so keep the `credential-provider` line.
+
+   </Path>
+
+2. Give Cargo a read token.
+
+   <Path title="Anyone can download" access="public" level={4}>
+
+   Skip this step. Anyone can download.
+
+   </Path>
+
+   <Path title="Only signed-in people" access="private" level={4}>
+
+   **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**. Put the token in `~/.cargo/credentials.toml`:
+
+   ```toml title="~/.cargo/credentials.toml"
+   [registries.crates]
+   token = "YOUR_READ_TOKEN"
+   ```
+
+   This file is in your home folder, not in the project. Do not commit it. In CI, set `CARGO_REGISTRIES_CRATES_TOKEN` to the token instead.
+
+   </Path>
+
+3. Add a crate.
+
+   <Path title="Your own crates" repokind="hosted" level={4}>
+
+   ```sh
+   cargo add acme-core@1.2.0 --registry crates
+   ```
+
+   Cargo writes the line into `Cargo.toml`:
+
+   ```toml title="Cargo.toml"
+   [dependencies]
+   acme-core = { version = "1.2.0", registry = "crates" }
+   ```
+
+   </Path>
+
+   <Path title="crates.io crates too" repokind="group" level={4}>
+
+   ```sh
+   cargo add acme-core@1.2.0
+   ```
+
+   A crate of crates.io and a crate of your own both come through the repository, so the dependency needs no `registry`.
+
+   </Path>
+
+4. Build.
+
+   ```sh
+   cargo build
+   ```
+
+</Steps>
+
+Done when Cargo prints `Finished`.
+
+<Path title="Your own crates" repokind="hosted">
+
+A hosted repository holds your own crates only. The crates of crates.io still come from crates.io. To fetch every crate through one registry, ask your server admin for a group of your repository and a proxy of crates.io.
+
+</Path>
+
+<Path title="crates.io crates too" repokind="group">
+
+A group asks its members in order. The first member that has a crate name owns it, and the group serves every version of that name from that member only. So a crate on crates.io with the name of your private crate cannot take its place, even with a higher version. Your admin puts your hosted repository before the proxy.
+
+</Path>
+
+## Publish a crate
+
+You set up the project once. After that, everyone on the project publishes with one command.
+
+<Steps>
+
+1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
+
+2. Paste the setup line in a terminal, in the folder that holds `Cargo.toml`. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
+
+3. Publish.
+
+   ```sh
+   telesphorepo publish
+   ```
+
+</Steps>
+
+Done when Cargo prints `Published`.
+
+The CLI runs `cargo publish` to the repository, with a publish token for this one repository. Cargo packs and checks the crate as usual. `Cargo.toml` and your Cargo config stay as they are, and no file holds the token.
+
+A version that the repository has already, also with other build metadata, answers `409`. Raise the version. A name that differs from a crate of the repository only in case, or in `-` and `_`, answers `409` too, as on crates.io.
+
+## Publish from CI
+
+The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes this file:
+
+```yaml title=".github/workflows/publish.yml"
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - run: curl -fsSL https://repo.example.com/install.sh | sh
+      - run: telesphorepo publish
+```
+
+The identity token publishes only. If the build reads a private repository, keep a read token in a CI secret and set `CARGO_REGISTRIES_CRATES_TOKEN` to it. For Jenkins, see [Set up a project](/set-up/).
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**Cargo asks for a token, or says that the registry needs a credential provider.** Add `credential-provider = "cargo:token"` under `[registries.crates]` in `.cargo/config.toml`, and check the token in `~/.cargo/credentials.toml`.
+
+**Cargo does not send the token.** A private repository needs Cargo 1.74 or later. Run `rustup update`.
+
+**Cargo cannot find a crate of your repository.** Without source replacement, the dependency needs `registry = "crates"`. Check the name of the registry in `.cargo/config.toml`.
+
+**A group serves your private crate, not the one on crates.io.** The first member that has a name owns it. Rename your crate, or ask your admin to change the order of the members.
+
+**409 when you publish.** That version is on the server, or another crate of the repository has nearly the same name. Raise the version, or rename the crate.
+
+**`cargo search` or `cargo owner` answers 404.** The server does not serve them. Search on the repository page in the web UI. Your server admin gives **Publish** on the repository.
+
+**You want to yank a version.** Make a publish token in **Settings** › **Tokens** › **New publish token**. Set `CARGO_REGISTRIES_CRATES_TOKEN` to it, then run `cargo yank acme-core@1.2.0 --registry crates`. Add `--undo` to take the yank back. A read token cannot yank.
+
+**The CLI says that cargo is not on the PATH.** Install Rust 1.74 or later from https://rustup.rs.
+
+</details>

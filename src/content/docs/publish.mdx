@@ -6,11 +6,11 @@ tableOfContents: false
 
 import { Steps } from '@astrojs/starlight/components';
 
-The project folder holds `telesphorepo.toml`. One command publishes it, for Gradle and for Maven.
+The project folder holds `telesphorepo.toml`. One command publishes it: a Gradle or Maven build, an npm package, a Python package, a Rust crate, a .NET package or a Helm chart.
 
 <Steps>
 
-1. Install the Telesphorepo CLI once. Your server's address is the `server` line of `telesphorepo.toml`.
+1. Install the Telesphorepo CLI once. Your server's address is the `server` line of `telesphorepo.toml`. See [Install the CLI](/install-cli/) for the details.
 
    ```sh
    curl -fsSL https://repo.example.com/install.sh | sh
@@ -32,9 +32,21 @@ The project folder holds `telesphorepo.toml`. One command publishes it, for Grad
 
 </Steps>
 
-Done when Gradle prints `BUILD SUCCESSFUL`, or Maven prints `BUILD SUCCESS`.
+Done when the build tool says so: Gradle prints `BUILD SUCCESSFUL`, Maven prints `BUILD SUCCESS`, Cargo prints `Published`. For Python and .NET, the CLI prints `Uploaded` or `Pushed` for each file.
 
-The CLI runs `./gradlew publish` or `mvn deploy` for you, with your wrapper when the project has one. It prints the command before it runs it. It gives the build a publish token for this one repository, and ends the token when the build ends.
+The CLI finds the project in the folder and runs its own tool for you. It prints the command before it runs it. It gives the tool a publish token for this one repository, and ends the token when the tool ends.
+
+| Project | The CLI runs |
+|---|---|
+| Gradle | `./gradlew publish`, or `gradle publish` without a wrapper |
+| Maven | `./mvnw deploy`, or `mvn deploy` without a wrapper |
+| npm (`package.json`) | `npm publish`, `pnpm publish`, `yarn npm publish` or `bun publish`, by the lockfile |
+| Python (`pyproject.toml`, `setup.py`) | `poetry build`, `uv build` or `python -m build`, then an upload of each file |
+| Rust (`Cargo.toml`) | `cargo publish` |
+| .NET (`.sln`, `.csproj`, `.fsproj`) | `dotnet pack -c Release`, then a push of each package |
+| Helm chart (`Chart.yaml`) | `helm package`, then `helm push` |
+
+For the steps of each format, see [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), and [Debian, raw and curl](/debian-and-raw/).
 
 Project not set up yet? [Set up a project](/set-up/).
 
@@ -51,7 +63,9 @@ Project not set up yet? [Set up a project](/set-up/).
 
 **403 when you publish.** You cannot publish to this repository yet. Ask your server admin for **Publish**.
 
-**409 when you publish.** That version is already on the server. Raise the version. You can publish a `-SNAPSHOT` version again and again.
+**409 when you publish.** That version is already on the server. Raise the version. In a Maven repository, you can publish a `-SNAPSHOT` version again and again. npm answers `403 version ... already exists` for the same reason.
+
+**The CLI says that a tool is not on the PATH.** The CLI runs the tool of the project, such as `pnpm`, `poetry`, `cargo` or `dotnet`. Install it, then publish again.
 
 **The server refused the device.** Run `telesphorepo login` with your server's address, and approve again. An approval lasts 90 days, unless someone removes the device.
 
@@ -74,5 +88,7 @@ tasks.withType<PublishToMavenRepository>().configureEach { enabled = false }
 ```
 
 **You publish a Debian package or a plain file.** See [Debian, raw and curl](/debian-and-raw/).
+
+**You publish Python wheels or .NET packages that you built.** Name the files: `telesphorepo publish dist/*.whl` or `telesphorepo publish bin/Release/*.nupkg`. The CLI then builds nothing.
 
 </details>

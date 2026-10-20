@@ -118,11 +118,31 @@ CI jobs cannot publish without the public address. For HTTPS, see [Run in produc
 
 2. Type a name, such as `releases`.
 
-3. Choose **Maven / Gradle**.
+3. Choose the format: **Maven / Gradle**, **npm**, **Python (PyPI)**, **Cargo (Rust)**, **NuGet**, **Debian (apt)** or **Raw files**. For Docker, see below.
+
+4. Choose **Hosted** for your own packages.
+
+5. Click **Create repository**.
+
+</Steps>
+
+## Add public packages
+
+A **proxy** keeps a copy of each package that people download from a public registry. A **group** joins several repositories under one address. With a group of your hosted repository and a proxy, people install your packages and the public ones through one address.
+
+<Steps>
+
+1. Make a repository of the same format, and choose **Proxy**. Pick the remote, such as Maven Central, `registry.npmjs.org`, PyPI, crates.io or nuget.org.
+
+2. Make a repository of the same format, and choose **Group**.
+
+3. Add the members in order: your hosted repository first, then the proxy.
 
 4. Click **Create repository**.
 
 </Steps>
+
+Neither kind takes uploads. In an npm, Python, Cargo or NuGet group, the first member that has a package name owns it, and the group serves every version of that name from that member only. So a public package with the name of your private package cannot take its place. A Maven group merges the versions of all its members.
 
 ## Make a Docker repository
 
@@ -160,7 +180,7 @@ Docker needs the server at the root of a host, such as `https://repo.example.com
 
 To add a person first, open **Settings** › **People** and click **New account**. See [People and sign-in](/people-and-sign-in/).
 
-Then send people two links: [Set up a project](/set-up/) for the first person on a project, and [Publish a package](/publish/) for everyone. For Docker and Helm, send [Docker and Helm](/docker/).
+Then send people two links: [Set up a project](/set-up/) for the first person on a project, and [Publish a package](/publish/) for everyone. Also send the page of your format: [Gradle and Maven](/download/), [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), or [Debian, raw and curl](/debian-and-raw/).
 
 ## Add a CI pipeline
 

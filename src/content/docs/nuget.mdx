@@ -1,0 +1,233 @@
+---
+title: .NET and NuGet
+description: Restore NuGet packages from Telesphorepo with dotnet, and publish them with the Telesphorepo CLI or dotnet nuget push.
+tableOfContents: false
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+An admin first makes a repository with the format **NuGet** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `dotnet`, so the package source is this:
+
+```text
+https://repo.example.com/nuget/dotnet/index.json
+```
+
+dotnet, nuget.exe and Visual Studio read it. Put your own values in the blocks below. The **Use this repository** tab of the repository shows the same blocks with your values.
+
+<Choice questions={[
+    {key: 'repokind', label: 'What does the repository hold?', options: [
+        {value: 'hosted', label: 'Only your own packages'},
+        {value: 'group', label: 'nuget.org packages too'},
+    ]},
+    {key: 'access', label: 'Who can download from the repository?', options: [
+        {value: 'public', label: 'Anyone'},
+        {value: 'private', label: 'Only signed-in people'},
+    ]},
+]} />
+
+## Restore packages
+
+<Steps>
+
+1. Make a read token.
+
+   <Path title="Anyone can download" access="public" level={4}>
+
+   Skip this step. Anyone can download.
+
+   </Path>
+
+   <Path title="Only signed-in people" access="private" level={4}>
+
+   **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**.
+
+   </Path>
+
+2. Put `nuget.config` next to the solution. dotnet reads it for every project below it.
+
+   <Path title="Anyone can download" access="public" level={4}>
+
+   ```xml title="nuget.config"
+   <?xml version="1.0" encoding="utf-8"?>
+   <configuration>
+     <packageSources>
+       <add key="dotnet" value="https://repo.example.com/nuget/dotnet/index.json" />
+     </packageSources>
+   </configuration>
+   ```
+
+   </Path>
+
+   <Path title="Only signed-in people" access="private" level={4}>
+
+   ```xml title="nuget.config"
+   <?xml version="1.0" encoding="utf-8"?>
+   <configuration>
+     <packageSources>
+       <add key="dotnet" value="https://repo.example.com/nuget/dotnet/index.json" />
+     </packageSources>
+     <packageSourceCredentials>
+       <dotnet>
+         <add key="Username" value="YOUR_USERNAME" />
+         <add key="ClearTextPassword" value="YOUR_READ_TOKEN" />
+       </dotnet>
+     </packageSourceCredentials>
+   </configuration>
+   ```
+
+   The file holds your token. Before you commit it, write `%NUGET_USERNAME%` and `%NUGET_TOKEN%` in place of the values, and set those variables on each computer and in CI.
+
+   </Path>
+
+   <Path title="nuget.org packages too" repokind="group" level={4}>
+
+   To restore every package through the repository, add `<clear />` as the first line in `<packageSources>`. dotnet then skips nuget.org.
+
+   </Path>
+
+3. Add a package.
+
+   ```sh
+   dotnet add package Contoso.Core --version 1.2.0
+   ```
+
+   dotnet writes the line into the project file:
+
+   ```xml title="App.csproj"
+   <ItemGroup>
+     <PackageReference Include="Contoso.Core" Version="1.2.0" />
+   </ItemGroup>
+   ```
+
+</Steps>
+
+Done when `dotnet restore` ends with no error.
+
+<details>
+<summary>Add the source for your user, with no nuget.config in the project</summary>
+
+<Path title="Anyone can download" access="public" level={4}>
+
+```sh
+dotnet nuget add source https://repo.example.com/nuget/dotnet/index.json --name dotnet
+```
+
+</Path>
+
+<Path title="Only signed-in people" access="private" level={4}>
+
+Paste the token at the hidden prompt.
+
+```sh
+printf 'Read token: '; read -rs READ_TOKEN; echo
+dotnet nuget add source https://repo.example.com/nuget/dotnet/index.json --name dotnet \
+  --username YOUR_USERNAME --password "$READ_TOKEN" --store-password-in-clear-text
+```
+
+</Path>
+
+dotnet adds the source to the `nuget.config` of your user.
+
+</details>
+
+<Path title="Your own packages" repokind="hosted">
+
+A hosted repository holds your own packages only. dotnet still restores the packages of nuget.org from nuget.org. To restore every package through one source, ask your server admin for a group of your repository and a proxy of nuget.org.
+
+</Path>
+
+<Path title="nuget.org packages too" repokind="group">
+
+A group asks its members in order. The first member that has a package id owns it, and the group serves every version of that id from that member only. So a package on nuget.org with the id of your private package cannot take its place, even with a higher version. Your admin puts your hosted repository before the proxy. A proxy stores the packages of nuget.org unchanged, so they keep the signatures of their authors and of nuget.org.
+
+</Path>
+
+## Publish a package
+
+You set up the project once. After that, everyone on the project publishes with one command.
+
+<Steps>
+
+1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
+
+2. Paste the setup line in a terminal, in the folder that holds the `.sln`, `.slnx`, `.csproj` or `.fsproj` file. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
+
+3. Publish.
+
+   ```sh
+   telesphorepo publish
+   ```
+
+</Steps>
+
+Done when the CLI prints `Pushed` for each package, for example `Pushed Contoso.Core.1.2.0.nupkg to dotnet`.
+
+The CLI runs `dotnet pack -c Release` into a temporary folder, then pushes each package that it wrote, with a publish token for this one repository. It skips `.symbols.nupkg` files. To push packages that you built, name them: `telesphorepo publish bin/Release/*.nupkg`. The CLI then builds nothing. The server stores the bytes of a package unchanged, so a signed package keeps its signature.
+
+A version that the repository has already answers `409`, also with the same bytes. Raise the version.
+
+<details>
+<summary>Publish with dotnet nuget push</summary>
+
+Make a publish token in **Settings** › **Tokens** › **New publish token**: choose the repository, then confirm with your second factor. The token works for 15 minutes. dotnet takes it as the API key:
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+dotnet nuget push Contoso.Core.1.2.0.nupkg --source https://repo.example.com/nuget/dotnet/index.json --api-key "$TOKEN"
+```
+
+dotnet takes the API key only as an argument, so the token shows in the process list while the push runs. A password or a read token cannot push.
+
+</details>
+
+## Publish from CI
+
+The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes this file:
+
+```yaml title=".github/workflows/publish.yml"
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - run: curl -fsSL https://repo.example.com/install.sh | sh
+      - run: telesphorepo publish
+```
+
+The identity token publishes only. If the restore reads a private repository, keep a read token in a CI secret, and set `NUGET_USERNAME` and `NUGET_TOKEN`. For Jenkins, see [Set up a project](/set-up/).
+
+## If something goes wrong
+
+<details>
+<summary>Find your problem, then do the fix</summary>
+
+**dotnet refuses an `http://` source.** Add `allowInsecureConnections="true"` to the `<add>` line of the source. For real use, serve the server over HTTPS. See [Run in production](/production/).
+
+**401 when you restore.** The repository is for signed-in people only. Check `packageSourceCredentials`: the element name must be the key of the source, here `<dotnet>`. A key that starts with a digit is written with `_x003` and the digit, as in `<_x0031_api>` for the key `1api`.
+
+**dotnet cannot find a package of nuget.org.** With `<clear />`, every package comes through the repository. Ask your server admin for a group with a proxy of nuget.org, or remove `<clear />`.
+
+**A group serves your private package, not the one on nuget.org.** The first member that has an id owns it. Rename your package, or ask your admin to change the order of the members.
+
+**409 when you publish.** That version is on the server. Raise the version. With `dotnet nuget push`, add `--skip-duplicate` to skip the packages that are there already.
+
+**`dotnet pack wrote no package`.** A project packs when it is packable. Add `<IsPackable>true</IsPackable>` to the project file. A test project does not pack.
+
+**The CLI says that dotnet is not on the PATH.** Install the .NET SDK.
+
+**You want to hide a version.** Run `dotnet nuget delete Contoso.Core 1.2.0 --source https://repo.example.com/nuget/dotnet/index.json` with a publish token as the API key. The server unlists the version. dotnet still restores it by its exact version.
+
+</details>

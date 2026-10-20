@@ -9,7 +9,7 @@ import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 import Fill from '../../components/choice/Fill.astro';
 
-One person does this once for each project. After that, everyone on the project can [publish a package](/publish/). For Docker images and Helm charts, see [Docker and Helm](/docker/).
+One person does this once for each project. After that, everyone on the project can [publish a package](/publish/). The steps are the same for Gradle, Maven, npm, Python, Cargo, .NET, Helm charts, Debian packages and raw files. For Docker images, see [Docker and Helm](/docker/).
 
 <Fill />
 
@@ -52,7 +52,7 @@ One person does this once for each project. After that, everyone on the project 
 
    </Path>
 
-   The line installs the Telesphorepo CLI and approves this computer. Then the CLI finds Gradle or Maven in the folder and writes `telesphorepo.toml`. It asks before it changes a file. It prints `publishing to your-repo (maven) as YOUR_USERNAME`.
+   The line installs the Telesphorepo CLI and approves this computer. Then the CLI finds the project in the folder and writes `telesphorepo.toml`. It asks before it changes a file. It prints the repository, its format and your username, such as `publishing to your-repo (maven) as YOUR_USERNAME`.
 
 4. The CLI asks for a CI file.
 
@@ -215,7 +215,18 @@ Done when the build log ends with `Finished: SUCCESS`.
 <details>
 <summary>Find your problem, then do the fix</summary>
 
-**The CLI does not find a project.** Run the line in the folder that holds `settings.gradle`, `settings.gradle.kts`, `build.gradle`, `build.gradle.kts` or `pom.xml`. The CLI names the files that it looks for.
+**The CLI does not find a project.** Run the line in the folder that holds the project file of the repository's format. The CLI names the files that it looks for:
+
+| Format | Project file |
+|---|---|
+| Maven / Gradle | `settings.gradle`, `settings.gradle.kts`, `build.gradle`, `build.gradle.kts` or `pom.xml` |
+| npm | `package.json` |
+| Python (PyPI) | `pyproject.toml` or `setup.py` |
+| Cargo (Rust) | `Cargo.toml` |
+| NuGet | a `.sln`, `.slnx`, `.csproj` or `.fsproj` file |
+| Docker | `Chart.yaml`, for a Helm chart |
+
+A Debian or raw repository needs no project file.
 
 **The folder holds Gradle and Maven files.** The CLI asks which one to use, and writes the answer as `kind` in `telesphorepo.toml`.
 
@@ -225,7 +236,7 @@ Done when the build log ends with `Finished: SUCCESS`.
 
 **The CLI cannot reach the server.** Check the address. Open it in a browser.
 
-**`telesphorepo` is not found in a new terminal.** The install puts the CLI in `~/.local/bin` (on Windows, in `%LOCALAPPDATA%\Programs\telesphorepo`). Add that folder to your `PATH`, or open a new terminal.
+**`telesphorepo` is not found in a new terminal.** The install puts the CLI in `~/.local/bin` (on Windows, in `%LOCALAPPDATA%\Programs\telesphorepo`). Add that folder to your `PATH`, or open a new terminal. See [Install the CLI](/install-cli/).
 
 **GitHub Actions gave this job no identity token.** Add `id-token: write` under `permissions` in the workflow file.
 
@@ -281,7 +292,7 @@ server = "https://your-server"
 repo = "your-repo"
 ```
 
-You do not change the build files. For Gradle, the project must apply the `maven-publish` plugin and give the project a group and a version:
+You do not change the build files. The steps for npm, Python, Cargo and .NET are on their pages: [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/) and [.NET and NuGet](/nuget/). For Gradle, the project must apply the `maven-publish` plugin and give the project a group and a version:
 
 ```kotlin title="build.gradle.kts"
 plugins {
@@ -303,7 +314,7 @@ For Maven, `pom.xml` needs no `<distributionManagement>`. The CLI gives Maven th
 
 ### GitHub Actions
 
-Create `.github/workflows/publish.yml`.
+Create `.github/workflows/publish.yml`. This one is for Gradle and Maven. The page of each format shows its own setup step in place of `actions/setup-java`.
 
 ```yaml title=".github/workflows/publish.yml"
 on:
@@ -329,7 +340,7 @@ jobs:
 
 ### Jenkinsfile
 
-Create `Jenkinsfile`. This one is for Gradle. For Maven, the build line is `mvn -B verify`.
+Create `Jenkinsfile`. This one is for Gradle. For Maven, the build line is `mvn -B verify`. The **Publish to this repository** tab shows the file for the tool of your repository.
 
 ```groovy title="Jenkinsfile"
 pipeline {
@@ -337,18 +348,33 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh './gradlew build'
+        script {
+          if (isUnix()) {
+            sh './gradlew build'
+          } else {
+            powershell '.\\gradlew.bat build'
+          }
+        }
       }
     }
     stage('Publish to your-repo') {
       steps {
         // The token is good for 10 minutes, so only this stage gets it.
         withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
-          sh '''
-            curl -fsSL https://your-server/install.sh | sh
-            export PATH="$HOME/.local/bin:$PATH"
-            telesphorepo publish
-          '''
+          script {
+            if (isUnix()) {
+              sh '''
+                curl -fsSL https://your-server/install.sh | sh
+                export PATH="$HOME/.local/bin:$PATH"
+                telesphorepo publish
+              '''
+            } else {
+              powershell '''
+                & ([scriptblock]::Create((irm https://your-server/install.ps1)))
+                telesphorepo publish
+              '''
+            }
+          }
         }
       }
     }

@@ -40,7 +40,7 @@ On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudfl
 <summary>Other proxies</summary>
 
 - Let the proxy accept request bodies up to the **Max upload size** of the server (**Settings** › **General**). The default is 2 GiB. Some proxies stop at 1 MiB.
-- Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, so use HTTPS for real use.
+- Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, and pip, Yarn, dotnet and Docker each need a setting for it, so use HTTPS for real use.
 
 </details>
 
