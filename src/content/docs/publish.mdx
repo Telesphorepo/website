@@ -19,7 +19,7 @@ The project folder holds `telesphorepo.toml`. One command publishes it: a Gradle
    On Windows:
 
    ```powershell
-   & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
+   irm https://repo.example.com/install.ps1 | iex
    ```
 
 2. In the project folder, run the publish command.

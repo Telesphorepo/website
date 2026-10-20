@@ -236,7 +236,7 @@ A Debian or raw repository needs no project file.
 
 **The CLI cannot reach the server.** Check the address. Open it in a browser.
 
-**`telesphorepo` is not found in a new terminal.** The install puts the CLI in `~/.local/bin` (on Windows, in `%LOCALAPPDATA%\Programs\telesphorepo`). Add that folder to your `PATH`, or open a new terminal. See [Install the CLI](/install-cli/).
+**`telesphorepo` is not found in a new terminal.** The install puts the CLI in `~/.local/bin` (on Windows, in `%LOCALAPPDATA%\Programs\telesphorepo`, which it adds to your user `PATH`). When `~/.local/bin` is not on your `PATH`, the script asks to add it to the start-up file of your shell, such as `~/.zshrc`. Answer `Y`, then open a new terminal. See [Install the CLI](/install-cli/).
 
 **GitHub Actions gave this job no identity token.** Add `id-token: write` under `permissions` in the workflow file.
 
@@ -252,7 +252,7 @@ A Debian or raw repository needs no project file.
 
 **The server cannot reach Jenkins.** Ask your server admin to paste the Jenkins keys into the CI pipeline. See [Run the server](/run-the-server/#add-a-ci-pipeline).
 
-**The Jenkins agent runs Windows.** A Jenkinsfile from the CLI runs PowerShell on a Windows agent. For a freestyle job, choose **Execute Windows PowerShell** and install the CLI with `& ([scriptblock]::Create((irm https://your-server/install.ps1)))`.
+**The Jenkins agent runs Windows.** A Jenkinsfile from the CLI runs PowerShell on a Windows agent. For a freestyle job, choose **Execute Windows PowerShell** and install the CLI with `irm https://your-server/install.ps1 | iex`.
 
 **The project is in a subfolder of the git repository.** The CI job starts at the top folder. Put `cd` and the subfolder before `telesphorepo publish`. The CLI prints the line.
 
@@ -276,7 +276,7 @@ curl -fsSL https://your-server/install.sh | sh
 On Windows:
 
 ```powershell
-& ([scriptblock]::Create((irm https://your-server/install.ps1)))
+irm https://your-server/install.ps1 | iex
 ```
 
 Approve this computer. The CLI prints a link and a code. Open the link, sign in, and approve the code.
