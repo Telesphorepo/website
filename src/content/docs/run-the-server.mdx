@@ -28,7 +28,7 @@ This page is for the server admin.
 1. Start the server.
 
    ```sh
-   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
+   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 2. Copy the admin password from the log.
@@ -56,10 +56,13 @@ This page is for the server admin.
          - "8080:8080"
        volumes:
          - telesphorepo-data:/data
+         - telesphorepo-backups:/backups
 
    volumes:
      telesphorepo-data:
        name: telesphorepo-data
+     telesphorepo-backups:
+       name: telesphorepo-backups
    ```
 
 2. Start the server.
@@ -87,7 +90,7 @@ For HTTPS and backups in the same file, see [Run with Docker Compose](/productio
 1. Start the server.
 
    ```sh
-   podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
+   podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 2. Copy the admin password from the log.
