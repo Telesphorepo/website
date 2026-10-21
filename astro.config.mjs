@@ -7,12 +7,22 @@ import starlightLinksValidator from 'starlight-links-validator'
 import starlightUtils from "@lorenzo_lewis/starlight-utils";
 import starlightLlmsTxt from 'starlight-llms-txt';
 
+// A page that is one step of a sequence carries its number. The sidebar shows it before the label
+// (src/styles/custom.css, a[data-step]).
+const step = (n) => ({attrs: {'data-step': String(n)}});
+
 const sidebar = [
-    {label: 'Publish a package', link: '/publish'},
-    {label: 'Set up a project', link: '/set-up'},
-    {label: 'Install the CLI', link: '/install-cli'},
+    {label: 'Overview', link: '/'},
     {
-        label: 'Formats',
+        label: 'Publish your packages',
+        items: [
+            {label: 'Install the CLI', link: '/install-cli', ...step(1)},
+            {label: 'Publish from a project', link: '/publish-from-a-project', ...step(2)},
+            {label: 'Publish from CI', link: '/publish-from-ci', ...step(3)},
+        ]
+    },
+    {
+        label: 'Use packages in your builds',
         items: [
             {label: 'Gradle and Maven', link: '/download'},
             {label: 'npm, pnpm, Yarn, Bun', link: '/npm'},
@@ -23,16 +33,21 @@ const sidebar = [
             {label: 'Debian, raw and curl', link: '/debian-and-raw'},
         ]
     },
-    {label: 'Run the server', link: '/run-the-server'},
     {
-        label: 'Reference',
-        collapsed: true,
+        label: 'Move from Nexus',
         items: [
-            {label: 'Move from Nexus', link: '/move-from-nexus'},
-            {label: 'Move your projects', link: '/move-projects'},
+            {label: 'Copy your repositories', link: '/move-from-nexus', ...step(1)},
+            {label: 'Move your projects by hand', link: '/move-projects-by-hand', ...step(2)},
+            {label: 'Move your projects with an AI agent', link: '/move-projects-with-an-agent', ...step(3)},
+        ]
+    },
+    {
+        label: 'Administration',
+        items: [
+            {label: 'Run the server', link: '/run-the-server'},
+            {label: 'Repositories and access', link: '/repositories-and-access'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
-            {label: 'Run in production', link: '/production'},
-            {label: 'Settings and commands', link: '/reference'},
+            {label: 'Commands and settings', link: '/commands-and-settings'},
         ]
     },
     // The header links. starlight-utils takes this group out of the sidebar. Starlight marks only the
@@ -41,21 +56,39 @@ const sidebar = [
     {
         label: "leadingNavLinks",
         items: [
-            {label: "Docs", link: "/publish"},
-            {label: "Reference", link: "/reference"},
+            {label: "Publish", link: "/install-cli"},
+            {label: "Use packages", link: "/download"},
+            {label: "Administration", link: "/run-the-server"},
         ]
     },
 ];
 
-// The docs page ids in sidebar order, after the landing page. The header links are not docs pages.
-const pageOrder = ['index', ...sidebar
+// The docs page ids in sidebar order. The landing page is the Overview entry; the header links are
+// not docs pages.
+const pageOrder = sidebar
     .filter((entry) => entry.label !== 'leadingNavLinks')
     .flatMap((entry) => 'items' in entry ? entry.items : [entry])
-    .map((entry) => entry.link.slice(1))];
+    .map((entry) => entry.link === '/' ? 'index' : entry.link.slice(1));
+
+// Pages that moved: the old address answers with a redirect to the new one. A fragment of the old
+// address (such as /production/#back-up) stays on the new one, so the merged pages keep the old
+// heading names.
+const moved = {
+    '/set-up': '/publish-from-a-project',
+    '/publish': '/publish-from-a-project',
+    '/production': '/run-the-server',
+    '/reference': '/commands-and-settings',
+    '/move-projects': '/move-projects-with-an-agent',
+};
+const redirects = Object.fromEntries(Object.entries(moved).flatMap(([from, to]) => [
+    [`${from}/`, `${to}/`],
+    [`${from}.md`, `${to}.md`],
+]));
 
 // https://astro.build/config
 export default defineConfig({
     site: 'https://docs.telesphorepo.com',
+    redirects,
     integrations: [starlight({
         title: 'Telesphorepo',
         description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, npm, Python, Cargo and NuGet packages, Docker images, Helm charts, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
@@ -126,19 +159,29 @@ export default defineConfig({
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
             description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, npm packages, Python packages, Rust crates, NuGet packages, Docker images and Helm charts, Debian packages and raw files. Each format has hosted repositories, and most also have proxies and groups. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish.md`. The Set up a project, Install the CLI, format and Run the server pages hold the steps for every choice, each under its own heading.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish-from-a-project.md`. The Publish from a project, Publish from CI, Install the CLI, format, Move your projects and Run the server pages hold the steps for every choice, each under its own heading.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['publish', 'set-up', 'install-cli', 'download', 'npm', 'python', 'cargo', 'nuget', 'docker', 'debian-and-raw', 'people-and-sign-in'],
-                    description: 'The Telesphorepo CLI (install, setup, publish and the Docker credential helper), each format (Gradle and Maven, npm, Python, Cargo, NuGet, Docker and Helm, Debian and raw), CI for GitHub Actions and Jenkins, accounts and two-step verification',
+                    paths: ['install-cli', 'publish-from-a-project', 'publish-from-ci'],
+                    description: 'The Telesphorepo CLI (install, setup, publish and the Docker credential helper), the project file, CI for GitHub Actions and Jenkins',
                 },
                 {
-                    label: 'Operations',
-                    paths: ['run-the-server', 'production', 'move-from-nexus', 'move-projects', 'reference'],
-                    description: 'HTTPS, storage, backups, upgrades, the move from Nexus, commands, environment variables and settings',
+                    label: 'Formats',
+                    paths: ['download', 'npm', 'python', 'cargo', 'nuget', 'docker', 'debian-and-raw'],
+                    description: 'Downloads in each format (Gradle and Maven, npm, Python, Cargo, NuGet, Docker and Helm, Debian and raw), with what is different when each one publishes',
+                },
+                {
+                    label: 'Moving from Nexus',
+                    paths: ['move-from-nexus', 'move-projects-by-hand', 'move-projects-with-an-agent'],
+                    description: 'The copy of Nexus 3 repositories and the switch-over, each project moved by hand or with a coding agent, and the rehearsal of publishing',
+                },
+                {
+                    label: 'Administration',
+                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'commands-and-settings'],
+                    description: 'HTTPS, storage, backups, upgrades, repositories, proxies and groups, access, CI pipelines, network rules, people, two-step verification, single sign-on, commands, environment variables and settings',
                 },
             ],
         })],

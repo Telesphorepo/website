@@ -100,10 +100,16 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
         color: var(--tr-heading);
     }
 
-    /* Narrow screens: the mark alone. The sidebar menu holds the same links. */
-    @media (max-width: 30rem) {
-        .tr-lockup,
+    /* The three header links need the width of a tablet. The sidebar menu holds the same pages. */
+    @media (max-width: 50rem) {
         .tr-nav-links {
+            display: none;
+        }
+    }
+
+    /* Narrow screens: the mark alone. */
+    @media (max-width: 30rem) {
+        .tr-lockup {
             display: none;
         }
 
