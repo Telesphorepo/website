@@ -1,92 +1,21 @@
 ---
 title: Debian, raw and curl
-description: Host a signed apt repository or plain files, and publish with the Telesphorepo CLI or curl.
+description: Install from a signed apt repository and download plain files from Telesphorepo, and what is different when you publish them with the CLI or curl.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
-Create the repository first. Open **Settings** › **Repositories** › **New repository**, and choose the format **Debian (apt)** or **Raw files**.
+This page sets up apt and curl to install and download from Telesphorepo. To publish packages and files, see [Publish from a project](/publish-from-a-project/), under Publish your packages; what is different for Debian and raw files is under [Publish Debian packages and raw files](#publish-debian-packages-and-raw-files).
 
-## Set up a project
+An admin first makes the repository: **Settings** › **Repositories** › **New repository**, with the format **Debian (apt)** or **Raw files**.
 
-<Steps>
-
-1. Open the repository in the web UI, then the **Publish to this repository** tab.
-
-2. Click **Set up a project**, and confirm with your second factor.
-
-3. Open a terminal in the project folder. Paste the line, then press Enter.
-
-   ```sh
-   curl -fsSL https://repo.example.com/install.sh | sh -s -- setup 'https://repo.example.com/#/setup/trsu_...'
-   ```
-
-   The CLI asks for the folder of a raw repository, or the distribution and the component of a Debian repository. It writes the answers to `telesphorepo.toml`.
-
-4. Commit `telesphorepo.toml`.
-
-</Steps>
-
-For a Debian repository named `apt`, the file is this:
-
-```toml title="telesphorepo.toml"
-server = "https://repo.example.com"
-repo = "apt"
-dist = "stable"
-component = "main"
-```
-
-For a raw repository named `files`, `path` is the folder in the repository:
-
-```toml title="telesphorepo.toml"
-server = "https://repo.example.com"
-repo = "files"
-path = "app"
-```
-
-Then publish the files with the CLI, on your computer or in CI:
-
-```sh
-telesphorepo publish my-package_1.0.0_amd64.deb
-telesphorepo publish app-1.2.0.tar.gz
-```
-
-The CLI sends a file of 64 MiB or more in parts, and sends a failed part again.
-
-In CI, the CLI publishes with the identity token of the job. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The **Publish to this repository** tab shows the CI files.
-
-## Publish tokens
-
-To upload with `curl`, you need a publish token:
-
-<Steps>
-
-1. Open **Settings** › **Tokens**, and click **New publish token**.
-2. Choose the repository, and click **Continue**.
-3. Confirm with your second factor, and click **Create token**.
-4. Copy the token. It starts with `trs_` and works for 15 minutes.
-
-</Steps>
-
-Publish tokens are for accounts with a password and **Publish** on the repository. You can also upload in the browser: open the repository and click **Upload**.
-
-## Debian
+## Install from a Debian repository
 
 The examples use a Debian repository named `apt`.
 
 <Steps>
 
-1. Upload a package with `telesphorepo publish my-package_1.0.0_amd64.deb`, or with `curl`. The path names the distribution (`stable`) and the component (`main`). Paste the publish token at the hidden prompt, so it stays out of the shell history and the process list.
-
-   ```sh
-   printf 'Publish token: '; read -rs TOKEN; echo
-   printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-package_1.0.0_amd64.deb \
-     https://repo.example.com/debian/apt/upload/stable/main
-   ```
-
-   The server builds and signs the indexes about 2 seconds later.
-
-2. On each machine that installs, add the key and the source:
+1. On each machine that installs, add the key and the source:
 
    ```sh
    sudo mkdir -p /etc/apt/keyrings
@@ -95,7 +24,7 @@ The examples use a Debian repository named `apt`.
      | sudo tee /etc/apt/sources.list.d/telesphorepo.list
    ```
 
-3. Install:
+2. Install:
 
    ```sh
    sudo apt update
@@ -128,28 +57,9 @@ printf 'machine %s login YOUR_USERNAME password %s\n' https://repo.example.com/d
 
 </details>
 
-<details>
-<summary>Architectures and upload errors</summary>
-
-A new Debian repository takes the architectures `amd64` and `arm64`, and packages for `all`. Change the list in **Architectures** on the **Format settings** tab of the repository settings. An upload with another architecture fails. The server builds the package lists of an added architecture, and removes those of a removed one.
-
-An upload of the same package and version with other bytes answers `409`. Raise the version.
-
-</details>
-
-## Raw files
+## Download raw files
 
 A raw repository keeps any file at any path. The examples use a raw repository named `files`.
-
-Upload with `telesphorepo publish app-1.2.0.tar.gz`, or with `curl` and a publish token:
-
-```sh
-printf 'Publish token: '; read -rs TOKEN; echo
-printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T app-1.2.0.tar.gz \
-  https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
-```
-
-Download:
 
 ```sh
 curl -fL -O https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
@@ -163,19 +73,98 @@ printf 'user = "YOUR_USERNAME:%s"\n' "$READ_TOKEN" \
   | curl -fL -K - -O https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
 ```
 
-<details>
-<summary>Replace a file</summary>
+## Publish Debian packages and raw files
 
-By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Replace files**, choose `allow`, then click **Save**.
+Set up the project as in [Publish from a project](/publish-from-a-project/#set-up-the-project). In a Debian or raw repository, the CLI asks for the folder of a raw repository, or the distribution and the component of a Debian repository. It writes the answers to `telesphorepo.toml`. Commit the file.
 
-</details>
+For a Debian repository named `apt`, the file is this:
 
-## Maven files with curl
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "apt"
+dist = "stable"
+component = "main"
+```
 
-Upload a file to a Maven repository with a publish token:
+For a raw repository named `files`, `path` is the folder in the repository:
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "files"
+path = "app"
+```
+
+Then publish the files with the CLI, on your computer or in CI:
+
+```sh
+telesphorepo publish my-package_1.0.0_amd64.deb
+telesphorepo publish app-1.2.0.tar.gz
+```
+
+The CLI sends a file of 64 MiB or more in parts, and sends a failed part again. A Debian repository builds and signs its indexes about 2 seconds after an upload.
+
+In CI, the CLI publishes with the identity token of the job. See [Publish from CI](/publish-from-ci/). The **Publish to this repository** tab shows the CI files.
+
+You can also upload in the browser: open the repository and click **Upload**.
+
+### Upload with curl and a publish token
+
+To upload with `curl`, you need a publish token:
+
+<Steps>
+
+1. Open **Settings** › **Tokens**, and click **New publish token**.
+2. Choose the repository, and click **Continue**.
+3. Confirm with your second factor, and click **Create token**.
+4. Copy the token. It starts with `trs_` and works for 15 minutes.
+
+</Steps>
+
+Publish tokens are for accounts with a password and **Publish** on the repository. Paste the token at the hidden prompt, so it stays out of the shell history and the process list.
+
+A Debian package goes to a path that names the distribution (`stable`) and the component (`main`):
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-package_1.0.0_amd64.deb \
+  https://repo.example.com/debian/apt/upload/stable/main
+```
+
+A raw file goes to its path in the repository:
+
+```sh
+printf 'Publish token: '; read -rs TOKEN; echo
+printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T app-1.2.0.tar.gz \
+  https://repo.example.com/raw/files/app/app-1.2.0.tar.gz
+```
+
+A file goes to a Maven repository the same way:
 
 ```sh
 printf 'Publish token: '; read -rs TOKEN; echo
 printf 'user = "publish:%s"\n' "$TOKEN" | curl -fsS -K - -T my-lib-1.0.0.jar \
   https://repo.example.com/maven/releases/com/example/my-lib/1.0.0/my-lib-1.0.0.jar
 ```
+
+## If something goes wrong
+
+<details>
+<summary>A Debian upload fails for its architecture</summary>
+
+A new Debian repository takes the architectures `amd64` and `arm64`, and packages for `all`. Change the list in **Architectures** on the **Format settings** tab of the repository settings. An upload with another architecture fails. The server builds the package lists of an added architecture, and removes those of a removed one.
+
+</details>
+
+<details>
+<summary>409 when you upload a Debian package</summary>
+
+An upload of the same package and version with other bytes answers `409`. Raise the version.
+
+</details>
+
+<details>
+<summary>409 when you replace a raw file</summary>
+
+By default, a raw repository refuses other bytes at a path that exists. It answers `409`. To allow a replace, open the repository settings, then the **Format settings** tab. In **Replace files**, choose `allow`, then click **Save**.
+
+</details>

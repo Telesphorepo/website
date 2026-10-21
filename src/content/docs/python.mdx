@@ -1,6 +1,6 @@
 ---
 title: Python with pip, uv and Poetry
-description: Install Python packages from Telesphorepo with pip, uv or Poetry, and publish wheels and sdists with the Telesphorepo CLI, twine, uv or Poetry.
+description: Install Python packages from Telesphorepo with pip, uv or Poetry, and what is different when you publish wheels and sdists.
 tableOfContents: false
 ---
 
@@ -8,7 +8,9 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-An admin first makes a repository with the format **Python (PyPI)** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `python`, so the index is this:
+This page sets up pip, uv or Poetry to install packages from Telesphorepo. To publish a package, see [Publish from a project](/publish-from-a-project/), under Publish your packages; what is different for Python is under [Publish to this repository](#publish-to-this-repository).
+
+An admin first makes a repository with the format **Python (PyPI)** (see [Make a repository](/repositories-and-access/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `python`, so the index is this:
 
 ```text
 https://repo.example.com/pypi/python/simple/
@@ -161,23 +163,9 @@ A group asks its members in order. The first member that has a project name owns
 
 </Path>
 
-## Publish a package
+## Publish to this repository
 
-You set up the project once. After that, everyone on the project publishes with one command.
-
-<Steps>
-
-1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
-
-2. Paste the setup line in a terminal, in the folder that holds `pyproject.toml` or `setup.py`. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
-
-3. Publish.
-
-   ```sh
-   telesphorepo publish
-   ```
-
-</Steps>
+Publish as in [Publish from a project](/publish-from-a-project/): run the setup line in the folder that holds `pyproject.toml` or `setup.py`, commit `telesphorepo.toml`, then run `telesphorepo publish`.
 
 Done when the CLI prints `Uploaded` for each file, for example `Uploaded acme_billing-1.2.0-py3-none-any.whl (acme-billing 1.2.0) to python`.
 
@@ -225,9 +213,9 @@ A password or a read token cannot upload.
 
 </details>
 
-## Publish from CI
+### The CI file for Python
 
-The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes the file for the build tool of the project:
+[Publish from CI](/publish-from-ci/) has the steps. When you choose **GitHub Actions** at setup, the CLI writes the file for the build tool of the project:
 
 <Path title="GitHub Actions with pip" pytool="pip" level={3}>
 
@@ -304,27 +292,62 @@ jobs:
 
 </Path>
 
-For Jenkins, see [Set up a project](/set-up/).
+For Jenkins, see [Publish from CI](/publish-from-ci/).
 
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>pip ignores an `http://` index</summary>
 
-**pip ignores an `http://` index.** pip uses an `http://` index only on `localhost`, or when its host is trusted. Add `trusted-host = repo.example.com` under `[global]` in `pip.conf`. For real use, serve the server over HTTPS. See [Run in production](/production/).
+pip uses an `http://` index only on `localhost`, or when its host is trusted. Add `trusted-host = repo.example.com` under `[global]` in `pip.conf`. For real use, serve the server over HTTPS. See [Serve over HTTPS](/run-the-server/#serve-over-https).
 
-**pip cannot find a dependency, such as `requests`.** The repository is hosted, and holds your own packages only. Ask your server admin for a group with a proxy of PyPI.
+</details>
 
-**401 when you install.** The repository is for signed-in people only. Check the username and the read token. For uv, the variables must name the index in capitals: `UV_INDEX_PYTHON_USERNAME` for the index `python`.
+<details>
+<summary>pip cannot find a dependency, such as `requests`</summary>
 
-**A group serves your private package, not the public one with the same name.** The first member that has a project owns it. Rename your project, or ask your admin to change the order of the members.
+The repository is hosted, and holds your own packages only. Ask your server admin for a group with a proxy of PyPI.
 
-**`409 File already exists`.** A file with that name is on the server with other bytes. Raise the version. The same bytes again are fine.
+</details>
 
-**400 when you upload.** The name and the version in the file name must match the metadata inside the file. Build the file again with your build tool.
+<details>
+<summary>401 when you install</summary>
 
-**The CLI says that poetry, uv or python is not on the PATH.** The CLI builds with the tool of the project. Install it, or build yourself and run `telesphorepo publish dist/*`.
+The repository is for signed-in people only. Check the username and the read token. For uv, the variables must name the index in capitals: `UV_INDEX_PYTHON_USERNAME` for the index `python`.
 
-**twine prints only the status line.** Add `--verbose`. twine then prints the reason that the server gives.
+</details>
+
+<details>
+<summary>A group serves your private package, not the public one with the same name</summary>
+
+The first member that has a project owns it. Rename your project, or ask your admin to change the order of the members.
+
+</details>
+
+<details>
+<summary>`409 File already exists`</summary>
+
+A file with that name is on the server with other bytes. Raise the version. The same bytes again are fine.
+
+</details>
+
+<details>
+<summary>400 when you upload</summary>
+
+The name and the version in the file name must match the metadata inside the file. Build the file again with your build tool.
+
+</details>
+
+<details>
+<summary>The CLI says that poetry, uv or python is not on the PATH</summary>
+
+The CLI builds with the tool of the project. Install it, or build yourself and run `telesphorepo publish dist/*`.
+
+</details>
+
+<details>
+<summary>twine prints only the status line</summary>
+
+Add `--verbose`. twine then prints the reason that the server gives.
 
 </details>

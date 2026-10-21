@@ -1,11 +1,13 @@
 ---
 title: Docker and Helm
-description: Push and pull container images, Helm charts and other OCI files with Docker, Podman, Helm and ORAS.
+description: Pull container images, Helm charts and other OCI files with Docker, Podman, Helm and ORAS, and push them with the credential helper of the CLI.
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
-An admin first makes a repository with the format **Docker** (see [Run the server](/run-the-server/#make-a-docker-repository)). The name of the repository is the first part of the image name:
+This page sets up Docker, Podman and Helm to pull images and charts from Telesphorepo. Pushing is publishing: Docker pushes through the credential helper of the CLI, so its steps are here, under [Push an image from your computer](#push-an-image-from-your-computer) and [Push an image from CI](#push-an-image-from-ci). [Install the CLI](/install-cli/) first. A Helm chart folder publishes as in [Publish from a project](/publish-from-a-project/), under Publish your packages.
+
+An admin first makes a repository with the format **Docker** (see [Make a Docker repository](/repositories-and-access/#make-a-docker-repository)). The name of the repository is the first part of the image name:
 
 ```text
 repo.example.com/docker/team/app:1.0
@@ -90,7 +92,7 @@ You do this once for each computer. The Telesphorepo CLI has a credential helper
 
 Done when `docker push` prints the digest of the image.
 
-Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. For larger layers, see [Push large images](/production/#push-large-images).
+Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. For larger layers, see [Push large images](/run-the-server/#push-large-images).
 
 After step 4, you do not run `docker login`. Docker, buildx, Podman, Helm and ORAS ask the helper for a token. Each push gets its own token for one repository, and the token ends within 15 minutes. An approval lasts 90 days, unless someone removes the device.
 
@@ -149,7 +151,7 @@ A publish token works for the time of its session, 15 minutes by default. The pu
 
 ## Push an image from CI
 
-The credential helper of the CLI trades the identity token of the CI job for a publish token at each push. The job runs no `docker login`. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). The job needs Docker. The **Publish to this repository** tab shows the same files with your values.
+The credential helper of the CLI trades the identity token of the CI job for a publish token at each push. The job runs no `docker login`. An admin adds a CI pipeline for the job first, as in [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline). The job needs Docker. The **Publish to this repository** tab shows the same files with your values.
 
 <Tabs>
 <TabItem label="GitHub Actions">
@@ -221,28 +223,78 @@ Change `app` to the name of your image. The identity token of CI pulls public im
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>`name unknown` or `404` on a push or a pull</summary>
 
-**`name unknown` or `404` on a push or a pull.** Name an image inside the repository: `repo.example.com/docker/team/app`, not `repo.example.com/docker`.
+Name an image inside the repository: `repo.example.com/docker/team/app`, not `repo.example.com/docker`.
 
-**`publishing needs a publish session`.** You logged in with a password or a read token. These cannot push. Use the credential helper, a publish token or CI.
+</details>
 
-**`denied` or `403` on a push.** You cannot publish to this repository yet. Ask your server admin for **Publish**.
+<details>
+<summary>`publishing needs a publish session`</summary>
 
-**The push stops with `413` or a timeout on a large layer.** Behind Cloudflare (Free and Pro plans), each layer must be under 100 MB. Ask your admin to turn on direct uploads. You keep the same commands. See [Run in production](/production/#push-large-images).
+You logged in with a password or a read token. These cannot push. Use the credential helper, a publish token or CI.
 
-**ORAS or Helm says the upload `Location` is on a different host.** Your admin turned on direct uploads. Push with ORAS and Helm to the upload address, for example `helm push mychart-0.1.0.tgz oci://upload.example.com/docker`. The **Use this repository** tab shows the right address.
+</details>
 
-**The push says the token ended.** The push took longer than the publish session. Ask your admin to raise **publish.session_ttl**, up to one hour.
+<details>
+<summary>`denied` or `403` on a push</summary>
 
-**Docker cannot reach an `http://` server.** Add the host to `insecure-registries` in `/etc/docker/daemon.json`, or serve the server over HTTPS.
+You cannot publish to this repository yet. Ask your server admin for **Publish**.
 
-**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
+</details>
 
-**`credentials not found in native keychain` on a push.** The computer has no approval for this server, or the approval ended. Run `telesphorepo login https://repo.example.com`, then push again.
+<details>
+<summary>The push stops with `413` or a timeout on a large layer</summary>
 
-**The CI push says that the helper has no credential.** Check `id-token: write` in the workflow, or the `OIDC_TOKEN` binding in Jenkins. `TELESPHOREPO_SERVER` must be the address of your server.
+Behind Cloudflare (Free and Pro plans), each layer must be under 100 MB. Ask your admin to turn on direct uploads. You keep the same commands. See [Push large images](/run-the-server/#push-large-images).
 
-**The registry must be at the root of a host.** Docker cannot use an address with a path, such as `https://example.com/repo`. Give the server its own host name.
+</details>
+
+<details>
+<summary>ORAS or Helm says the upload `Location` is on a different host</summary>
+
+Your admin turned on direct uploads. Push with ORAS and Helm to the upload address, for example `helm push mychart-0.1.0.tgz oci://upload.example.com/docker`. The **Use this repository** tab shows the right address.
+
+</details>
+
+<details>
+<summary>The push says the token ended</summary>
+
+The push took longer than the publish session. Ask your admin to raise **publish.session_ttl**, up to one hour.
+
+</details>
+
+<details>
+<summary>Docker cannot reach an `http://` server</summary>
+
+Add the host to `insecure-registries` in `/etc/docker/daemon.json`, or serve the server over HTTPS.
+
+</details>
+
+<details>
+<summary>You lost a laptop</summary>
+
+Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
+
+</details>
+
+<details>
+<summary>`credentials not found in native keychain` on a push</summary>
+
+The computer has no approval for this server, or the approval ended. Run `telesphorepo login https://repo.example.com`, then push again.
+
+</details>
+
+<details>
+<summary>The CI push says that the helper has no credential</summary>
+
+Check `id-token: write` in the workflow, or the `OIDC_TOKEN` binding in Jenkins. `TELESPHOREPO_SERVER` must be the address of your server.
+
+</details>
+
+<details>
+<summary>The registry must be at the root of a host</summary>
+
+Docker cannot use an address with a path, such as `https://example.com/repo`. Give the server its own host name.
 
 </details>

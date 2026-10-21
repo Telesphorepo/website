@@ -1,6 +1,6 @@
 ---
 title: Rust and Cargo
-description: Use a Telesphorepo Cargo registry in Rust builds, and publish crates with the Telesphorepo CLI.
+description: Use crates from a Telesphorepo Cargo registry in Rust builds, and what is different when you publish crates.
 tableOfContents: false
 ---
 
@@ -8,7 +8,9 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-An admin first makes a repository with the format **Cargo (Rust)** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `crates`, so the registry index is this:
+This page sets up Cargo to fetch crates from Telesphorepo. To publish a crate, see [Publish from a project](/publish-from-a-project/), under Publish your packages; what is different for Cargo is under [Publish to this repository](#publish-to-this-repository).
+
+An admin first makes a repository with the format **Cargo (Rust)** (see [Make a repository](/repositories-and-access/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `crates`, so the registry index is this:
 
 ```text
 sparse+https://repo.example.com/cargo/crates/index/
@@ -153,33 +155,17 @@ A group asks its members in order. The first member that has a crate name owns i
 
 </Path>
 
-## Publish a crate
+## Publish to this repository
 
-You set up the project once. After that, everyone on the project publishes with one command.
-
-<Steps>
-
-1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
-
-2. Paste the setup line in a terminal, in the folder that holds `Cargo.toml`. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
-
-3. Publish.
-
-   ```sh
-   telesphorepo publish
-   ```
-
-</Steps>
-
-Done when Cargo prints `Published`.
+Publish as in [Publish from a project](/publish-from-a-project/): run the setup line in the folder that holds `Cargo.toml`, commit `telesphorepo.toml`, then run `telesphorepo publish`. Done when Cargo prints `Published`.
 
 The CLI runs `cargo publish` to the repository, with a publish token for this one repository. Cargo packs and checks the crate as usual. `Cargo.toml` and your Cargo config stay as they are, and no file holds the token.
 
 A version that the repository has already, also with other build metadata, answers `409`. Raise the version. A name that differs from a crate of the repository only in case, or in `-` and `_`, answers `409` too, as on crates.io.
 
-## Publish from CI
+### The CI file for Cargo
 
-The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes this file:
+[Publish from CI](/publish-from-ci/) has the steps. When you choose **GitHub Actions** at setup, the CLI writes this file:
 
 ```yaml title=".github/workflows/publish.yml"
 on:
@@ -200,27 +186,62 @@ jobs:
       - run: telesphorepo publish
 ```
 
-The identity token publishes only. If the build reads a private repository, keep a read token in a CI secret and set `CARGO_REGISTRIES_CRATES_TOKEN` to it. For Jenkins, see [Set up a project](/set-up/).
+The identity token publishes only. If the build reads a private repository, keep a read token in a CI secret and set `CARGO_REGISTRIES_CRATES_TOKEN` to it. For Jenkins, see [Publish from CI](/publish-from-ci/).
 
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>Cargo asks for a token, or says that the registry needs a credential provider</summary>
 
-**Cargo asks for a token, or says that the registry needs a credential provider.** Add `credential-provider = "cargo:token"` under `[registries.crates]` in `.cargo/config.toml`, and check the token in `~/.cargo/credentials.toml`.
+Add `credential-provider = "cargo:token"` under `[registries.crates]` in `.cargo/config.toml`, and check the token in `~/.cargo/credentials.toml`.
 
-**Cargo does not send the token.** A private repository needs Cargo 1.74 or later. Run `rustup update`.
+</details>
 
-**Cargo cannot find a crate of your repository.** Without source replacement, the dependency needs `registry = "crates"`. Check the name of the registry in `.cargo/config.toml`.
+<details>
+<summary>Cargo does not send the token</summary>
 
-**A group serves your private crate, not the one on crates.io.** The first member that has a name owns it. Rename your crate, or ask your admin to change the order of the members.
+A private repository needs Cargo 1.74 or later. Run `rustup update`.
 
-**409 when you publish.** That version is on the server, or another crate of the repository has nearly the same name. Raise the version, or rename the crate.
+</details>
 
-**`cargo search` or `cargo owner` answers 404.** The server does not serve them. Search on the repository page in the web UI. Your server admin gives **Publish** on the repository.
+<details>
+<summary>Cargo cannot find a crate of your repository</summary>
 
-**You want to yank a version.** Make a publish token in **Settings** › **Tokens** › **New publish token**. Set `CARGO_REGISTRIES_CRATES_TOKEN` to it, then run `cargo yank acme-core@1.2.0 --registry crates`. Add `--undo` to take the yank back. A read token cannot yank.
+Without source replacement, the dependency needs `registry = "crates"`. Check the name of the registry in `.cargo/config.toml`.
 
-**The CLI says that cargo is not on the PATH.** Install Rust 1.74 or later from https://rustup.rs.
+</details>
+
+<details>
+<summary>A group serves your private crate, not the one on crates.io</summary>
+
+The first member that has a name owns it. Rename your crate, or ask your admin to change the order of the members.
+
+</details>
+
+<details>
+<summary>409 when you publish</summary>
+
+That version is on the server, or another crate of the repository has nearly the same name. Raise the version, or rename the crate.
+
+</details>
+
+<details>
+<summary>`cargo search` or `cargo owner` answers 404</summary>
+
+The server does not serve them. Search on the repository page in the web UI. Your server admin gives **Publish** on the repository.
+
+</details>
+
+<details>
+<summary>You want to yank a version</summary>
+
+Make a publish token in **Settings** › **Tokens** › **New publish token**. Set `CARGO_REGISTRIES_CRATES_TOKEN` to it, then run `cargo yank acme-core@1.2.0 --registry crates`. Add `--undo` to take the yank back. A read token cannot yank.
+
+</details>
+
+<details>
+<summary>The CLI says that cargo is not on the PATH</summary>
+
+Install Rust 1.74 or later from https://rustup.rs.
 
 </details>

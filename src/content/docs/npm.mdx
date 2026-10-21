@@ -1,6 +1,6 @@
 ---
 title: npm, pnpm, Yarn and Bun
-description: Install JavaScript packages from Telesphorepo with npm, pnpm, Yarn or Bun, and publish them with the Telesphorepo CLI.
+description: Install JavaScript packages from Telesphorepo with npm, pnpm, Yarn or Bun, and what is different when you publish them.
 tableOfContents: false
 ---
 
@@ -8,7 +8,9 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-An admin first makes a repository with the format **npm** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `js`, so the registry is this:
+This page sets up a project to install packages from Telesphorepo. To publish a package, see [Publish from a project](/publish-from-a-project/), under Publish your packages; what is different for npm is under [Publish to this repository](#publish-to-this-repository).
+
+An admin first makes a repository with the format **npm** (see [Make a repository](/repositories-and-access/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `js`, so the registry is this:
 
 ```text
 https://repo.example.com/npm/js/
@@ -179,25 +181,9 @@ A group asks its members in order. The first member that has a package name owns
 
 </Path>
 
-## Publish a package
+## Publish to this repository
 
-You set up the project once. After that, everyone on the project publishes with one command.
-
-<Steps>
-
-1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
-
-2. Paste the setup line in a terminal, in the folder that holds `package.json`. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
-
-3. Publish.
-
-   ```sh
-   telesphorepo publish
-   ```
-
-</Steps>
-
-Done when the publish ends with no error, and the version shows on the repository page in the web UI.
+Publish as in [Publish from a project](/publish-from-a-project/): run the setup line in the folder that holds `package.json`, commit `telesphorepo.toml`, then run `telesphorepo publish`. Done when the publish ends with no error, and the version shows on the repository page in the web UI.
 
 The CLI picks the package manager by the lockfile, and runs its publish with a publish token for this one repository:
 
@@ -210,9 +196,9 @@ The CLI picks the package manager by the lockfile, and runs its publish with a p
 
 The package manager packs the package, so `files`, `prepack` and `workspace:` ranges work as usual. You do not run `npm login`. You do not change `package.json` or `.npmrc` to publish.
 
-## Publish from CI
+### The CI file for npm
 
-The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes this file:
+[Publish from CI](/publish-from-ci/) has the steps. When you choose **GitHub Actions** at setup, the CLI writes this file for the package manager of the project:
 
 <Path title="GitHub Actions with npm" npmtool="npm" level={3}>
 
@@ -317,31 +303,76 @@ jobs:
 
 </Path>
 
-The identity token publishes only. If the install step reads a private repository, keep a read token in a CI secret and set `NPM_TOKEN` to it in that step. For Jenkins, see [Set up a project](/set-up/).
+The identity token publishes only. If the install step reads a private repository, keep a read token in a CI secret and set `NPM_TOKEN` to it in that step. For Jenkins, see [Publish from CI](/publish-from-ci/).
 
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>Yarn does not install a version that you just published</summary>
 
-**Yarn does not install a version that you just published.** Yarn 4 installs a version only once it is a week old. For a hosted repository, add `npmMinimalAgeGate: 0` to `.yarnrc.yml`. For a group or a proxy, list your own packages in `npmPreapprovedPackages`.
+Yarn 4 installs a version only once it is a week old. For a hosted repository, add `npmMinimalAgeGate: 0` to `.yarnrc.yml`. For a group or a proxy, list your own packages in `npmPreapprovedPackages`.
 
-**401 when Yarn installs from a private repository.** Yarn sends the token on installs only with `npmAlwaysAuth: true`. Add it to `.yarnrc.yml`.
+</details>
 
-**401 when npm, pnpm or Bun installs.** Check that `NPM_TOKEN` holds a read token, and that the `_authToken` line names the same address as `registry=`, without `https:`.
+<details>
+<summary>401 when Yarn installs from a private repository</summary>
 
-**Yarn refuses an `http://` server.** Add the host name of the server to `unsafeHttpWhitelist` in `.yarnrc.yml`. For real use, serve the server over HTTPS. See [Run in production](/production/).
+Yarn sends the token on installs only with `npmAlwaysAuth: true`. Add it to `.yarnrc.yml`.
 
-**The package manager cannot find a public package.** The repository is hosted, and holds your own packages only. Ask your server admin for a group with a proxy of `registry.npmjs.org`.
+</details>
 
-**A group serves your private package, not the public one with the same name.** The first member that has a name owns it. Rename your package, or ask your admin to change the order of the members.
+<details>
+<summary>401 when npm, pnpm or Bun installs</summary>
 
-**`npm login is not used with Telesphorepo`.** To install, put a read token in `.npmrc`. To publish, run `telesphorepo publish`.
+Check that `NPM_TOKEN` holds a read token, and that the `_authToken` line names the same address as `registry=`, without `https:`.
 
-**403 `version 1.2.0 of x already exists`.** That version is on the server. Raise the version in `package.json`.
+</details>
 
-**The CLI says that the project publishes with pnpm, and pnpm is not on the PATH.** The CLI picks the package manager by the lockfile. Install that package manager, or remove the lockfile of the one you do not use.
+<details>
+<summary>Yarn refuses an `http://` server</summary>
 
-**You want to take a version back.** Open the repository in the web UI, then the **Files** tab, and delete the tarball of the version. The server then drops that version from the package. You need **Delete** on the repository. A CI job cannot unpublish.
+Add the host name of the server to `unsafeHttpWhitelist` in `.yarnrc.yml`. For real use, serve the server over HTTPS. See [Serve over HTTPS](/run-the-server/#serve-over-https).
+
+</details>
+
+<details>
+<summary>The package manager cannot find a public package</summary>
+
+The repository is hosted, and holds your own packages only. Ask your server admin for a group with a proxy of `registry.npmjs.org`.
+
+</details>
+
+<details>
+<summary>A group serves your private package, not the public one with the same name</summary>
+
+The first member that has a name owns it. Rename your package, or ask your admin to change the order of the members.
+
+</details>
+
+<details>
+<summary>`npm login is not used with Telesphorepo`</summary>
+
+To install, put a read token in `.npmrc`. To publish, run `telesphorepo publish`.
+
+</details>
+
+<details>
+<summary>403 `version 1.2.0 of x already exists`</summary>
+
+That version is on the server. Raise the version in `package.json`.
+
+</details>
+
+<details>
+<summary>The CLI says that the project publishes with pnpm, and pnpm is not on the PATH</summary>
+
+The CLI picks the package manager by the lockfile. Install that package manager, or remove the lockfile of the one you do not use.
+
+</details>
+
+<details>
+<summary>You want to take a version back</summary>
+
+Open the repository in the web UI, then the **Files** tab, and delete the tarball of the version. The server then drops that version from the package. You need **Delete** on the repository. A CI job cannot unpublish.
 
 </details>

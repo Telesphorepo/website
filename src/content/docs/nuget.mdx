@@ -1,6 +1,6 @@
 ---
 title: .NET and NuGet
-description: Restore NuGet packages from Telesphorepo with dotnet, and publish them with the Telesphorepo CLI or dotnet nuget push.
+description: Restore NuGet packages from Telesphorepo with dotnet, and what is different when you publish them.
 tableOfContents: false
 ---
 
@@ -8,7 +8,9 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-An admin first makes a repository with the format **NuGet** (see [Run the server](/run-the-server/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `dotnet`, so the package source is this:
+This page sets up dotnet to restore packages from Telesphorepo. To publish a package, see [Publish from a project](/publish-from-a-project/), under Publish your packages; what is different for NuGet is under [Publish to this repository](#publish-to-this-repository).
+
+An admin first makes a repository with the format **NuGet** (see [Make a repository](/repositories-and-access/#make-a-repository)). The examples use the server `repo.example.com` and a repository named `dotnet`, so the package source is this:
 
 ```text
 https://repo.example.com/nuget/dotnet/index.json
@@ -144,23 +146,9 @@ A group asks its members in order. The first member that has a package id owns i
 
 </Path>
 
-## Publish a package
+## Publish to this repository
 
-You set up the project once. After that, everyone on the project publishes with one command.
-
-<Steps>
-
-1. Open the repository in the web UI, then the **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor.
-
-2. Paste the setup line in a terminal, in the folder that holds the `.sln`, `.slnx`, `.csproj` or `.fsproj` file. The CLI writes `telesphorepo.toml`. Commit it. See [Set up a project](/set-up/) for the CI file.
-
-3. Publish.
-
-   ```sh
-   telesphorepo publish
-   ```
-
-</Steps>
+Publish as in [Publish from a project](/publish-from-a-project/): run the setup line in the folder that holds the `.sln`, `.slnx`, `.csproj` or `.fsproj` file, commit `telesphorepo.toml`, then run `telesphorepo publish`.
 
 Done when the CLI prints `Pushed` for each package, for example `Pushed Contoso.Core.1.2.0.nupkg to dotnet`.
 
@@ -182,9 +170,9 @@ dotnet takes the API key only as an argument, so the token shows in the process 
 
 </details>
 
-## Publish from CI
+### The CI file for .NET
 
-The CLI uses the identity token of the job, so the job stores no secret. An admin adds a CI pipeline for the job first, as in [Run the server](/run-the-server/#add-a-ci-pipeline). When you choose **GitHub Actions** at setup, the CLI writes this file:
+[Publish from CI](/publish-from-ci/) has the steps. When you choose **GitHub Actions** at setup, the CLI writes this file:
 
 ```yaml title=".github/workflows/publish.yml"
 on:
@@ -207,27 +195,62 @@ jobs:
       - run: telesphorepo publish
 ```
 
-The identity token publishes only. If the restore reads a private repository, keep a read token in a CI secret, and set `NUGET_USERNAME` and `NUGET_TOKEN`. For Jenkins, see [Set up a project](/set-up/).
+The identity token publishes only. If the restore reads a private repository, keep a read token in a CI secret, and set `NUGET_USERNAME` and `NUGET_TOKEN`. For Jenkins, see [Publish from CI](/publish-from-ci/).
 
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>dotnet refuses an `http://` source</summary>
 
-**dotnet refuses an `http://` source.** Add `allowInsecureConnections="true"` to the `<add>` line of the source. For real use, serve the server over HTTPS. See [Run in production](/production/).
+Add `allowInsecureConnections="true"` to the `<add>` line of the source. For real use, serve the server over HTTPS. See [Serve over HTTPS](/run-the-server/#serve-over-https).
 
-**401 when you restore.** The repository is for signed-in people only. Check `packageSourceCredentials`: the element name must be the key of the source, here `<dotnet>`. A key that starts with a digit is written with `_x003` and the digit, as in `<_x0031_api>` for the key `1api`.
+</details>
 
-**dotnet cannot find a package of nuget.org.** With `<clear />`, every package comes through the repository. Ask your server admin for a group with a proxy of nuget.org, or remove `<clear />`.
+<details>
+<summary>401 when you restore</summary>
 
-**A group serves your private package, not the one on nuget.org.** The first member that has an id owns it. Rename your package, or ask your admin to change the order of the members.
+The repository is for signed-in people only. Check `packageSourceCredentials`: the element name must be the key of the source, here `<dotnet>`. A key that starts with a digit is written with `_x003` and the digit, as in `<_x0031_api>` for the key `1api`.
 
-**409 when you publish.** That version is on the server. Raise the version. With `dotnet nuget push`, add `--skip-duplicate` to skip the packages that are there already.
+</details>
 
-**`dotnet pack wrote no package`.** A project packs when it is packable. Add `<IsPackable>true</IsPackable>` to the project file. A test project does not pack.
+<details>
+<summary>dotnet cannot find a package of nuget.org</summary>
 
-**The CLI says that dotnet is not on the PATH.** Install the .NET SDK.
+With `<clear />`, every package comes through the repository. Ask your server admin for a group with a proxy of nuget.org, or remove `<clear />`.
 
-**You want to hide a version.** Run `dotnet nuget delete Contoso.Core 1.2.0 --source https://repo.example.com/nuget/dotnet/index.json` with a publish token as the API key. The server unlists the version. dotnet still restores it by its exact version.
+</details>
+
+<details>
+<summary>A group serves your private package, not the one on nuget.org</summary>
+
+The first member that has an id owns it. Rename your package, or ask your admin to change the order of the members.
+
+</details>
+
+<details>
+<summary>409 when you publish</summary>
+
+That version is on the server. Raise the version. With `dotnet nuget push`, add `--skip-duplicate` to skip the packages that are there already.
+
+</details>
+
+<details>
+<summary>`dotnet pack wrote no package`</summary>
+
+A project packs when it is packable. Add `<IsPackable>true</IsPackable>` to the project file. A test project does not pack.
+
+</details>
+
+<details>
+<summary>The CLI says that dotnet is not on the PATH</summary>
+
+Install the .NET SDK.
+
+</details>
+
+<details>
+<summary>You want to hide a version</summary>
+
+Run `dotnet nuget delete Contoso.Core 1.2.0 --source https://repo.example.com/nuget/dotnet/index.json` with a publish token as the API key. The server unlists the version. dotnet still restores it by its exact version.
 
 </details>

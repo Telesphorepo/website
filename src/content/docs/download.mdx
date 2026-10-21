@@ -1,6 +1,6 @@
 ---
 title: Gradle and Maven
-description: Use a Telesphorepo repository in a Gradle or Maven build.
+description: Download packages from a Telesphorepo repository in a Gradle or Maven build.
 tableOfContents: false
 ---
 
@@ -8,7 +8,9 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-This page is for Gradle and Maven builds. For other formats, see [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), and [Debian, raw and curl](/debian-and-raw/). To publish, see [Publish a package](/publish/).
+This page sets up a Gradle or Maven build to download packages from Telesphorepo. To publish a Gradle or Maven project, see [Publish from a project](/publish-from-a-project/), under Publish your packages.
+
+For other formats, see [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), and [Debian, raw and curl](/debian-and-raw/).
 
 In the blocks, put your server's address in place of `https://your-server`, and your repository's name in place of `your-repo`. The **Use this repository** tab of your repository shows the same blocks with your values filled in.
 
@@ -273,25 +275,65 @@ Done when Maven prints `BUILD SUCCESS`.
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>Gradle or Maven cannot find the package</summary>
 
-**Gradle or Maven cannot find the package.** Use the group, the name and the version of a package in the repository. Open the package in the web UI to see its line.
+Use the group, the name and the version of a package in the repository. Open the package in the web UI to see its line.
 
-**Gradle or Maven cannot find a public package, such as one of Maven Central.** The repository is hosted, and holds your own packages only. Keep `mavenCentral()` in the build, or ask your server admin for a group with a proxy of Maven Central. A Maven group merges the versions of all its members.
+</details>
 
-**401 when you download.** The repository is for signed-in people only. Choose **Only signed-in people** above. Check the username and the read token.
+<details>
+<summary>Gradle or Maven cannot find a public package, such as one of Maven Central</summary>
 
-**There is no New read token button.** Read tokens are for accounts with a password. A single sign-on account cannot make one.
+The repository is hosted, and holds your own packages only. Keep `mavenCentral()` in the build, or ask your server admin for a group with a proxy of Maven Central. A Maven group merges the versions of all its members.
 
-**Maven refuses an `http://` address.** Maven allows `http://` only for `localhost`. Serve the server over HTTPS. See [Run in production](/production/).
+</details>
 
-**`~/.m2/settings.xml` already has `<servers>`.** Add only the `<server>` part to it.
+<details>
+<summary>401 when you download</summary>
 
-**`pom.xml` already has `<repositories>` or `<dependencies>`.** Add only the inner part to it.
+The repository is for signed-in people only. Choose **Only signed-in people** above. Check the username and the read token.
 
-**A CI job must download from a private repository.** Keep the read token in a CI secret. For Gradle, set `ORG_GRADLE_PROJECT_telesphorepoUsername` and `ORG_GRADLE_PROJECT_telesphorepoPassword`. For Maven, write `${env.REPO_USERNAME}` and `${env.REPO_TOKEN}` in the `<server>` part, and set those variables.
+</details>
 
-**The repository holds a Gradle plugin.** Put the repository in `pluginManagement`, at the top of the settings file:
+<details>
+<summary>There is no New read token button</summary>
+
+Read tokens are for accounts with a password. A single sign-on account cannot make one.
+
+</details>
+
+<details>
+<summary>Maven refuses an `http://` address</summary>
+
+Maven allows `http://` only for `localhost`. Serve the server over HTTPS. See [Serve over HTTPS](/run-the-server/#serve-over-https).
+
+</details>
+
+<details>
+<summary>`~/.m2/settings.xml` already has `<servers>`</summary>
+
+Add only the `<server>` part to it.
+
+</details>
+
+<details>
+<summary>`pom.xml` already has `<repositories>` or `<dependencies>`</summary>
+
+Add only the inner part to it.
+
+</details>
+
+<details>
+<summary>A CI job must download from a private repository</summary>
+
+Keep the read token in a CI secret. For Gradle, set `ORG_GRADLE_PROJECT_telesphorepoUsername` and `ORG_GRADLE_PROJECT_telesphorepoPassword`. For Maven, write `${env.REPO_USERNAME}` and `${env.REPO_TOKEN}` in the `<server>` part, and set those variables.
+
+</details>
+
+<details>
+<summary>The repository holds a Gradle plugin</summary>
+
+Put the repository in `pluginManagement`, at the top of the settings file:
 
 ```kotlin title="settings.gradle.kts"
 pluginManagement {
@@ -305,6 +347,11 @@ pluginManagement {
 }
 ```
 
-**You need a Debian package or a plain file.** See [Debian, raw and curl](/debian-and-raw/).
+</details>
+
+<details>
+<summary>You need a Debian package or a plain file</summary>
+
+See [Debian, raw and curl](/debian-and-raw/).
 
 </details>
