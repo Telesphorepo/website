@@ -7,27 +7,106 @@ import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 
 ## Serve over HTTPS
 
-The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it for HTTPS. [Caddy](https://caddyserver.com) gets a certificate for you.
+The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it for HTTPS. [Caddy](https://caddyserver.com) gets a certificate from Let's Encrypt and renews it for you.
+
+Before you start, point a DNS name (`repo.example.com` below) at the host, and open ports 80 and 443 on its firewall: Caddy needs both to get the certificate.
+
+<Tabs>
+<TabItem label="Caddy on the host">
 
 <Steps>
 
-1. Save this as `Caddyfile` and start Caddy:
+1. Install Caddy from its package repository. On Debian and Ubuntu:
 
-   ```text title="Caddyfile"
+   ```sh
+   sudo apt install --yes debian-keyring debian-archive-keyring apt-transport-https curl
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+   sudo chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list
+   sudo apt update
+   sudo apt install caddy
+   ```
+
+   For other systems, see [Install Caddy](https://caddyserver.com/docs/install). The package runs Caddy as the service `caddy`.
+
+2. Start the server on the host's loopback address only, so that it is reachable through Caddy and not from outside:
+
+   ```sh
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+3. Put this in `/etc/caddy/Caddyfile`, in place of what is there:
+
+   ```text title="/etc/caddy/Caddyfile"
    repo.example.com {
        reverse_proxy localhost:8080
    }
    ```
 
-2. Open the server once through Caddy.
+4. Reload Caddy:
 
-3. Trust the proxy. Open **Settings** › **Network and proxy**. Under **Detected proxies**, click **Trust** on the row of Caddy. Click **Save**, then **Save changes**.
-
-4. Open **Settings** › **General**. Set **Public base URL** to `https://repo.example.com`, and click **Save**.
+   ```sh
+   sudo systemctl reload caddy
+   ```
 
 </Steps>
 
-Step 3 lets the server see the real address of each client. Rate limits and the audit log need it.
+</TabItem>
+<TabItem label="Caddy in Docker">
+
+<Steps>
+
+1. Make a network that the server and Caddy share:
+
+   ```sh
+   docker network create telesphorepo
+   ```
+
+2. Start the server on it. It publishes no port: only Caddy reaches it.
+
+   ```sh
+   docker run -d --name telesphorepo --network telesphorepo -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+3. Save this as `Caddyfile`:
+
+   ```text title="Caddyfile"
+   repo.example.com {
+       reverse_proxy telesphorepo:8080
+   }
+   ```
+
+4. Start Caddy in the folder of the `Caddyfile`:
+
+   ```sh
+   docker run -d --name caddy --network telesphorepo -p 80:80 -p 443:443 -p 443:443/udp \
+     -v "$PWD/Caddyfile":/etc/caddy/Caddyfile:ro \
+     -v telesphorepo-caddy-data:/data -v telesphorepo-caddy-config:/config caddy:2
+   ```
+
+</Steps>
+
+</TabItem>
+<TabItem label="Docker Compose">
+
+[Run with Docker Compose](#run-with-docker-compose) below has the server and Caddy in one file.
+
+</TabItem>
+</Tabs>
+
+Then, in either case:
+
+<Steps>
+
+1. Open `https://repo.example.com` and sign in.
+
+2. Trust the proxy. Open **Settings** › **Network and proxy**. Under **Detected proxies**, click **Trust** on the row of Caddy. Click **Save**, then **Save changes**.
+
+3. Open **Settings** › **General**. Set **Public base URL** to `https://repo.example.com`, and click **Save**.
+
+</Steps>
+
+Step 2 lets the server see the real address of each client. Rate limits and the audit log need it. Step 3 makes the addresses in the snippets, the setup lines and the CLI downloads use your public URL.
 
 <details>
 <summary>Cloudflare in front</summary>
@@ -239,6 +318,19 @@ docker run --rm -v telesphorepo-backups:/backups -v telesphorepo-restored:/data 
 ```
 
 The restore checks the database against its checksum, refuses a volume that is not empty, and says whether the backup is from the same version of Telesphorepo as the image.
+
+## Image tags
+
+The image `ghcr.io/telesphorepo/telesphorepo` has these tags, for `linux/amd64` and `linux/arm64`:
+
+| Tag | Is |
+|---|---|
+| `latest` | The newest release |
+| `0.1.0`, `0.1` | One release, or the newest of a minor version |
+| `main` | The newest build of the main branch that passed its tests, between releases |
+| `sha-<commit>` | One build of the main branch, by its commit |
+
+Use `latest` or a version in production. Pin a version, such as `0.1`, to choose when you upgrade.
 
 ## Upgrade
 
