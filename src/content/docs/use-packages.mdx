@@ -1,0 +1,69 @@
+---
+title: Use packages in your builds
+description: Point a build or a package manager at a Telesphorepo repository, on your computer and in CI.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Each repository shows its own setup for every tool of its format, with your server and the repository filled in.
+
+<Steps>
+
+1. Open the repository in the web UI, then the **Use this repository** tab.
+
+2. If the repository is private, make a read token. Open **Settings** › **Tokens**, click **New read token**, type a name, then click **Create token**.
+
+3. Pick your tool on the tab, and copy its setup into your project.
+
+</Steps>
+
+Done when the build downloads the package.
+
+The setup keeps the token out of the project, in your home folder or in an environment variable. A read token can only download.
+
+## Public packages through the same address
+
+A hosted repository holds only your own packages. To get public packages, such as those of Maven Central or npm, through the same address, ask your server admin for a group with a proxy.
+
+Then point the build at the group. See [Add public packages](/repositories-and-access/#add-public-packages).
+
+## Download in CI
+
+Keep a read token in a CI secret, and give it to the build step. See [Download from a private repository in CI](/publish-from-ci/#download-from-a-private-repository-in-ci).
+
+## If something goes wrong
+
+<details>
+<summary>401 when you download</summary>
+
+Check the username and the read token. Copy the setup from the **Use this repository** tab again. Some tools, such as Yarn, send the token only when the setup says so.
+
+</details>
+
+<details>
+<summary>There is no New read token button</summary>
+
+A single sign-on account cannot make a read token. Use an account with a password.
+
+</details>
+
+<details>
+<summary>The build cannot find a public package</summary>
+
+The repository is hosted, and holds only your own packages. Ask your server admin for a group with a proxy, as in [Public packages through the same address](#public-packages-through-the-same-address).
+
+</details>
+
+<details>
+<summary>A group serves your private package, not the public one with the same name</summary>
+
+In a group, the first member that has a package name owns it. Rename your package, or ask your admin to change the order of the members.
+
+</details>
+
+<details>
+<summary>The tool refuses an `http://` address</summary>
+
+Many tools download over plain HTTP from `localhost` only. Ask your server admin to serve the server over HTTPS. See [Serve over HTTPS](/run-the-server/#serve-over-https).
+
+</details>

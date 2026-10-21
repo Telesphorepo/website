@@ -1,0 +1,73 @@
+---
+title: Store files in R2 or S3
+description: Move the files of the server from its local disk to a Cloudflare R2 or S3 bucket.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+The server keeps files on its local disk. Move them to a bucket when the disk is not enough.
+
+Cloudflare R2 charges nothing for downloads.
+
+## Store files in Cloudflare R2
+
+<Steps>
+
+1. In Cloudflare, create a bucket.
+
+2. Create an R2 API token with **Object Read & Write** on the bucket. Copy its two keys: Cloudflare shows them once.
+
+3. In the server, open **Settings** › **Storage**.
+
+4. Under **Storage type**, choose **A Cloudflare R2 bucket, or another S3-compatible bucket**.
+
+5. Fill in the bucket:
+
+   - **Address:** the **S3 API** address from the bucket's **Settings** page, such as `https://<account id>.r2.cloudflarestorage.com`.
+   - **Region:** empty.
+   - **Bucket:** the bucket's name.
+   - **Access key ID** and **Secret access key:** from the token.
+
+6. Click **Test connection**.
+
+7. Click **Save**, and confirm.
+
+</Steps>
+
+The server copies the files to the bucket in the background. Everything keeps working meanwhile.
+
+The old files stay on the disk. Delete them when the bucket works.
+
+## Who sends the bytes
+
+| Setup | Who checks each download | Who sends the bytes |
+|---|---|---|
+| Local disk | your server | your server |
+| R2 | your server | R2 |
+| R2 and [edge delivery](https://github.com/Telesphorepo/Telesphorepo/tree/main/edge) | a Cloudflare Worker near the build | R2, from the nearest bucket |
+
+## Use AWS S3 or SeaweedFS
+
+Follow the same steps, with these values:
+
+| Setting | AWS S3 | SeaweedFS |
+|---|---|---|
+| **Address** | empty | `http://seaweedfs:8333` |
+| **Region** | the bucket's region, such as `us-east-1` | any name, such as `us-east-1` |
+| **Path-style addresses** | off | on |
+
+## If something goes wrong
+
+<details>
+<summary>Test connection fails with R2</summary>
+
+Use the **S3 API** address, with nothing after the host. A custom domain of the bucket does not work here.
+
+</details>
+
+<details>
+<summary>Builds cannot download from the bucket</summary>
+
+Turn off **Download from the bucket**, then click **Save**. Your server then sends the bytes itself.
+
+</details>

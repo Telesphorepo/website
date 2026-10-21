@@ -17,11 +17,12 @@ bun run preview  # serve the production build
 
 The pages are in `src/content/docs/<page>.mdx`. The sidebar, the redirects of moved pages and the
 `llms.txt` sets are in `astro.config.mjs`. The sidebar opens with Overview (the landing page),
-then four groups: Publish your packages, Use packages in your builds, Move from Nexus and Administration.
+then Publish your packages, Use packages in your builds (one page: each repository in the server shows the
+setup of its format), Move from Nexus and Administration.
 The theme is in `src/styles/custom.css`. The fonts are Geist, and Geist Mono for code, from
 `@fontsource/geist` and `@fontsource/geist-mono`. The landing page components are in
-`src/components/landing/`. The questions at the top of a page, such as "Where does the job run?"
-and "Which build tool?" (`Choice.astro`), and the step blocks that they show (`Path.astro`) are in
+`src/components/landing/`. The questions on a page, such as "Where does the job run?" and
+"Which web server?" (`Choice.astro`, a select for each question), and the step blocks that they show (`Path.astro`) are in
 `src/components/choice/`. The diagrams are in `src/components/diagrams/`, and any docs page can
 import them. Every page also has a Markdown copy at its URL with `.md` added, and the build writes
 `llms.txt`. A diagram's Markdown copy is its summary.

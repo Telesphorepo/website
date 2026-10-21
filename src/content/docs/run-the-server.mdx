@@ -1,15 +1,28 @@
 ---
 title: Run the server
-description: Take Telesphorepo from nothing to production. Start it, serve it over HTTPS, sign in, set the public address, store files in Cloudflare R2, back up and upgrade.
+description: Start Telesphorepo, serve it over HTTPS, sign in, trust the proxy and set the public address.
 ---
 
-import { Steps, Tabs, TabItem, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Aside } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
+import MovedAnchors from '../../components/qol/MovedAnchors.astro';
 
-This page is for the server admin. It takes a server from nothing to production, in order. To try Telesphorepo on your own computer, [Start the server](#start-the-server) and [Sign in](#sign-in) are enough.
+<MovedAnchors map={{
+    'run-with-docker-compose': '/run-the-server/?engine=compose#start-the-server',
+    'store-files-in-cloudflare-r2': '/store-files-in-r2/#store-files-in-cloudflare-r2',
+    'who-sends-the-bytes': '/store-files-in-r2/#who-sends-the-bytes',
+    'keep-the-master-key-safe': '/back-up-and-restore/#keep-the-master-key-safe',
+    'back-up': '/back-up-and-restore/#back-up',
+    'restore': '/back-up-and-restore/#restore',
+    'image-tags': '/upgrade/#image-tags',
+    'upgrade': '/upgrade/#upgrade',
+    'push-large-images': '/push-large-images/',
+}} />
 
-For production, you need a host with Docker, Docker Compose or Podman, a DNS name that points at it, such as `repo.example.com`, and ports 80 and 443 open on its firewall.
+To try it on your own computer, [Start the server](#start-the-server) and [Sign in](#sign-in) are enough.
+
+For production, you need a host, a DNS name such as `repo.example.com` that points at it, and ports 80 and 443 open.
 
 <Choice questions={[
     {key: 'engine', label: 'How do you run the server?', options: [
@@ -29,7 +42,7 @@ For production, you need a host with Docker, Docker Compose or Podman, a DNS nam
 1. Start the server.
 
    ```sh
-   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 2. Copy the admin password from the log.
@@ -54,7 +67,7 @@ For production, you need a host with Docker, Docker Compose or Podman, a DNS nam
        image: ghcr.io/telesphorepo/telesphorepo:latest
        restart: unless-stopped
        ports:
-         - "8080:8080"
+         - "127.0.0.1:8080:8080"
        volumes:
          - telesphorepo-data:/data
          - telesphorepo-backups:/backups
@@ -80,8 +93,6 @@ For production, you need a host with Docker, Docker Compose or Podman, a DNS nam
 
 </Steps>
 
-For production, [Serve over HTTPS](#serve-over-https) has a Compose file with Caddy in it.
-
 </Path>
 
 <Path title="Podman" engine="podman" level={3}>
@@ -91,7 +102,7 @@ For production, [Serve over HTTPS](#serve-over-https) has a Compose file with Ca
 1. Start the server.
 
    ```sh
-   podman run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   podman run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 2. Copy the admin password from the log.
@@ -108,65 +119,52 @@ For production, [Serve over HTTPS](#serve-over-https) has a Compose file with Ca
 
 <Steps>
 
-1. Download the `telesphorepo-server` file for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases).
+1. Download `telesphorepo-server` for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases), and unpack it.
 
-2. Unpack the file.
-
-3. Start the server, and copy the admin password that it shows.
+2. Start the server, and copy the admin password that it shows.
 
    ```sh
-   ./telesphorepo-server serve
+   TR_LISTEN=127.0.0.1:8080 ./telesphorepo-server serve
    ```
 
 </Steps>
 
-The data is in `./data`, next to where you started it. Check a downloaded program against `SHA256SUMS` on the release page.
+The data is in `./data`, next to where you started it.
 
 </Path>
 
-The server prints the password of the user `admin` once, on its first start. To pick the first admin yourself, set `TR_BOOTSTRAP_ADMIN_USER` and `TR_BOOTSTRAP_ADMIN_PASSWORD` on the first start. The server reads them only while it has no users.
-
-Always keep the `telesphorepo-data` volume. It holds the database, the files and the key for your secret settings.
+<Aside type="caution">
+Always keep the `telesphorepo-data` volume. It holds all your data.
+</Aside>
 
 ## Serve over HTTPS
 
-The server speaks plain HTTP on port 8080. Put a reverse proxy in front of it for HTTPS. [Caddy](https://caddyserver.com) gets a certificate from Let's Encrypt and renews it for you.
+Put a web server in front. It gets the certificate and passes each request on to `localhost:8080`.
 
-Before you start, point a DNS name (`repo.example.com` below) at the host, and open ports 80 and 443 on its firewall: Caddy needs both to get the certificate. With Podman, write `podman` in place of `docker` in the commands.
+<Choice questions={[
+    {key: 'webserver', label: 'Which web server?', options: [
+        {value: 'caddy', label: 'Caddy'},
+        {value: 'nginx', label: 'nginx'},
+        {value: 'apache', label: 'Apache'},
+        {value: 'another', label: 'Another proxy'},
+    ]},
+]} />
 
-<Tabs syncKey="https">
-<TabItem label="Caddy on the host">
+<Path title="Caddy" webserver="caddy" level={3}>
+
+[Caddy](https://caddyserver.com) gets and renews the certificate itself.
 
 <Steps>
 
-1. Install Caddy from its package repository. On Debian and Ubuntu:
+1. Install Caddy. On Debian and Ubuntu:
 
    ```sh
-   sudo apt install --yes debian-keyring debian-archive-keyring apt-transport-https curl
-   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-   sudo chmod o+r /usr/share/keyrings/caddy-stable-archive-keyring.gpg /etc/apt/sources.list.d/caddy-stable.list
-   sudo apt update
    sudo apt install caddy
    ```
 
-   For other systems, see [Install Caddy](https://caddyserver.com/docs/install). The package runs Caddy as the service `caddy`.
+   For other systems, see [Install Caddy](https://caddyserver.com/docs/install).
 
-2. Start the server on the host's loopback address only, so that it is reachable through Caddy and not from outside:
-
-   ```sh
-   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
-   ```
-
-   With the program, set the listen address instead: `TR_LISTEN=127.0.0.1:8080 ./telesphorepo-server serve`.
-
-   Copy the admin password from the log:
-
-   ```sh
-   docker logs telesphorepo 2>&1 | grep 'password:'
-   ```
-
-3. Put this in `/etc/caddy/Caddyfile`, in place of what is there:
+2. Put this in `/etc/caddy/Caddyfile`, in place of what is there.
 
    ```text title="/etc/caddy/Caddyfile"
    repo.example.com {
@@ -174,7 +172,7 @@ Before you start, point a DNS name (`repo.example.com` below) at the host, and o
    }
    ```
 
-4. Reload Caddy:
+3. Reload Caddy.
 
    ```sh
    sudo systemctl reload caddy
@@ -182,388 +180,168 @@ Before you start, point a DNS name (`repo.example.com` below) at the host, and o
 
 </Steps>
 
-</TabItem>
-<TabItem label="Caddy in Docker">
+</Path>
+
+<Path title="nginx" webserver="nginx" level={3}>
 
 <Steps>
 
-1. Make a network that the server and Caddy share:
+1. Install nginx and Certbot. On Debian and Ubuntu:
 
    ```sh
-   docker network create telesphorepo
+   sudo apt install nginx certbot python3-certbot-nginx
    ```
 
-2. Start the server on it. It publishes no port: only Caddy reaches it.
+2. Save this as `/etc/nginx/conf.d/telesphorepo.conf`.
 
-   ```sh
-   docker run -d --name telesphorepo --network telesphorepo -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
-   ```
+   ```nginx title="/etc/nginx/conf.d/telesphorepo.conf"
+   server {
+       listen 80;
+       server_name repo.example.com;
 
-   Copy the admin password from the log:
+       client_max_body_size 0;
+       proxy_request_buffering off;
+       proxy_buffering off;
+       proxy_read_timeout 1h;
+       proxy_send_timeout 1h;
 
-   ```sh
-   docker logs telesphorepo 2>&1 | grep 'password:'
-   ```
-
-3. Save this as `Caddyfile`:
-
-   ```text title="Caddyfile"
-   repo.example.com {
-       reverse_proxy telesphorepo:8080
+       location / {
+           proxy_pass http://127.0.0.1:8080;
+           proxy_http_version 1.1;
+           proxy_set_header Host $host;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header X-Forwarded-Proto $scheme;
+       }
    }
    ```
 
-4. Start Caddy in the folder of the `Caddyfile`:
+3. Get a certificate. Certbot adds HTTPS to the file and reloads nginx.
 
    ```sh
-   docker run -d --name caddy --network telesphorepo -p 80:80 -p 443:443 -p 443:443/udp \
-     -v "$PWD/Caddyfile":/etc/caddy/Caddyfile:ro \
-     -v telesphorepo-caddy-data:/data -v telesphorepo-caddy-config:/config caddy:2
+   sudo certbot --nginx -d repo.example.com --redirect
    ```
 
 </Steps>
 
-</TabItem>
-<TabItem label="Docker Compose">
+</Path>
 
-<span id="run-with-docker-compose"></span>
-
-This one file runs the server, Caddy for HTTPS, and a volume for the backups, which the server writes every 24 hours.
+<Path title="Apache" webserver="apache" level={3}>
 
 <Steps>
 
-1. Save these two files in a folder of their own. Put your address in place of `repo.example.com` in both.
-
-   ```yaml title="compose.yaml"
-   services:
-     telesphorepo:
-       image: ghcr.io/telesphorepo/telesphorepo:latest
-       restart: unless-stopped
-       environment:
-         TR_BASE_URL: https://repo.example.com
-       volumes:
-         - telesphorepo-data:/data
-         - telesphorepo-backups:/backups
-
-     caddy:
-       image: caddy:2
-       restart: unless-stopped
-       ports:
-         - "80:80"
-         - "443:443"
-         - "443:443/udp"
-       volumes:
-         - ./Caddyfile:/etc/caddy/Caddyfile:ro
-         - telesphorepo-caddy-data:/data
-         - telesphorepo-caddy-config:/config
-
-   # Named in full, so the volumes keep these names whatever the folder is called.
-   volumes:
-     telesphorepo-data:
-       name: telesphorepo-data
-     telesphorepo-backups:
-       name: telesphorepo-backups
-     telesphorepo-caddy-data:
-       name: telesphorepo-caddy-data
-     telesphorepo-caddy-config:
-       name: telesphorepo-caddy-config
-   ```
-
-   ```text title="Caddyfile"
-   repo.example.com {
-       reverse_proxy telesphorepo:8080
-   }
-   ```
-
-2. Point the DNS name at the host, then start everything:
+1. Install Apache and Certbot. On Debian and Ubuntu:
 
    ```sh
-   docker compose up -d
+   sudo apt install apache2 certbot python3-certbot-apache
    ```
 
-3. Copy the password of the user `admin` from the log:
+2. Turn on the proxy modules.
 
    ```sh
-   docker compose logs telesphorepo 2>&1 | grep 'password:'
+   sudo a2enmod proxy proxy_http headers
+   ```
+
+3. Save this as `/etc/apache2/sites-available/telesphorepo.conf`.
+
+   ```apache title="/etc/apache2/sites-available/telesphorepo.conf"
+   <VirtualHost *:80>
+       ServerName repo.example.com
+
+       ProxyPreserveHost On
+       AllowEncodedSlashes NoDecode
+       ProxyPass / http://127.0.0.1:8080/ nocanon
+       RequestHeader set X-Forwarded-Proto expr=%{REQUEST_SCHEME}
+
+       LimitRequestBody 0
+       ProxyTimeout 3600
+   </VirtualHost>
+   ```
+
+4. Turn on the site.
+
+   ```sh
+   sudo a2ensite telesphorepo
+   sudo systemctl reload apache2
+   ```
+
+5. Get a certificate. Certbot adds HTTPS to the site and reloads Apache.
+
+   ```sh
+   sudo certbot --apache -d repo.example.com --redirect
    ```
 
 </Steps>
 
-`TR_BASE_URL` sets the public address from the file, so the UI shows it read-only. Leave it out to set it in **Settings** instead. To keep the master key out of the data volume, add `TR_MASTER_KEY` from a secret (see [Keep the master key safe](#keep-the-master-key-safe)).
+</Path>
 
-</TabItem>
-</Tabs>
+<Path title="Another proxy" webserver="another" level={3}>
 
-<details>
-<summary>Other proxies</summary>
+Set up your proxy to:
 
-- Let the proxy accept request bodies up to the **Max upload size** of the server (**Settings** › **General**). The default is 2 GiB. Some proxies stop at 1 MiB.
-- Without a proxy, on plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Start the server with `-e TR_COOKIE_SECURE=false`. Maven also refuses plain HTTP, and pip, Yarn, dotnet and Docker each need a setting for it, so use HTTPS for real use.
+- pass each request on to `localhost:8080`, with its `Host` header,
+- set `X-Forwarded-For` and `X-Forwarded-Proto`,
+- take bodies of any size, or at least the **Max upload size** (2 GiB by default),
+- stream uploads and downloads, and wait up to an hour,
+- keep `%2F` in paths as it is. npm needs it.
 
-</details>
+It may speak HTTP/1.1 or HTTP/2 to the server.
 
-<details>
-<summary>HTTP/2, and TLS in the server itself</summary>
+No proxy? Set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to PEM files, and the server serves HTTPS itself.
 
-The server speaks HTTP/1.1 and HTTP/2. Behind a reverse proxy, the server also takes HTTP/2 without TLS, for a proxy that sends it. A proxy that sends HTTP/1.1 works too, so you need no change.
-
-To let the server do TLS itself, set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to a certificate and a key (PEM files). Both are needed. The server loads a renewed certificate without a restart. Turning TLS on or off needs a restart.
-
-</details>
+</Path>
 
 ## Sign in
 
 <Steps>
 
-1. Open your address, such as `https://repo.example.com`. Without HTTPS, on your own computer, open `http://localhost:8080`.
+1. Open your address, such as `https://repo.example.com`. On your own computer, open `http://localhost:8080`.
 
 2. Sign in as `admin`, with the password from the log.
 
-3. Add your authenticator app when the page asks.
-
-   **Authenticator app** › **Add**. Scan the code, then type the code from your phone.
+3. Add your authenticator app when the page asks. Under **Authenticator app**, click **Add**, scan the code, and type the code from your phone.
 
 </Steps>
 
-The server asks for this second step from everyone who manages it. See [Two-step verification](/people-and-sign-in/#two-step-verification).
-
 ## Trust the proxy
 
-Do this when a reverse proxy, such as Caddy, sits in front of the server.
+The server then sees the real address of each client. The audit log and the [network rules](/repositories-and-access/#limit-where-requests-come-from) need it.
 
 <Steps>
 
 1. Open **Settings** › **Network and proxy**.
 
-2. Under **Detected proxies**, click **Trust** on the row of Caddy.
+2. Under **Detected proxies**, click **Trust** on the row of your web server.
 
 3. Click **Save**, then **Save changes**.
 
 </Steps>
 
-The server then sees the real address of each client. Rate limits, the audit log and the [network rules](/repositories-and-access/#limit-where-requests-come-from) need it.
-
-<details>
-<summary>Cloudflare in front</summary>
-
-On the **Network and proxy** page, under **Where your proxy is**, tick **Cloudflare**. If Caddy sits between Cloudflare and the server, also tick **Other addresses** and add the address of Caddy.
-
-</details>
-
 ## Set the public address
+
+Your first sign-in sets the public address. Check it once.
 
 <Steps>
 
 1. Open **Settings** › **General**.
 
-2. Set **Public base URL** to the address that people use.
-
-   ```text
-   https://repo.example.com
-   ```
-
-3. Click **Save**.
+2. Check that **Public base URL** is the address that people use, such as `https://repo.example.com`. Fix it and click **Save** if not.
 
 </Steps>
 
-The addresses in the snippets, the setup lines and the CLI downloads then use your public address. CI jobs cannot publish without it, and passkeys need it: set it before anyone adds a passkey.
-
-## Store files in Cloudflare R2
-
-The server keeps files on its local disk by default. Cloudflare R2 is the usual choice for a bucket: R2 charges nothing for downloads. Any S3-compatible bucket works too, such as AWS S3 or SeaweedFS.
-
-<Steps>
-
-1. In Cloudflare, create the bucket. Then create an R2 API token with **Object Read & Write** on it, and copy its **Access Key ID** and **Secret Access Key**: Cloudflare shows them once.
-
-2. Open **Settings** › **Storage**. Under **Storage type**, choose **A Cloudflare R2 bucket, or another S3-compatible bucket**, and enter:
-
-   - **Address:** `https://<account id>.r2.cloudflarestorage.com`, with nothing after the host. The bucket's **Settings** page shows it under **S3 API**.
-   - **Region:** leave it empty.
-   - **Bucket:** the bucket's name.
-   - **Access key ID** and **Secret access key:** from the token.
-   - **Path-style addresses:** off.
-
-   A custom domain of the bucket does not work here: it serves public downloads only, and the server writes and signs links through the S3 API.
-
-3. Click **Test connection**. The server writes, reads and deletes one test file.
-
-4. Click **Save** and confirm. If the server has files, it copies them to the bucket in the background, 16 at a time. Downloads and uploads keep working during the copy.
-
-</Steps>
-
-The old files stay where they were. Delete them yourself when the new storage works.
-
-### Who sends the bytes
-
-| Setup | Who answers a download | Who sends the bytes |
-|---|---|---|
-| Local disk | your server | your server |
-| R2 (default, **Download from the bucket** on) | your server: it checks the account and the rules of the repository, then sends the build to a signed link that lasts a few minutes | R2, straight to the build |
-| R2 and [edge delivery](https://github.com/Telesphorepo/Telesphorepo/tree/main/edge) | a Cloudflare Worker near the build, with the rules of the repository at the edge | R2, from the bucket nearest the build |
-
-With R2, each download still makes one trip to your server first. Edge delivery takes that trip away, and keeps copies in buckets in several regions. If the builds cannot reach the bucket, turn off **Download from the bucket**: then your server sends the bytes.
-
-<details>
-<summary>AWS S3 and SeaweedFS</summary>
-
-| Setting | AWS S3 | SeaweedFS |
-|---|---|---|
-| Address | leave it empty | `http://seaweedfs:8333` |
-| Region | the bucket's region, for example `us-east-1` | any name, for example `us-east-1` |
-| Path-style addresses | off | on |
-
-</details>
-
-## Keep the master key safe
-
-The server encrypts secret settings with a master key. By default it writes the key to `master.key` in the data volume. Without the key, the server cannot read the S3 secret, the single sign-on secret, the signing keys and the authenticator apps.
-
-To keep the key out of the volume, create one before the first start and pass it in:
-
-```sh
-openssl rand -base64 32
-```
-
-```sh
-docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
-  -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
-  ghcr.io/telesphorepo/telesphorepo:latest
-```
-
-Do not change `TR_MASTER_KEY` later.
-
-## Back up
-
-The server backs itself up into `/backups` every 24 hours and keeps the newest 7. Mount a volume there, as the commands on this page do, best on another disk. The folder, the schedule and the number to keep are under **Settings** › **Server** › **Backups**, next to **Back up now**.
-
-A backup is a folder with a copy of the database, the master key and, with local disk storage, the stored files. Files in an S3 bucket stay in the bucket, so back up the bucket too, with its versioning or replication. A master key in `TR_MASTER_KEY` is not written into the backup; keep it with the backups.
-
-To back up from the command line, run this. It works while the server runs:
-
-```sh
-docker run --rm -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
-  ghcr.io/telesphorepo/telesphorepo:latest backup /backups
-```
-
-## Restore
-
-Restore a backup folder into an empty volume, then start the server on that volume:
-
-```sh
-docker run --rm -v telesphorepo-backups:/backups -v telesphorepo-restored:/data \
-  ghcr.io/telesphorepo/telesphorepo:latest restore /backups/20261020T201500.123Z
-```
-
-The restore checks the database against its checksum, refuses a volume that is not empty, and says whether the backup is from the same version of Telesphorepo as the image.
-
-## Image tags
-
-The image `ghcr.io/telesphorepo/telesphorepo` has these tags, for `linux/amd64` and `linux/arm64`:
-
-| Tag | Is |
-|---|---|
-| `latest` | The newest release |
-| `0.1.0`, `0.1` | One release, or the newest of a minor version |
-| `main` | The newest build of the main branch that passed its tests, between releases |
-| `sha-<commit>` | One build of the main branch, by its commit |
-
-Use `latest` or a version in production. Pin a version, such as `0.1`, to choose when you upgrade.
-
-## Upgrade
-
-<Steps>
-
-1. Back up: click **Back up now** under **Settings** › **Server** › **Backups**.
-
-2. Pull the new image and start a new container on the same volume:
-
-   <Tabs>
-   <TabItem label="Docker Compose">
-
-   ```sh
-   docker compose pull
-   docker compose up -d
-   ```
-
-   </TabItem>
-   <TabItem label="Docker">
-
-   ```sh
-   docker pull ghcr.io/telesphorepo/telesphorepo:latest
-   docker stop telesphorepo
-   docker rm telesphorepo
-   docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
-   ```
-
-   </TabItem>
-   </Tabs>
-
-3. Check that it runs:
-
-   ```sh
-   curl https://repo.example.com/healthz
-   ```
-
-   The answer is `ok`.
-
-</Steps>
-
-Pass the same `-e` variables as before. On its first start, a new version updates the database to its own structure, one step at a time, and the log names each step. The server refuses to start on a database from a newer version. To go back to an older version, restore the backup you made in step 1.
-
-<Aside>
-All settings live in the database. Change them in **Settings**. Each change applies at once, with no restart. See [Commands and settings](/commands-and-settings/#environment-variables) for the environment variables.
-</Aside>
-
-## Push large images
-
-Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit. Not behind Cloudflare? You have nothing to do.
-
-To push larger layers, let the layers skip Cloudflare. People still push to the main address. The server tells the client to send the layers to a second address: the upload address. Nobody changes a command.
-
-<Aside type="caution">
-This makes the IP address of your server public.
-</Aside>
-
-<Steps>
-
-1. In Cloudflare, add a second name for your server, for example `upload.example.com`. Make the record **DNS only**. Serve it over HTTPS, as in [Serve over HTTPS](#serve-over-https).
-
-2. Open the port of that name in the firewall of your server, for the computers that push.
-
-3. Open **Settings** › **General**. Under **Docker**, set **Docker upload address** to `https://upload.example.com`. Turn on **Expose the origin IP for Docker uploads**. Click **Save**.
-
-</Steps>
-
-Pulls, logins and the credential helper keep the main address.
-
-ORAS and Helm 4 send layers only to the address in the command. Push with them to the upload address:
-
-```sh
-helm push mychart-0.1.0.tgz oci://upload.example.com/docker
-oras push upload.example.com/docker/team/art:1.0 file.txt
-```
+Snippets, CI jobs and passkeys use this address.
 
 ## Next steps
 
-<CardGrid>
-    <LinkCard title="Repositories and access" description="Make repositories, proxies and groups, give people Publish and add CI pipelines." href="/repositories-and-access/" />
-    <LinkCard title="People and sign-in" description="Add people, give permissions, set up two-step verification and single sign-on." href="/people-and-sign-in/" />
-    <LinkCard title="Copy your repositories from Nexus" description="Copy your Nexus 3 repositories, keep them in sync, then switch over." href="/move-from-nexus/" />
-    <LinkCard title="Commands and settings" description="Server commands, CLI commands, environment variables and every setting." href="/commands-and-settings/" />
-</CardGrid>
+- [Store files in R2 or S3](/store-files-in-r2/)
+- [Back up and restore](/back-up-and-restore/)
+- [Upgrade the server](/upgrade/)
+- [Push large images](/push-large-images/)
+- [Repositories and access](/repositories-and-access/)
 
 ## If something goes wrong
 
 <details>
-<summary>The log shows no password</summary>
-
-Wait a few seconds, then run the log command again.
-
-</details>
-
-<details>
-<summary>You lost the admin password, or the log no longer has it</summary>
+<summary>You lost the admin password</summary>
 
 Set a new one, and type it at the prompt:
 
@@ -576,41 +354,34 @@ docker exec -it telesphorepo /telesphorepo-server user passwd admin
 <details>
 <summary>Your data is gone after you removed the container</summary>
 
-The data lives in the `telesphorepo-data` volume, not in the container. Always keep the volume: it holds the database, the files and the key for your secret settings. To get data back, [restore](#restore) a backup.
-
-</details>
-
-<details>
-<summary>You run the program and cannot find the data</summary>
-
-It is in `./data`, next to where you started it. `TR_DATA_DIR` sets another folder.
+The data lives in the `telesphorepo-data` volume. Start the server on it again, or [restore a backup](/back-up-and-restore/#restore).
 
 </details>
 
 <details>
 <summary>The browser signs you out at once on plain HTTP</summary>
 
-On plain HTTP and a host that is not `localhost`, the browser drops the session cookie. Serve the server over HTTPS, or start it with `-e TR_COOKIE_SECURE=false`.
+The browser drops the session cookie on plain HTTP, except at `localhost`. Serve the server over HTTPS.
 
 </details>
 
 <details>
-<summary>Uploads through the proxy stop at 1 MiB</summary>
+<summary>Uploads through the proxy fail with `413`</summary>
 
-Let the proxy accept request bodies up to the **Max upload size** of the server (**Settings** › **General**), 2 GiB by default.
-
-</details>
-
-<details>
-<summary>A Docker push stops with `413` behind Cloudflare</summary>
-
-Each layer must be under 100 MB behind Cloudflare Free and Pro. See [Push large images](#push-large-images).
+Let the proxy take bodies of any size: `client_max_body_size 0` in nginx, `LimitRequestBody 0` in Apache.
 
 </details>
 
 <details>
-<summary>The server refuses to start after a downgrade</summary>
+<summary>The page shows no Detected proxies</summary>
 
-The server refuses to start on a database from a newer version. Restore the backup that you made before the upgrade.
+Open the server once at your HTTPS address, then reload the page.
+
+</details>
+
+<details>
+<summary>Cloudflare sits in front of your web server</summary>
+
+Under **Where your proxy is**, also tick **Cloudflare**. Then see [Push large images](/push-large-images/).
 
 </details>

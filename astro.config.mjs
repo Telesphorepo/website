@@ -7,38 +7,23 @@ import starlightLinksValidator from 'starlight-links-validator'
 import starlightUtils from "@lorenzo_lewis/starlight-utils";
 import starlightLlmsTxt from 'starlight-llms-txt';
 
-// A page that is one step of a sequence carries its number. The sidebar shows it before the label
-// (src/styles/custom.css, a[data-step]).
-const step = (n) => ({attrs: {'data-step': String(n)}});
-
 const sidebar = [
     {label: 'Overview', link: '/'},
     {
         label: 'Publish your packages',
         items: [
-            {label: 'Install the CLI', link: '/install-cli', ...step(1)},
-            {label: 'Publish from a project', link: '/publish-from-a-project', ...step(2)},
-            {label: 'Publish from CI', link: '/publish-from-ci', ...step(3)},
+            {label: 'Install the CLI', link: '/install-cli'},
+            {label: 'Publish from a project', link: '/publish-from-a-project'},
+            {label: 'Publish from CI', link: '/publish-from-ci'},
         ]
     },
-    {
-        label: 'Use packages in your builds',
-        items: [
-            {label: 'Gradle and Maven', link: '/download'},
-            {label: 'npm, pnpm, Yarn, Bun', link: '/npm'},
-            {label: 'Python', link: '/python'},
-            {label: 'Rust and Cargo', link: '/cargo'},
-            {label: '.NET and NuGet', link: '/nuget'},
-            {label: 'Docker and Helm', link: '/docker'},
-            {label: 'Debian, raw and curl', link: '/debian-and-raw'},
-        ]
-    },
+    {label: 'Use packages in your builds', link: '/use-packages'},
     {
         label: 'Move from Nexus',
         items: [
-            {label: 'Copy your repositories', link: '/move-from-nexus', ...step(1)},
-            {label: 'Move your projects by hand', link: '/move-projects-by-hand', ...step(2)},
-            {label: 'Move your projects with an AI agent', link: '/move-projects-with-an-agent', ...step(3)},
+            {label: 'Copy your repositories', link: '/move-from-nexus'},
+            {label: 'Move your projects by hand', link: '/move-projects-by-hand'},
+            {label: 'Move your projects with an AI agent', link: '/move-projects-with-an-agent'},
         ]
     },
     {
@@ -47,6 +32,10 @@ const sidebar = [
             {label: 'Run the server', link: '/run-the-server'},
             {label: 'Repositories and access', link: '/repositories-and-access'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
+            {label: 'Store files in R2 or S3', link: '/store-files-in-r2'},
+            {label: 'Back up and restore', link: '/back-up-and-restore'},
+            {label: 'Upgrade the server', link: '/upgrade'},
+            {label: 'Push large images', link: '/push-large-images'},
             {label: 'Commands and settings', link: '/commands-and-settings'},
         ]
     },
@@ -57,12 +46,11 @@ const sidebar = [
         label: "leadingNavLinks",
         items: [
             {label: "Publish", link: "/install-cli"},
-            {label: "Use packages", link: "/download"},
+            {label: "Use packages", link: "/use-packages"},
             {label: "Administration", link: "/run-the-server"},
         ]
     },
 ];
-
 // The docs page ids in sidebar order. The landing page is the Overview entry; the header links are
 // not docs pages.
 const pageOrder = sidebar
@@ -79,6 +67,13 @@ const moved = {
     '/production': '/run-the-server',
     '/reference': '/commands-and-settings',
     '/move-projects': '/move-projects-with-an-agent',
+    '/download': '/use-packages',
+    '/npm': '/use-packages',
+    '/python': '/use-packages',
+    '/cargo': '/use-packages',
+    '/nuget': '/use-packages',
+    '/docker': '/use-packages',
+    '/debian-and-raw': '/use-packages',
 };
 const redirects = Object.fromEntries(Object.entries(moved).flatMap(([from, to]) => [
     [`${from}/`, `${to}/`],
@@ -131,6 +126,8 @@ export default defineConfig({
             },
         },
         sidebar,
+        // "On this page" lists the h2 headings only, so a long page keeps a short list.
+        tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 2},
         lastUpdated: true,
         routeMiddleware: './src/components/qol/route-data.ts',
         editLink: {
@@ -159,19 +156,14 @@ export default defineConfig({
         }), starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
             description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, npm packages, Python packages, Rust crates, NuGet packages, Docker images and Helm charts, Debian packages and raw files. Each format has hosted repositories, and most also have proxies and groups. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish-from-a-project.md`. The Publish from a project, Publish from CI, Install the CLI, format, Move your projects and Run the server pages hold the steps for every choice, each under its own heading.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish-from-a-project.md`. The Publish from a project, Publish from CI, Install the CLI, Move your projects and Run the server pages hold the steps for every choice, each under its own heading. Each repository in the server shows the setup of its format on its Use this repository and Publish to this repository tabs.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['install-cli', 'publish-from-a-project', 'publish-from-ci'],
-                    description: 'The Telesphorepo CLI (install, setup, publish and the Docker credential helper), the project file, CI for GitHub Actions and Jenkins',
-                },
-                {
-                    label: 'Formats',
-                    paths: ['download', 'npm', 'python', 'cargo', 'nuget', 'docker', 'debian-and-raw'],
-                    description: 'Downloads in each format (Gradle and Maven, npm, Python, Cargo, NuGet, Docker and Helm, Debian and raw), with what is different when each one publishes',
+                    paths: ['install-cli', 'publish-from-a-project', 'publish-from-ci', 'use-packages'],
+                    description: 'The Telesphorepo CLI (install, setup, publish and the Docker credential helper), the project file, CI for GitHub Actions and Jenkins, and downloads with a read token',
                 },
                 {
                     label: 'Moving from Nexus',
@@ -180,7 +172,7 @@ export default defineConfig({
                 },
                 {
                     label: 'Administration',
-                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'commands-and-settings'],
+                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'store-files-in-r2', 'back-up-and-restore', 'upgrade', 'push-large-images', 'commands-and-settings'],
                     description: 'HTTPS, storage, backups, upgrades, repositories, proxies and groups, access, CI pipelines, network rules, people, two-step verification, single sign-on, commands, environment variables and settings',
                 },
             ],

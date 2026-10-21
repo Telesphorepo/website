@@ -1,0 +1,26 @@
+---
+/*
+ * Headings that moved to another page. Takes {oldAnchor: newUrl}, such as {'back-up':
+ * '/back-up-and-restore/#back-up'}. When the address of this page ends in one of the old anchors,
+ * the script sends the reader to the new address, so old links still land.
+ */
+interface Props {
+    map: Record<string, string>;
+}
+
+const { map } = Astro.props;
+
+const script = `(() => {
+    const map = ${JSON.stringify(map)};
+    const go = () => {
+        let hash = location.hash.slice(1);
+        try { hash = decodeURIComponent(hash); } catch (e) {}
+        const to = map[hash];
+        if (to) location.replace(to);
+    };
+    go();
+    addEventListener('hashchange', go);
+})();`;
+---
+
+<script is:inline set:html={script}></script>

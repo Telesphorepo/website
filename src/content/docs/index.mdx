@@ -43,53 +43,9 @@ One command, `telesphorepo publish`, gets the token for Gradle, Maven, npm, Pyth
 
 ## Start here
 
-Pick what you came to do. Each part of the docs is in the order you do it.
-
-<div class="tr-readers not-content">
-
-<section class="tr-reader" aria-labelledby="reader-publish">
-<h3 id="reader-publish">You publish packages</h3>
-<p>Install the CLI once, set up each project, then publish from your computer or from CI.</p>
-<ol class="tr-reader-links tr-reader-steps">
-<li><LinkCard title="Install the CLI" description="One command on Linux, macOS or Windows." href="/install-cli/" /></li>
-<li><LinkCard title="Publish from a project" description="Set up the project once, then run telesphorepo publish." href="/publish-from-a-project/" /></li>
-<li><LinkCard title="Publish from CI" description="GitHub Actions and Jenkins, with no stored secret." href="/publish-from-ci/" /></li>
-</ol>
-</section>
-
-<section class="tr-reader" aria-labelledby="reader-use">
-<h3 id="reader-use">Your builds use packages</h3>
-<p>Point a build or a package manager at a repository, with a read token when it is private.</p>
-<ul class="tr-reader-links tr-reader-grid">
-<li><LinkCard title="Gradle and Maven" href="/download/" /></li>
-<li><LinkCard title="npm, pnpm, Yarn and Bun" href="/npm/" /></li>
-<li><LinkCard title="Python" href="/python/" /></li>
-<li><LinkCard title="Rust and Cargo" href="/cargo/" /></li>
-<li><LinkCard title=".NET and NuGet" href="/nuget/" /></li>
-<li><LinkCard title="Docker and Helm" href="/docker/" /></li>
-<li><LinkCard title="Debian, raw and curl" href="/debian-and-raw/" /></li>
-</ul>
-</section>
-
-<section class="tr-reader" aria-labelledby="reader-nexus">
-<h3 id="reader-nexus">You move from Nexus</h3>
-<p>Copy your Nexus 3 repositories and keep them in sync, move each project, then switch over.</p>
-<ol class="tr-reader-links tr-reader-steps">
-<li><LinkCard title="Copy your repositories" description="Copy, sync, and switch over on the server." href="/move-from-nexus/" /></li>
-<li><LinkCard title="Move your projects by hand" description="The files, addresses and lockfiles for each ecosystem." href="/move-projects-by-hand/" /></li>
-<li><LinkCard title="Move your projects with an AI agent" description="A prompt for each ecosystem, or the skill for Claude Code." href="/move-projects-with-an-agent/" /></li>
-</ol>
-</section>
-
-<section class="tr-reader" aria-labelledby="reader-admin">
-<h3 id="reader-admin">You run the server</h3>
-<p>Take the server to production, make repositories and give people access.</p>
-<ul class="tr-reader-links">
-<li><LinkCard title="Run the server" description="From the first start to HTTPS, storage, backups and upgrades." href="/run-the-server/" /></li>
-<li><LinkCard title="Repositories and access" description="Hosted, proxy and group repositories, Publish, CI pipelines." href="/repositories-and-access/" /></li>
-<li><LinkCard title="People and sign-in" description="Permissions, two-step verification and single sign-on." href="/people-and-sign-in/" /></li>
-<li><LinkCard title="Commands and settings" description="Every command, variable and setting." href="/commands-and-settings/" /></li>
-</ul>
-</section>
-
+<div class="tr-start not-content">
+<LinkCard title="Publish a package" description="Install the CLI, set up the project once, then run one command." href="/install-cli/" />
+<LinkCard title="Use packages in your builds" description="Point a build at a repository. The server shows the setup for your tool." href="/use-packages/" />
+<LinkCard title="Run the server" description="Start it, put it behind HTTPS, and sign in." href="/run-the-server/" />
+<LinkCard title="Move from Nexus" description="Copy your Nexus repositories, then move each project." href="/move-from-nexus/" />
 </div>

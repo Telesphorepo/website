@@ -1,15 +1,17 @@
 ---
 title: Move your projects with an AI agent
-description: A prompt for a coding agent for each ecosystem, which moves a project from Nexus to Telesphorepo with you, the steps that need you, a rehearsal of publishing before the switch-over, and the skill for Claude Code.
+description: Paste a prompt into a coding agent, and it moves a project from Nexus to Telesphorepo with you.
 ---
 
-import { Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-To make the same changes yourself, see [Move your projects by hand](/move-projects-by-hand/).
+After the [copy from Nexus](/move-from-nexus/), each project still names Nexus. A coding agent, such as Claude Code, can move a project with you.
 
-When Telesphorepo holds a copy of your Nexus repositories (see [Copy your repositories from Nexus](/move-from-nexus/)), each project still names Nexus. A coding agent, such as Claude Code, moves a project with you: the agent changes the files, and asks you for the few steps that need a person. Choose what the project uses and how far to move it, then paste the prompt into the agent in the project folder. With Claude Code, you can also [use the skill](#use-the-skill).
+The agent changes the files. It asks you for the few steps that need a person.
+
+To make the changes yourself, see [Move your projects by hand](/move-projects-by-hand/).
 
 ## Choose the prompt
 
@@ -29,17 +31,26 @@ When Telesphorepo holds a copy of your Nexus repositories (see [Copy your reposi
     ]},
 ]} />
 
-Fill in the first lines of the prompt: your Telesphorepo address, your Nexus address, the name of each repository in Nexus and in Telesphorepo, and the private ones. The **Repositories** page of Telesphorepo lists the names, with a lock after each private repository. Read the changes the agent makes before you commit them.
+<Steps>
+
+1. Copy the prompt below.
+
+2. Fill in its first lines: your two server addresses, and the name of each repository in Nexus and in Telesphorepo. The **Repositories** page lists the names. A lock after a name means it is private.
+
+3. Open the agent in the project folder, and paste the prompt.
+
+4. Read the changes before you commit them.
+
+</Steps>
 
 <Path title="Gradle or Maven: download addresses only" ecosystem="gradle" scope="downloads">
 
 ```text title="Prompt: Gradle or Maven, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -48,49 +59,48 @@ Repositories (Nexus name -> Telesphorepo name):
 - maven-releases -> maven-releases
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: pom.xml, .mvn/maven.config, every
-   settings.xml in the project, build.gradle(.kts), settings.gradle(.kts) (pluginManagement,
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in pom.xml, .mvn/maven.config, every settings.xml,
+   build.gradle(.kts), settings.gradle(.kts) (pluginManagement,
    dependencyResolutionManagement), gradle.properties, gradle/*.gradle(.kts), buildSrc/,
-   build-logic/, init scripts, and gradle/wrapper/gradle-wrapper.properties. Also show me what
-   ~/.m2/settings.xml, ~/.gradle/gradle.properties and ~/.gradle/init.d/ on this computer name.
-   Look also in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others),
-   Dockerfiles, compose files, shell and PowerShell scripts, and docs and READMEs. Tell me each
-   Nexus repository the project uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address:
+   build-logic/, init scripts and gradle/wrapper/gradle-wrapper.properties, and in CI files
+   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files,
+   scripts and READMEs. Also show me what ~/.m2/settings.xml, ~/.gradle/gradle.properties and
+   ~/.gradle/init.d/ on this computer name. For each Nexus repository not in my list, ask me
+   its name and wait.
+2. Change every download address.
    https://nexus.example.com/repository/<nexus name>/ becomes
-   https://repo.example.com/maven/<telesphorepo name>. The files keep their paths, so only the
-   prefix changes. A <mirror> with <mirrorOf>*</mirrorOf> points at a Telesphorepo group. A
+   https://repo.example.com/maven/<telesphorepo name>. Only the prefix changes; the files keep
+   their paths. A <mirror> with <mirrorOf>*</mirrorOf> points at a Telesphorepo group. A
    distributionUrl on a Nexus raw repository becomes https://repo.example.com/raw/<name>/<path>;
    keep distributionSha256Sum.
-3. Lockfiles: Gradle lockfiles and gradle/verification-metadata.xml hold no addresses. Keep them
-   as they are.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in ORG_GRADLE_PROJECT_<name>Username and
-   ORG_GRADLE_PROJECT_<name>Password for Gradle, TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN for Maven, here and as CI secrets. Tell me these names before I do
-   it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo
-   CLI sets it during a publish. Wire the variables in: Gradle: in the maven { } block, name =
-   "<name>" and credentials(PasswordCredentials::class) (Groovy:
-   credentials(PasswordCredentials)), where <name> is the repository name as a Gradle identifier
+3. Lockfiles: Gradle lockfiles and gradle/verification-metadata.xml hold no addresses. Keep
+   them.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in
+   ORG_GRADLE_PROJECT_<name>Username and ORG_GRADLE_PROJECT_<name>Password for Gradle, and
+   TELESPHOREPO_READ_USER and TELESPHOREPO_READ_TOKEN for Maven, here and as CI secrets. Tell
+   me these names first, and never ask me for the token. Never use the name
+   TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the variables in. Gradle: in the
+   maven { } block, name = "<name>" and credentials(PasswordCredentials::class) (Groovy:
+   credentials(PasswordCredentials)); <name> is the repository name as a Gradle identifier
    (my-libs is myLibs). Maven: a <server> whose <id> is the <id> of the repository or mirror,
    with ${env.TELESPHOREPO_READ_USER} and ${env.TELESPHOREPO_READ_TOKEN}, in ~/.m2/settings.xml
    and in a settings file of the project that CI passes with -s.
-5. Watch for these. A hosted repository holds only its own packages: keep mavenCentral(), or use
-   a group with a proxy of Maven Central. A Maven group merges the versions of all its members,
-   as Nexus does. Maven refuses http:// addresses other than localhost; Gradle needs
+5. Watch for these. A hosted repository holds only its own packages: keep mavenCentral(), or
+   use a group with a proxy of Maven Central. A Maven group merges the versions of all its
+   members, as Nexus does. Maven refuses http:// addresses other than localhost; Gradle needs
    isAllowInsecureProtocol = true for one.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (./gradlew build --refresh-dependencies, or mvn -U
-   -Dmaven.repo.local=<new empty folder> verify), and check in its output that the downloads
-   come from repo.example.com. If a private repository needs the token variables and your shell
-   does not have them, ask me to run it and send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (./gradlew build --refresh-dependencies, or mvn -U
+   -Dmaven.repo.local=<new empty folder> verify), and check that every download comes from
+   repo.example.com. If your shell lacks the token variables, ask me to run the build and send
+   you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -99,12 +109,11 @@ Do this:
 <Path title="Gradle or Maven: full switch-over with publishing" ecosystem="gradle" scope="full">
 
 ```text title="Prompt: Gradle or Maven, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -113,112 +122,109 @@ Repositories (Nexus name -> Telesphorepo name):
 - maven-releases -> maven-releases
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, maven-releases-rehearsal, and move to maven-releases after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, maven-releases-rehearsal, and move to maven-releases after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   Maven repository named maven-releases-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories maven-releases-rehearsal and maven-releases. Tell me the
-   values to enter: for GitHub Actions, the GitHub repository, the workflow file and the branch;
-   for Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: pom.xml, .mvn/maven.config, every
-   settings.xml in the project, build.gradle(.kts), settings.gradle(.kts) (pluginManagement,
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted Maven repository named maven-releases-rehearsal (Repositories page,
+   New repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   maven-releases-rehearsal and maven-releases. Tell me the values for it: for GitHub Actions,
+   the GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address
+   and the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in pom.xml, .mvn/maven.config, every settings.xml,
+   build.gradle(.kts), settings.gradle(.kts) (pluginManagement,
    dependencyResolutionManagement), gradle.properties, gradle/*.gradle(.kts), buildSrc/,
-   build-logic/, init scripts, and gradle/wrapper/gradle-wrapper.properties. Also show me what
-   ~/.m2/settings.xml, ~/.gradle/gradle.properties and ~/.gradle/init.d/ on this computer name.
-   Look also in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others),
-   Dockerfiles, compose files, shell and PowerShell scripts, and docs and READMEs. Note how the
-   project publishes to Nexus today. Tell me each Nexus repository the project uses that is not
-   in my list, and wait for its name.
-3. Change every download address to its Telesphorepo address. Address:
+   build-logic/, init scripts and gradle/wrapper/gradle-wrapper.properties, and in CI files
+   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files,
+   scripts and READMEs. Also show me what ~/.m2/settings.xml, ~/.gradle/gradle.properties and
+   ~/.gradle/init.d/ on this computer name. Note how the project publishes to Nexus today. For
+   each Nexus repository not in my list, ask me its name and wait.
+3. Change every download address.
    https://nexus.example.com/repository/<nexus name>/ becomes
-   https://repo.example.com/maven/<telesphorepo name>. The files keep their paths, so only the
-   prefix changes. A <mirror> with <mirrorOf>*</mirrorOf> points at a Telesphorepo group. A
+   https://repo.example.com/maven/<telesphorepo name>. Only the prefix changes; the files keep
+   their paths. A <mirror> with <mirrorOf>*</mirrorOf> points at a Telesphorepo group. A
    distributionUrl on a Nexus raw repository becomes https://repo.example.com/raw/<name>/<path>;
    keep distributionSha256Sum.
-4. Lockfiles: Gradle lockfiles and gradle/verification-metadata.xml hold no addresses. Keep them
-   as they are.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in ORG_GRADLE_PROJECT_<name>Username and
-   ORG_GRADLE_PROJECT_<name>Password for Gradle, TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN for Maven, here and as CI secrets. Tell me these names before I do
-   it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo
-   CLI sets it during a publish. Wire the variables in: Gradle: in the maven { } block, name =
-   "<name>" and credentials(PasswordCredentials::class) (Groovy:
-   credentials(PasswordCredentials)), where <name> is the repository name as a Gradle identifier
+4. Lockfiles: Gradle lockfiles and gradle/verification-metadata.xml hold no addresses. Keep
+   them.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in
+   ORG_GRADLE_PROJECT_<name>Username and ORG_GRADLE_PROJECT_<name>Password for Gradle, and
+   TELESPHOREPO_READ_USER and TELESPHOREPO_READ_TOKEN for Maven, here and as CI secrets. Tell
+   me these names first, and never ask me for the token. Never use the name
+   TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the variables in. Gradle: in the
+   maven { } block, name = "<name>" and credentials(PasswordCredentials::class) (Groovy:
+   credentials(PasswordCredentials)); <name> is the repository name as a Gradle identifier
    (my-libs is myLibs). Maven: a <server> whose <id> is the <id> of the repository or mirror,
    with ${env.TELESPHOREPO_READ_USER} and ${env.TELESPHOREPO_READ_TOKEN}, in ~/.m2/settings.xml
    and in a settings file of the project that CI passes with -s.
-6. Watch for these. A hosted repository holds only its own packages: keep mavenCentral(), or use
-   a group with a proxy of Maven Central. A Maven group merges the versions of all its members,
-   as Nexus does. Maven refuses http:// addresses other than localhost; Gradle needs
+6. Watch for these. A hosted repository holds only its own packages: keep mavenCentral(), or
+   use a group with a proxy of Maven Central. A Maven group merges the versions of all its
+   members, as Nexus does. Maven refuses http:// addresses other than localhost; Gradle needs
    isAllowInsecureProtocol = true for one.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (./gradlew build --refresh-dependencies, or mvn -U
-   -Dmaven.repo.local=<new empty folder> verify), and check in its output that the downloads
-   come from repo.example.com. If a private repository needs the token variables and your shell
-   does not have them, ask me to run it and send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (./gradlew build --refresh-dependencies, or mvn -U
+   -Dmaven.repo.local=<new empty folder> verify), and check that every download comes from
+   repo.example.com. If your shell lacks the token variables, ask me to run the build and send
+   you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
-10. Remove the Nexus publishing: <distributionManagement> entries and <server> credentials for
-    Nexus, Nexus staging plugins (nexus-staging-maven-plugin,
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
+10. Remove the Nexus publishing: the <distributionManagement> entries and <server> credentials
+    for Nexus, the Nexus staging plugins (nexus-staging-maven-plugin,
     io.github.gradle-nexus.publish-plugin) that target our Nexus, and the Nexus repository in
-    Gradle's publishing { repositories { } }: gradle publish publishes to every repository
-    listed there. Keep the maven-publish plugin, the publications, group and version: a Gradle
-    project needs them. telesphorepo publish runs mvn deploy (or ./mvnw) with the repository as
-    the target, or gradle publish (or ./gradlew) with an init script that adds the repository;
-    the build files keep no publish address. List the CI secrets that are no longer used.
-11. Write telesphorepo.toml in the project folder, next to pom.xml or the Gradle settings file.
-    It holds no secret, and the project commits it:
+    Gradle's publishing { repositories { } } (gradle publish publishes to every repository
+    there). Keep the maven-publish plugin, the publications, group and version. telesphorepo
+    publish runs mvn deploy (or ./mvnw) with the repository as the target, or gradle publish
+    (or ./gradlew) with an init script that adds the repository; the build files keep no
+    publish address. List the CI secrets nothing uses now.
+11. Write telesphorepo.toml next to pom.xml or the Gradle settings file. It holds no secret, and
+    the project commits it:
       server = "https://repo.example.com"
       repo = "maven-releases-rehearsal"
     If the folder has both Maven and Gradle files, add kind = "maven" or kind = "gradle".
-12. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
-    read), then actions/checkout@v7, actions/setup-java@v6 (distribution: temurin, java-version:
-    21; use the project's Java version) with no build step, then
+12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
+    read), then actions/checkout@v7, actions/setup-java@v6 (distribution: temurin,
+    java-version: the project's Java version, such as 21) with no build step, then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish
     Jenkins: keep the build stage (./gradlew build, on Windows .\gradlew.bat build; or mvn -B
-    verify), and add a publish stage after it. Only that stage gets the identity token, because
-    it is good for 10 minutes. Inside withCredentials([string(credentialsId:
-    'telesphorepo-id-token', variable: 'OIDC_TOKEN')]), it runs on a Unix agent:
+    verify), and add a publish stage after it. Only that stage gets the identity token, which
+    lasts 10 minutes. Inside withCredentials([string(credentialsId: 'telesphorepo-id-token',
+    variable: 'OIDC_TOKEN')]) it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-13. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish. If the server says my account may not publish, ask me to give it
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variables from secrets.
+13. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish. If the server says my account may not publish, ask me for
     Publish on maven-releases-rehearsal.
-14. Verify: in a new temporary folder, write a minimal Gradle or Maven build that depends on the
-    group:artifact:version you published, from
+14. Verify: in a new temporary folder, write a minimal Gradle or Maven build that depends on
+    the group:artifact:version you published, from
     https://repo.example.com/maven/maven-releases-rehearsal, and build it with an empty cache.
     Then delete the folder.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to maven-releases, check that the CI pipeline lists
-    maven-releases, publish once, then delete maven-releases-rehearsal.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to maven-releases, check that the CI pipeline lists maven-releases,
+    publish once, then delete maven-releases-rehearsal.
 ```
 
 </Path>
@@ -226,12 +232,11 @@ Do this:
 <Path title="npm, pnpm, Yarn or Bun: download addresses only" ecosystem="npm" scope="downloads">
 
 ```text title="Prompt: npm, pnpm, Yarn or Bun, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -240,49 +245,48 @@ Repositories (Nexus name -> Telesphorepo name):
 - npm-hosted -> npm-hosted
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: .npmrc (in the project and ~/.npmrc),
-   .yarnrc.yml, .yarnrc (Yarn 1), bunfig.toml, package.json (publishConfig, scripts), the
-   lockfiles, and the registry-url input of actions/setup-node in CI. Look also in CI files
-   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files,
-   shell and PowerShell scripts, and docs and READMEs. Tell me each Nexus repository the project
-   uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address:
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in .npmrc (the project's and ~/.npmrc), .yarnrc.yml,
+   .yarnrc (Yarn 1), bunfig.toml, package.json (publishConfig, scripts), the lockfiles and the
+   registry-url input of actions/setup-node, and in CI files (.github/workflows, Jenkinsfile,
+   .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs. For each Nexus
+   repository not in my list, ask me its name and wait.
+2. Change every download address.
    https://nexus.example.com/repository/<nexus name>/ becomes
-   https://repo.example.com/npm/<telesphorepo name>/, with the trailing slash. Scoped registries
-   (@acme:registry=) change the same way; Yarn 2 and later name them in npmRegistryServer and
-   npmScopes. Remove the Nexus _auth, always-auth and email lines. Bun reads .npmrc, and
-   bunfig.toml can set [install] registry and scopes. On a hosted repository, Yarn 4 needs
-   npmMinimalAgeGate: 0, or it installs a version only once it is a week old; on a group or a
-   proxy, list our own packages in npmPreapprovedPackages instead. A plain http:// server needs
-   its host in unsafeHttpWhitelist of Yarn.
+   https://repo.example.com/npm/<telesphorepo name>/, with the trailing slash. Scoped
+   registries (@acme:registry=) change the same way; Yarn 2 and later name them in
+   npmRegistryServer and npmScopes. Remove the Nexus _auth, always-auth and email lines. Bun
+   reads .npmrc, and bunfig.toml can set [install] registry and scopes. On a hosted
+   repository, Yarn 4 needs npmMinimalAgeGate: 0, or it installs a version only once it is a
+   week old; on a group or a proxy, list our own packages in npmPreapprovedPackages instead. A
+   plain http:// server needs its host in unsafeHttpWhitelist of Yarn.
 3. Lockfiles: in package-lock.json, a Yarn 1 yarn.lock, pnpm-lock.yaml and bun.lock, change the
    prefix https://nexus.example.com/repository/<nexus name>/ to
    https://repo.example.com/npm/<telesphorepo name>/. The tarballs keep their paths
-   (<name>/-/<file>.tgz) and their integrity. A Yarn 2+ yarn.lock holds no address. Then run the
-   frozen install of the tool: npm ci, pnpm install --frozen-lockfile, yarn install --immutable
-   or bun install --frozen-lockfile.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in NPM_TOKEN, here and as CI secrets. Tell me these
-   names before I do it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN:
-   the Telesphorepo CLI sets it during a publish. Wire the variables in: .npmrc gets
-   //repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}; .yarnrc.yml gets npmAlwaysAuth: true
-   and npmAuthToken: "${NPM_TOKEN}". In CI, the install step gets NPM_TOKEN from a secret.
+   (<name>/-/<file>.tgz) and their integrity. A Yarn 2+ yarn.lock holds no address. Then run
+   the frozen install of the tool: npm ci, pnpm install --frozen-lockfile, yarn install
+   --immutable or bun install --frozen-lockfile.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it in NPM_TOKEN, here and as a CI secret. Tell me
+   this name first, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the
+   CLI sets it when it publishes. Wire the variable in: .npmrc gets
+   //repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}; .yarnrc.yml gets npmAlwaysAuth:
+   true and npmAuthToken: "${NPM_TOKEN}". In CI, the install step gets NPM_TOKEN from a secret.
 5. Watch for these. In a Telesphorepo npm group, the first member that has a package name owns
-   it, and the group serves every version of that name from that member only. Nexus merges them.
-   If the project needs versions of one name from two members, tell me. Telesphorepo does not
-   serve npm audit: point an audit step at --registry=https://registry.npmjs.org/, or tell me.
+   it, and the group serves every version of that name from that member only; Nexus merges
+   them. If the project needs versions of one name from two members, tell me. Telesphorepo does
+   not serve npm audit: point an audit step at --registry=https://registry.npmjs.org/, or tell
+   me.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (delete node_modules, then run the frozen install
-   of the tool with an empty cache (for npm: npm ci --cache <new empty folder>)), and check in
-   its output that the downloads come from repo.example.com. If a private repository needs the
-   token variables and your shell does not have them, ask me to run it and send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (delete node_modules, then run the frozen install with an empty
+   cache; for npm: npm ci --cache <new empty folder>), and check that every download comes
+   from repo.example.com. If your shell lacks the token variable, ask me to run the build and
+   send you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -291,12 +295,11 @@ Do this:
 <Path title="npm, pnpm, Yarn or Bun: full switch-over with publishing" ecosystem="npm" scope="full">
 
 ```text title="Prompt: npm, pnpm, Yarn or Bun, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -305,111 +308,109 @@ Repositories (Nexus name -> Telesphorepo name):
 - npm-hosted -> npm-hosted
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, npm-hosted-rehearsal, and move to npm-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, npm-hosted-rehearsal, and move to npm-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   npm repository named npm-hosted-rehearsal; my account needs Publish on it. Then, on Settings
-   › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this project,
-   with the repositories npm-hosted-rehearsal and npm-hosted. Tell me the values to enter: for
-   GitHub Actions, the GitHub repository, the workflow file and the branch; for Jenkins, the
-   Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: .npmrc (in the project and ~/.npmrc),
-   .yarnrc.yml, .yarnrc (Yarn 1), bunfig.toml, package.json (publishConfig, scripts), the
-   lockfiles, and the registry-url input of actions/setup-node in CI. Look also in CI files
-   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files,
-   shell and PowerShell scripts, and docs and READMEs. Note how the project publishes to Nexus
-   today. Tell me each Nexus repository the project uses that is not in my list, and wait for
-   its name.
-3. Change every download address to its Telesphorepo address. Address:
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted npm repository named npm-hosted-rehearsal (Repositories page, New
+   repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   npm-hosted-rehearsal and npm-hosted. Tell me the values for it: for GitHub Actions, the
+   GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address and
+   the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in .npmrc (the project's and ~/.npmrc), .yarnrc.yml,
+   .yarnrc (Yarn 1), bunfig.toml, package.json (publishConfig, scripts), the lockfiles and the
+   registry-url input of actions/setup-node, and in CI files (.github/workflows, Jenkinsfile,
+   .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs. Note how the
+   project publishes to Nexus today. For each Nexus repository not in my list, ask me its name
+   and wait.
+3. Change every download address.
    https://nexus.example.com/repository/<nexus name>/ becomes
-   https://repo.example.com/npm/<telesphorepo name>/, with the trailing slash. Scoped registries
-   (@acme:registry=) change the same way; Yarn 2 and later name them in npmRegistryServer and
-   npmScopes. Remove the Nexus _auth, always-auth and email lines. Bun reads .npmrc, and
-   bunfig.toml can set [install] registry and scopes. On a hosted repository, Yarn 4 needs
-   npmMinimalAgeGate: 0, or it installs a version only once it is a week old; on a group or a
-   proxy, list our own packages in npmPreapprovedPackages instead. A plain http:// server needs
-   its host in unsafeHttpWhitelist of Yarn.
+   https://repo.example.com/npm/<telesphorepo name>/, with the trailing slash. Scoped
+   registries (@acme:registry=) change the same way; Yarn 2 and later name them in
+   npmRegistryServer and npmScopes. Remove the Nexus _auth, always-auth and email lines. Bun
+   reads .npmrc, and bunfig.toml can set [install] registry and scopes. On a hosted
+   repository, Yarn 4 needs npmMinimalAgeGate: 0, or it installs a version only once it is a
+   week old; on a group or a proxy, list our own packages in npmPreapprovedPackages instead. A
+   plain http:// server needs its host in unsafeHttpWhitelist of Yarn.
 4. Lockfiles: in package-lock.json, a Yarn 1 yarn.lock, pnpm-lock.yaml and bun.lock, change the
    prefix https://nexus.example.com/repository/<nexus name>/ to
    https://repo.example.com/npm/<telesphorepo name>/. The tarballs keep their paths
-   (<name>/-/<file>.tgz) and their integrity. A Yarn 2+ yarn.lock holds no address. Then run the
-   frozen install of the tool: npm ci, pnpm install --frozen-lockfile, yarn install --immutable
-   or bun install --frozen-lockfile.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in NPM_TOKEN, here and as CI secrets. Tell me these
-   names before I do it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN:
-   the Telesphorepo CLI sets it during a publish. Wire the variables in: .npmrc gets
-   //repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}; .yarnrc.yml gets npmAlwaysAuth: true
-   and npmAuthToken: "${NPM_TOKEN}". In CI, the install step gets NPM_TOKEN from a secret.
+   (<name>/-/<file>.tgz) and their integrity. A Yarn 2+ yarn.lock holds no address. Then run
+   the frozen install of the tool: npm ci, pnpm install --frozen-lockfile, yarn install
+   --immutable or bun install --frozen-lockfile.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it in NPM_TOKEN, here and as a CI secret. Tell me
+   this name first, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the
+   CLI sets it when it publishes. Wire the variable in: .npmrc gets
+   //repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}; .yarnrc.yml gets npmAlwaysAuth:
+   true and npmAuthToken: "${NPM_TOKEN}". In CI, the install step gets NPM_TOKEN from a secret.
 6. Watch for these. In a Telesphorepo npm group, the first member that has a package name owns
-   it, and the group serves every version of that name from that member only. Nexus merges them.
-   If the project needs versions of one name from two members, tell me. Telesphorepo does not
-   serve npm audit: point an audit step at --registry=https://registry.npmjs.org/, or tell me.
+   it, and the group serves every version of that name from that member only; Nexus merges
+   them. If the project needs versions of one name from two members, tell me. Telesphorepo does
+   not serve npm audit: point an audit step at --registry=https://registry.npmjs.org/, or tell
+   me.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (delete node_modules, then run the frozen install
-   of the tool with an empty cache (for npm: npm ci --cache <new empty folder>)), and check in
-   its output that the downloads come from repo.example.com. If a private repository needs the
-   token variables and your shell does not have them, ask me to run it and send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (delete node_modules, then run the frozen install with an empty
+   cache; for npm: npm ci --cache <new empty folder>), and check that every download comes
+   from repo.example.com. If your shell lacks the token variable, ask me to run the build and
+   send you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
 10. Remove the Nexus publishing: publishConfig.registry, the Nexus publish auth lines, and the
     npm publish steps of CI with their secrets. telesphorepo publish picks the tool by the
     lockfile: pnpm publish (pnpm-lock.yaml), yarn npm publish (yarn.lock), bun publish
-    (bun.lock), else npm publish. List the CI secrets that are no longer used.
-11. Write telesphorepo.toml in the project folder, next to package.json. It holds no secret, and
-    the project commits it:
+    (bun.lock), else npm publish. List the CI secrets nothing uses now.
+11. Write telesphorepo.toml next to package.json. It holds no secret, and the project commits
+    it:
       server = "https://repo.example.com"
       repo = "npm-hosted-rehearsal"
     In a workspace, ask me which packages publish, and put a telesphorepo.toml in each of their
     folders.
-12. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
-    read), then actions/checkout@v7, the steps of the tool: npm actions/setup-node@v5
-    (node-version: lts/*) and run: npm ci; pnpm pnpm/action-setup@v4, actions/setup-node@v5 and
-    run: pnpm install --frozen-lockfile; Yarn actions/setup-node@v5 and run: corepack enable &&
-    yarn install --immutable; Bun oven-sh/setup-bun@v2 and run: bun install --frozen-lockfile,
-    then
+12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
+    read), then actions/checkout@v7, then the steps of the tool: npm: actions/setup-node@v5
+    (node-version: lts/*) and run: npm ci; pnpm: pnpm/action-setup@v4, actions/setup-node@v5
+    and run: pnpm install --frozen-lockfile; Yarn: actions/setup-node@v5 and run: corepack
+    enable && yarn install --immutable; Bun: oven-sh/setup-bun@v2 and run: bun install
+    --frozen-lockfile. Then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish
-    Jenkins: keep the build stage (the same install command), and add a publish stage after it.
-    Only that stage gets the identity token, because it is good for 10 minutes. Inside
-    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]),
-    it runs on a Unix agent:
+    Jenkins: keep the build stage (the same install command), and add a publish stage after
+    it. Only that stage gets the identity token, which lasts 10 minutes. Inside
+    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')])
+    it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-13. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish. If the server says my account may not publish, ask me to give it
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variable from secrets.
+13. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish. If the server says my account may not publish, ask me for
     Publish on npm-hosted-rehearsal.
 14. Verify: in a new temporary folder, run npm init -y, write an .npmrc with the registry
-    https://repo.example.com/npm/npm-hosted-rehearsal/, and run npm install <package>@<version>.
-    Then delete the folder.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to npm-hosted, check that the CI pipeline lists npm-hosted,
-    publish once, then delete npm-hosted-rehearsal.
+    https://repo.example.com/npm/npm-hosted-rehearsal/, and run npm install
+    <package>@<version>. Then delete the folder.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to npm-hosted, check that the CI pipeline lists npm-hosted, publish
+    once, then delete npm-hosted-rehearsal.
 ```
 
 </Path>
@@ -417,12 +418,11 @@ Do this:
 <Path title="Python: download addresses only" ecosystem="python" scope="downloads">
 
 ```text title="Prompt: Python, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -431,48 +431,47 @@ Repositories (Nexus name -> Telesphorepo name):
 - pypi-hosted -> pypi-hosted
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: pip.conf or pip.ini (the project,
-   ~/.config/pip/pip.conf, /etc/pip.conf), requirements*.txt and constraints files (--index-url,
-   --extra-index-url, --trusted-host), pyproject.toml ([[tool.uv.index]],
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in pip.conf or pip.ini (the project's,
+   ~/.config/pip/pip.conf, /etc/pip.conf), requirements*.txt and constraints files
+   (--index-url, --extra-index-url, --trusted-host), pyproject.toml ([[tool.uv.index]],
    [[tool.poetry.source]], [tool.pdm]), uv.toml, poetry.toml, setup.cfg, tox.ini, noxfile.py,
-   .pypirc, and PIP_INDEX_URL, PIP_EXTRA_INDEX_URL, UV_INDEX_URL or UV_DEFAULT_INDEX in
-   Dockerfiles and CI. Look also in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and
-   others), Dockerfiles, compose files, shell and PowerShell scripts, and docs and READMEs. Tell
-   me each Nexus repository the project uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address:
+   .pypirc, and PIP_INDEX_URL, PIP_EXTRA_INDEX_URL, UV_INDEX_URL or UV_DEFAULT_INDEX, and in CI
+   files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
+   files, scripts and READMEs. For each Nexus repository not in my list, ask me its name and
+   wait.
+2. Change every download address.
    https://nexus.example.com/repository/<nexus name>/simple/ (with or without simple/) becomes
    https://repo.example.com/pypi/<telesphorepo name>/simple/. On a plain http:// server, pip
-   needs trusted-host = <host> and uv allow-insecure-host.
+   needs trusted-host = <host> and uv needs allow-insecure-host.
 3. Lockfiles: uv.lock and poetry.lock hold file addresses whose paths differ between Nexus and
    Telesphorepo, so run the lock command instead of editing them: uv lock, or poetry lock
-   (Poetry 1: poetry lock --no-update). Then check git diff: the same versions and the same
-   hashes, other addresses only. In requirements files with --hash, change only the index lines.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in PIP_INDEX_URL for pip, UV_INDEX_<NAME>_USERNAME
-   and UV_INDEX_<NAME>_PASSWORD for uv, POETRY_HTTP_BASIC_<SOURCE>_USERNAME and
-   POETRY_HTTP_BASIC_<SOURCE>_PASSWORD for Poetry, here and as CI secrets. Tell me these names
-   before I do it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the
-   Telesphorepo CLI sets it during a publish. Wire the variables in: pip reads credentials from
-   the address, so the whole address with my username and the token goes in PIP_INDEX_URL, and
-   the files keep the address without credentials. For uv, <NAME> is the index name in upper
-   case, other characters as _; for Poetry, <SOURCE> is the source name the same way.
+   (Poetry 1: poetry lock --no-update). Then check git diff: the same versions and hashes,
+   other addresses only. In requirements files with --hash, change only the index lines.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in PIP_INDEX_URL for pip,
+   UV_INDEX_<NAME>_USERNAME and UV_INDEX_<NAME>_PASSWORD for uv, or
+   POETRY_HTTP_BASIC_<SOURCE>_USERNAME and POETRY_HTTP_BASIC_<SOURCE>_PASSWORD for Poetry,
+   here and as CI secrets. Tell me these names first, and never ask me for the token. Never use
+   the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the variables in: pip
+   reads credentials from the address, so the whole address with my username and the token
+   goes in PIP_INDEX_URL, and the files keep the address without credentials. For uv, <NAME> is
+   the index name in upper case, other characters as _; for Poetry, <SOURCE> is the source name
+   the same way.
 5. Watch for these. A hosted repository holds only our own packages: their dependencies need a
    group with a PyPI proxy, or PyPI itself. In a Telesphorepo PyPI group, the first member that
-   has a project name owns it, with every file of that project. Nexus merges them. If the
+   has a project name owns it, with every file of that project; Nexus merges them. If the
    project needs files of one name from two members, tell me.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (a new virtual environment and the install with an
-   empty cache (pip install --no-cache-dir -r requirements.txt, uv sync --no-cache, or poetry
-   install with a new cache folder)), and check in its output that the downloads come from
-   repo.example.com. If a private repository needs the token variables and your shell does not
-   have them, ask me to run it and send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (a new virtual environment, then pip install --no-cache-dir -r
+   requirements.txt, uv sync --no-cache, or poetry install with a new cache folder), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run the build and send you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -481,12 +480,11 @@ Do this:
 <Path title="Python: full switch-over with publishing" ecosystem="python" scope="full">
 
 ```text title="Prompt: Python, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -495,108 +493,105 @@ Repositories (Nexus name -> Telesphorepo name):
 - pypi-hosted -> pypi-hosted
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, pypi-hosted-rehearsal, and move to pypi-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, pypi-hosted-rehearsal, and move to pypi-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   PyPI repository named pypi-hosted-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories pypi-hosted-rehearsal and pypi-hosted. Tell me the values to
-   enter: for GitHub Actions, the GitHub repository, the workflow file and the branch; for
-   Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: pip.conf or pip.ini (the project,
-   ~/.config/pip/pip.conf, /etc/pip.conf), requirements*.txt and constraints files (--index-url,
-   --extra-index-url, --trusted-host), pyproject.toml ([[tool.uv.index]],
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted PyPI repository named pypi-hosted-rehearsal (Repositories page, New
+   repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   pypi-hosted-rehearsal and pypi-hosted. Tell me the values for it: for GitHub Actions, the
+   GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address and
+   the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in pip.conf or pip.ini (the project's,
+   ~/.config/pip/pip.conf, /etc/pip.conf), requirements*.txt and constraints files
+   (--index-url, --extra-index-url, --trusted-host), pyproject.toml ([[tool.uv.index]],
    [[tool.poetry.source]], [tool.pdm]), uv.toml, poetry.toml, setup.cfg, tox.ini, noxfile.py,
-   .pypirc, and PIP_INDEX_URL, PIP_EXTRA_INDEX_URL, UV_INDEX_URL or UV_DEFAULT_INDEX in
-   Dockerfiles and CI. Look also in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and
-   others), Dockerfiles, compose files, shell and PowerShell scripts, and docs and READMEs. Note
-   how the project publishes to Nexus today. Tell me each Nexus repository the project uses that
-   is not in my list, and wait for its name.
-3. Change every download address to its Telesphorepo address. Address:
+   .pypirc, and PIP_INDEX_URL, PIP_EXTRA_INDEX_URL, UV_INDEX_URL or UV_DEFAULT_INDEX, and in CI
+   files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
+   files, scripts and READMEs. Note how the project publishes to Nexus today. For each Nexus
+   repository not in my list, ask me its name and wait.
+3. Change every download address.
    https://nexus.example.com/repository/<nexus name>/simple/ (with or without simple/) becomes
    https://repo.example.com/pypi/<telesphorepo name>/simple/. On a plain http:// server, pip
-   needs trusted-host = <host> and uv allow-insecure-host.
+   needs trusted-host = <host> and uv needs allow-insecure-host.
 4. Lockfiles: uv.lock and poetry.lock hold file addresses whose paths differ between Nexus and
    Telesphorepo, so run the lock command instead of editing them: uv lock, or poetry lock
-   (Poetry 1: poetry lock --no-update). Then check git diff: the same versions and the same
-   hashes, other addresses only. In requirements files with --hash, change only the index lines.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in PIP_INDEX_URL for pip, UV_INDEX_<NAME>_USERNAME
-   and UV_INDEX_<NAME>_PASSWORD for uv, POETRY_HTTP_BASIC_<SOURCE>_USERNAME and
-   POETRY_HTTP_BASIC_<SOURCE>_PASSWORD for Poetry, here and as CI secrets. Tell me these names
-   before I do it, and never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the
-   Telesphorepo CLI sets it during a publish. Wire the variables in: pip reads credentials from
-   the address, so the whole address with my username and the token goes in PIP_INDEX_URL, and
-   the files keep the address without credentials. For uv, <NAME> is the index name in upper
-   case, other characters as _; for Poetry, <SOURCE> is the source name the same way.
+   (Poetry 1: poetry lock --no-update). Then check git diff: the same versions and hashes,
+   other addresses only. In requirements files with --hash, change only the index lines.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in PIP_INDEX_URL for pip,
+   UV_INDEX_<NAME>_USERNAME and UV_INDEX_<NAME>_PASSWORD for uv, or
+   POETRY_HTTP_BASIC_<SOURCE>_USERNAME and POETRY_HTTP_BASIC_<SOURCE>_PASSWORD for Poetry,
+   here and as CI secrets. Tell me these names first, and never ask me for the token. Never use
+   the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the variables in: pip
+   reads credentials from the address, so the whole address with my username and the token
+   goes in PIP_INDEX_URL, and the files keep the address without credentials. For uv, <NAME> is
+   the index name in upper case, other characters as _; for Poetry, <SOURCE> is the source name
+   the same way.
 6. Watch for these. A hosted repository holds only our own packages: their dependencies need a
    group with a PyPI proxy, or PyPI itself. In a Telesphorepo PyPI group, the first member that
-   has a project name owns it, with every file of that project. Nexus merges them. If the
+   has a project name owns it, with every file of that project; Nexus merges them. If the
    project needs files of one name from two members, tell me.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (a new virtual environment and the install with an
-   empty cache (pip install --no-cache-dir -r requirements.txt, uv sync --no-cache, or poetry
-   install with a new cache folder)), and check in its output that the downloads come from
-   repo.example.com. If a private repository needs the token variables and your shell does not
-   have them, ask me to run it and send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (a new virtual environment, then pip install --no-cache-dir -r
+   requirements.txt, uv sync --no-cache, or poetry install with a new cache folder), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run the build and send you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
-10. Remove the Nexus publishing: .pypirc use, twine upload, uv publish and publish-url, poetry
-    publish -r and the Poetry repository config for Nexus, and their CI secrets. telesphorepo
-    publish runs poetry build (with [tool.poetry]), uv build (with uv.lock) or python -m build,
-    then uploads every wheel and sdist. List the CI secrets that are no longer used.
-11. Write telesphorepo.toml in the project folder, next to pyproject.toml or setup.py. It holds
-    no secret, and the project commits it:
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
+10. Remove the Nexus publishing: the use of .pypirc, twine upload, uv publish and publish-url,
+    poetry publish -r and the Poetry repository config for Nexus, and their CI secrets.
+    telesphorepo publish runs poetry build (with [tool.poetry]), uv build (with uv.lock) or
+    python -m build, then uploads every wheel and sdist. List the CI secrets nothing uses now.
+11. Write telesphorepo.toml next to pyproject.toml or setup.py. It holds no secret, and the
+    project commits it:
       server = "https://repo.example.com"
       repo = "pypi-hosted-rehearsal"
-12. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
-    read), then actions/checkout@v7, the steps of the tool: uv astral-sh/setup-uv@v7; Poetry
-    actions/setup-python@v6 (python-version: 3.x) and run: pipx install poetry; pip
-    actions/setup-python@v6 and run: python -m pip install build, then
+12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
+    read), then actions/checkout@v7, then the steps of the tool: uv: astral-sh/setup-uv@v7;
+    Poetry: actions/setup-python@v6 (python-version: 3.x) and run: pipx install poetry; pip:
+    actions/setup-python@v6 and run: python -m pip install build. Then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish
-    Jenkins: keep the build stage (none for uv and Poetry, but the Jenkins agent needs the tool
-    installed; for pip, python3 -m pip install --user build), and add a publish stage after it.
-    Only that stage gets the identity token, because it is good for 10 minutes. Inside
-    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]),
-    it runs on a Unix agent:
+    Jenkins: keep the build stage (none for uv and Poetry, but the agent needs the tool
+    installed; for pip, python3 -m pip install --user build), and add a publish stage after
+    it. Only that stage gets the identity token, which lasts 10 minutes. Inside
+    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')])
+    it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-13. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish (telesphorepo publish dist/*.whl uploads files that are built already).
-    If the server says my account may not publish, ask me to give it Publish on
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variables from secrets.
+13. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish (telesphorepo publish dist/*.whl uploads files that are built
+    already). If the server says my account may not publish, ask me for Publish on
     pypi-hosted-rehearsal.
 14. Verify: in a new temporary virtual environment, run pip install --index-url
     https://repo.example.com/pypi/pypi-hosted-rehearsal/simple/ --extra-index-url
     https://pypi.org/simple/ <package>==<version>. Then delete it.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to pypi-hosted, check that the CI pipeline lists pypi-hosted,
-    publish once, then delete pypi-hosted-rehearsal.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to pypi-hosted, check that the CI pipeline lists pypi-hosted, publish
+    once, then delete pypi-hosted-rehearsal.
 ```
 
 </Path>
@@ -604,12 +599,11 @@ Do this:
 <Path title="Rust and Cargo: download addresses only" ecosystem="cargo" scope="downloads">
 
 ```text title="Prompt: Rust and Cargo, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -618,39 +612,36 @@ Repositories (Nexus name -> Telesphorepo name):
 - cargo-hosted -> cargo-hosted
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: .cargo/config.toml (in the project and
-   ~/.cargo/config.toml), Cargo.toml (registry = of dependencies, publish =), Cargo.lock, and
-   CARGO_REGISTRIES_* variables in Dockerfiles and CI. Look also in CI files (.github/workflows,
-   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, shell and PowerShell
-   scripts, and docs and READMEs. Tell me each Nexus repository the project uses that is not in
-   my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address: the index becomes
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in .cargo/config.toml (the project's and
+   ~/.cargo/config.toml), Cargo.toml (registry = of dependencies, publish =), Cargo.lock and
+   CARGO_REGISTRIES_* variables, and in CI files (.github/workflows, Jenkinsfile,
+   .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs. For each Nexus
+   repository not in my list, ask me its name and wait.
+2. Change every download address. The index becomes
    sparse+https://repo.example.com/cargo/<telesphorepo name>/index/. Keep the registry names
    that Cargo.toml uses, and change only index in [registries.<name>]. A proxy or a group of
    crates.io also takes [source.crates-io] replace-with = "<name>".
 3. Lockfiles: in Cargo.lock, change each source = "sparse+<Nexus index>" (or registry+) to the
    Telesphorepo index, exactly as in the config. Keep every checksum. Then run cargo fetch
    --locked.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in CARGO_REGISTRIES_<NAME>_TOKEN (the registry name
-   in upper case, - as _), here and as CI secrets. Tell me these names before I do it, and never
-   ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets it
-   during a publish. Wire the variables in: The registry gets credential-provider =
-   "cargo:token", and Cargo reads the token from the variable. This needs Cargo 1.74 or later.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it in CARGO_REGISTRIES_<NAME>_TOKEN (the registry name
+   in upper case, - as _), here and as a CI secret. Tell me this name first, and never ask me
+   for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variable in: the registry gets credential-provider = "cargo:token", and Cargo reads
+   the token from the variable. This needs Cargo 1.74 or later.
 5. Watch for these. In a Telesphorepo Cargo group, the first member that has a crate name owns
    it, and the group serves every version of that name from that member only.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (cargo build --locked with a new CARGO_HOME (an
-   empty folder)), and check in its output that the downloads come from repo.example.com. If a
-   private repository needs the token variables and your shell does not have them, ask me to run
-   it and send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (cargo build --locked with a new, empty CARGO_HOME), and check
+   that every download comes from repo.example.com. If your shell lacks the token variable, ask
+   me to run the build and send you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -659,12 +650,11 @@ Do this:
 <Path title="Rust and Cargo: full switch-over with publishing" ecosystem="cargo" scope="full">
 
 ```text title="Prompt: Rust and Cargo, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -673,95 +663,91 @@ Repositories (Nexus name -> Telesphorepo name):
 - cargo-hosted -> cargo-hosted
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, cargo-hosted-rehearsal, and move to cargo-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, cargo-hosted-rehearsal, and move to cargo-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   Cargo repository named cargo-hosted-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories cargo-hosted-rehearsal and cargo-hosted. Tell me the values to
-   enter: for GitHub Actions, the GitHub repository, the workflow file and the branch; for
-   Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: .cargo/config.toml (in the project and
-   ~/.cargo/config.toml), Cargo.toml (registry = of dependencies, publish =), Cargo.lock, and
-   CARGO_REGISTRIES_* variables in Dockerfiles and CI. Look also in CI files (.github/workflows,
-   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, shell and PowerShell
-   scripts, and docs and READMEs. Note how the project publishes to Nexus today. Tell me each
-   Nexus repository the project uses that is not in my list, and wait for its name.
-3. Change every download address to its Telesphorepo address. Address: the index becomes
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted Cargo repository named cargo-hosted-rehearsal (Repositories page, New
+   repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   cargo-hosted-rehearsal and cargo-hosted. Tell me the values for it: for GitHub Actions, the
+   GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address and
+   the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in .cargo/config.toml (the project's and
+   ~/.cargo/config.toml), Cargo.toml (registry = of dependencies, publish =), Cargo.lock and
+   CARGO_REGISTRIES_* variables, and in CI files (.github/workflows, Jenkinsfile,
+   .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs. Note how the
+   project publishes to Nexus today. For each Nexus repository not in my list, ask me its name
+   and wait.
+3. Change every download address. The index becomes
    sparse+https://repo.example.com/cargo/<telesphorepo name>/index/. Keep the registry names
    that Cargo.toml uses, and change only index in [registries.<name>]. A proxy or a group of
    crates.io also takes [source.crates-io] replace-with = "<name>".
 4. Lockfiles: in Cargo.lock, change each source = "sparse+<Nexus index>" (or registry+) to the
    Telesphorepo index, exactly as in the config. Keep every checksum. Then run cargo fetch
    --locked.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in CARGO_REGISTRIES_<NAME>_TOKEN (the registry name
-   in upper case, - as _), here and as CI secrets. Tell me these names before I do it, and never
-   ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets it
-   during a publish. Wire the variables in: The registry gets credential-provider =
-   "cargo:token", and Cargo reads the token from the variable. This needs Cargo 1.74 or later.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it in CARGO_REGISTRIES_<NAME>_TOKEN (the registry name
+   in upper case, - as _), here and as a CI secret. Tell me this name first, and never ask me
+   for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variable in: the registry gets credential-provider = "cargo:token", and Cargo reads
+   the token from the variable. This needs Cargo 1.74 or later.
 6. Watch for these. In a Telesphorepo Cargo group, the first member that has a crate name owns
    it, and the group serves every version of that name from that member only.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (cargo build --locked with a new CARGO_HOME (an
-   empty folder)), and check in its output that the downloads come from repo.example.com. If a
-   private repository needs the token variables and your shell does not have them, ask me to run
-   it and send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (cargo build --locked with a new, empty CARGO_HOME), and check
+   that every download comes from repo.example.com. If your shell lacks the token variable, ask
+   me to run the build and send you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
-10. Remove the Nexus publishing: cargo publish --registry <nexus> steps and the Nexus tokens.
-    Where Cargo.toml has publish = [...] with the Nexus registry, set publish =
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
+10. Remove the Nexus publishing: the cargo publish --registry <nexus> steps and the Nexus
+    tokens. Where Cargo.toml has publish = [...] with the Nexus registry, set publish =
     ["telesphorepo"]: the CLI publishes with --registry telesphorepo, and Cargo refuses a
     registry that the list does not name. Do not remove the key, or a plain cargo publish goes
-    to crates.io. List the CI secrets that are no longer used.
-11. Write telesphorepo.toml in the project folder, next to Cargo.toml. It holds no secret, and
-    the project commits it:
+    to crates.io. List the CI secrets nothing uses now.
+11. Write telesphorepo.toml next to Cargo.toml. It holds no secret, and the project commits it:
       server = "https://repo.example.com"
       repo = "cargo-hosted-rehearsal"
-12. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
+12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
     read), then actions/checkout@v7, dtolnay/rust-toolchain@stable with no build step, then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish
     Jenkins: keep the build stage (cargo test), and add a publish stage after it. Only that
-    stage gets the identity token, because it is good for 10 minutes. Inside
-    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]),
-    it runs on a Unix agent:
+    stage gets the identity token, which lasts 10 minutes. Inside
+    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')])
+    it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-13. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish. If the server says my account may not publish, ask me to give it
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variable from secrets.
+13. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish. If the server says my account may not publish, ask me for
     Publish on cargo-hosted-rehearsal.
-14. Verify: in a new temporary folder, run cargo new verify, write a .cargo/config.toml with the
-    registry of cargo-hosted-rehearsal, run cargo add <crate>@<version> --registry <name>, then
-    cargo build. Then delete the folder.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to cargo-hosted, check that the CI pipeline lists cargo-hosted,
-    publish once, then delete cargo-hosted-rehearsal.
+14. Verify: in a new temporary folder, run cargo new verify, write a .cargo/config.toml with
+    the registry of cargo-hosted-rehearsal, run cargo add <crate>@<version> --registry <name>,
+    then cargo build. Then delete the folder.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to cargo-hosted, check that the CI pipeline lists cargo-hosted, publish
+    once, then delete cargo-hosted-rehearsal.
 ```
 
 </Path>
@@ -769,12 +755,11 @@ Do this:
 <Path title=".NET and NuGet: download addresses only" ecosystem="nuget" scope="downloads">
 
 ```text title="Prompt: .NET and NuGet, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -783,41 +768,38 @@ Repositories (Nexus name -> Telesphorepo name):
 - nuget-hosted -> nuget-hosted
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: nuget.config or NuGet.Config (the solution
-   folder and its parents, and the user's), Directory.Build.props and .targets (RestoreSources,
-   RestoreAdditionalProjectSources), *.csproj and *.fsproj, and dotnet nuget add source,
-   --source and the source-url input of actions/setup-dotnet in Dockerfiles and CI. Look also in
-   CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Tell me each Nexus repository the
-   project uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address:
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in nuget.config or NuGet.Config (the solution folder, its
+   parents and the user's), Directory.Build.props and .targets (RestoreSources,
+   RestoreAdditionalProjectSources), *.csproj and *.fsproj, dotnet nuget add source, --source
+   and the source-url input of actions/setup-dotnet, and in CI files (.github/workflows,
+   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs.
+   For each Nexus repository not in my list, ask me its name and wait.
+2. Change every download address.
    https://nexus.example.com/repository/<nexus name>/index.json (or the v2 address without
    index.json) becomes https://repo.example.com/nuget/<telesphorepo name>/index.json. Keep the
    source keys, so packageSourceMapping and the credentials still match. A source on plain
    http:// needs allowInsecureConnections="true".
-3. Lockfiles: packages.lock.json holds no address. Keep it as it is.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in NUGET_USERNAME and NUGET_TOKEN, here and as CI
-   secrets. Tell me these names before I do it, and never ask me for the token. Never use the
-   name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets it during a publish. Wire the variables
-   in: nuget.config gets <packageSourceCredentials> under the source key (a key that starts with
-   a digit is written _x003N_...), with Username %NUGET_USERNAME% and ClearTextPassword
-   %NUGET_TOKEN%.
+3. Lockfiles: packages.lock.json holds no address. Keep it.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in NUGET_USERNAME and
+   NUGET_TOKEN, here and as CI secrets. Tell me these names first, and never ask me for the
+   token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the
+   variables in: nuget.config gets <packageSourceCredentials> under the source key (a key that
+   starts with a digit is written _x003N_...), with Username %NUGET_USERNAME% and
+   ClearTextPassword %NUGET_TOKEN%.
 5. Watch for these. In a Telesphorepo NuGet group, the first member that has a package id owns
-   it, and the group serves every version of that id from that member only. Nexus merges them.
+   it, and the group serves every version of that id from that member only; Nexus merges them.
    If the project needs versions of one id from two members, tell me.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (dotnet restore --no-cache --force, then dotnet
-   build), and check in its output that the downloads come from repo.example.com. If a private
-   repository needs the token variables and your shell does not have them, ask me to run it and
-   send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (dotnet restore --no-cache --force, then dotnet build), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run the build and send you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -826,12 +808,11 @@ Do this:
 <Path title=".NET and NuGet: full switch-over with publishing" ecosystem="nuget" scope="full">
 
 ```text title="Prompt: .NET and NuGet, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -840,98 +821,94 @@ Repositories (Nexus name -> Telesphorepo name):
 - nuget-hosted -> nuget-hosted
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, nuget-hosted-rehearsal, and move to nuget-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, nuget-hosted-rehearsal, and move to nuget-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   NuGet repository named nuget-hosted-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories nuget-hosted-rehearsal and nuget-hosted. Tell me the values to
-   enter: for GitHub Actions, the GitHub repository, the workflow file and the branch; for
-   Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: nuget.config or NuGet.Config (the solution
-   folder and its parents, and the user's), Directory.Build.props and .targets (RestoreSources,
-   RestoreAdditionalProjectSources), *.csproj and *.fsproj, and dotnet nuget add source,
-   --source and the source-url input of actions/setup-dotnet in Dockerfiles and CI. Look also in
-   CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Note how the project publishes to
-   Nexus today. Tell me each Nexus repository the project uses that is not in my list, and wait
-   for its name.
-3. Change every download address to its Telesphorepo address. Address:
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted NuGet repository named nuget-hosted-rehearsal (Repositories page, New
+   repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   nuget-hosted-rehearsal and nuget-hosted. Tell me the values for it: for GitHub Actions, the
+   GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address and
+   the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in nuget.config or NuGet.Config (the solution folder, its
+   parents and the user's), Directory.Build.props and .targets (RestoreSources,
+   RestoreAdditionalProjectSources), *.csproj and *.fsproj, dotnet nuget add source, --source
+   and the source-url input of actions/setup-dotnet, and in CI files (.github/workflows,
+   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs.
+   Note how the project publishes to Nexus today. For each Nexus repository not in my list, ask
+   me its name and wait.
+3. Change every download address.
    https://nexus.example.com/repository/<nexus name>/index.json (or the v2 address without
    index.json) becomes https://repo.example.com/nuget/<telesphorepo name>/index.json. Keep the
    source keys, so packageSourceMapping and the credentials still match. A source on plain
    http:// needs allowInsecureConnections="true".
-4. Lockfiles: packages.lock.json holds no address. Keep it as it is.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in NUGET_USERNAME and NUGET_TOKEN, here and as CI
-   secrets. Tell me these names before I do it, and never ask me for the token. Never use the
-   name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets it during a publish. Wire the variables
-   in: nuget.config gets <packageSourceCredentials> under the source key (a key that starts with
-   a digit is written _x003N_...), with Username %NUGET_USERNAME% and ClearTextPassword
-   %NUGET_TOKEN%.
+4. Lockfiles: packages.lock.json holds no address. Keep it.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in NUGET_USERNAME and
+   NUGET_TOKEN, here and as CI secrets. Tell me these names first, and never ask me for the
+   token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes. Wire the
+   variables in: nuget.config gets <packageSourceCredentials> under the source key (a key that
+   starts with a digit is written _x003N_...), with Username %NUGET_USERNAME% and
+   ClearTextPassword %NUGET_TOKEN%.
 6. Watch for these. In a Telesphorepo NuGet group, the first member that has a package id owns
-   it, and the group serves every version of that id from that member only. Nexus merges them.
+   it, and the group serves every version of that id from that member only; Nexus merges them.
    If the project needs versions of one id from two members, tell me.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (dotnet restore --no-cache --force, then dotnet
-   build), and check in its output that the downloads come from repo.example.com. If a private
-   repository needs the token variables and your shell does not have them, ask me to run it and
-   send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (dotnet restore --no-cache --force, then dotnet build), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run the build and send you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
-10. Remove the Nexus publishing: dotnet nuget push or nuget push steps to Nexus, <apikeys>, and
-    the API key secrets. telesphorepo publish runs dotnet pack -c Release and pushes each
-    package. List the CI secrets that are no longer used.
-11. Write telesphorepo.toml in the project folder, next to the solution or project file. It
-    holds no secret, and the project commits it:
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
+10. Remove the Nexus publishing: the dotnet nuget push or nuget push steps to Nexus, <apikeys>,
+    and the API key secrets. telesphorepo publish runs dotnet pack -c Release and pushes each
+    package. List the CI secrets nothing uses now.
+11. Write telesphorepo.toml next to the solution or project file. It holds no secret, and the
+    project commits it:
       server = "https://repo.example.com"
       repo = "nuget-hosted-rehearsal"
-12. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
-    read), then actions/checkout@v7, actions/setup-dotnet@v5 (dotnet-version: 10.0.x; use the
-    project's SDK version) with no build step, then
+12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
+    read), then actions/checkout@v7, actions/setup-dotnet@v5 (dotnet-version: the project's
+    SDK version, such as 10.0.x) with no build step, then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish
     Jenkins: keep the build stage (dotnet build -c Release), and add a publish stage after it.
-    Only that stage gets the identity token, because it is good for 10 minutes. Inside
-    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]),
-    it runs on a Unix agent:
+    Only that stage gets the identity token, which lasts 10 minutes. Inside
+    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')])
+    it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-13. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish (telesphorepo publish <file>.nupkg pushes packages that are built
-    already). If the server says my account may not publish, ask me to give it Publish on
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variables from secrets.
+13. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish (telesphorepo publish <file>.nupkg pushes packages that are built
+    already). If the server says my account may not publish, ask me for Publish on
     nuget-hosted-rehearsal.
 14. Verify: in a new temporary folder, run dotnet new console, write a nuget.config with the
     source https://repo.example.com/nuget/nuget-hosted-rehearsal/index.json, and run dotnet add
     package <id> --version <version>. Then delete the folder.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to nuget-hosted, check that the CI pipeline lists nuget-hosted,
-    publish once, then delete nuget-hosted-rehearsal.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to nuget-hosted, check that the CI pipeline lists nuget-hosted, publish
+    once, then delete nuget-hosted-rehearsal.
 ```
 
 </Path>
@@ -939,12 +916,11 @@ Do this:
 <Path title="Docker and Helm: download addresses only" ecosystem="docker" scope="downloads">
 
 ```text title="Prompt: Docker and Helm, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -956,57 +932,54 @@ Nexus Docker hosts and ports (host or port -> Nexus name):
 - nexus.example.com:8083 -> docker-hub
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host, for /repository/ and for the Nexus Docker hosts and ports. Look in:
-   Dockerfile* (FROM, COPY --from), compose files (image:), Kubernetes manifests and Kustomize
-   (image:, images:, imagePullSecrets), Helm Chart.yaml (dependencies), Chart.lock, values*.yaml
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host, for /repository/ and for the Nexus Docker hosts and ports. Look in Dockerfile* (FROM,
+   COPY --from), compose files (image:), Kubernetes manifests and Kustomize (image:, images:,
+   imagePullSecrets), Helm Chart.yaml (dependencies), Chart.lock, values*.yaml
    (image.registry, image.repository), helmfile, skaffold, Tiltfile, devcontainer files, and
-   docker login, docker pull, helm registry login and helm repo add in CI and scripts. Look also
-   in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Tell me each Nexus repository the
-   project uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. Address: Telesphorepo serves the
-   registry at the root of its host, and the repository name is the first part of the image
-   name. nexus.example.com:8082/team/app:1.0 becomes
-   repo.example.com/docker-hosted/team/app:1.0. Through a proxy of Docker Hub, an official image
-   is repo.example.com/docker-hub/nginx:1.27 (or library/nginx). The manifests are the same, so
-   each @sha256: digest stays valid. A plain http:// server needs its host in
-   insecure-registries of /etc/docker/daemon.json. Helm charts are OCI artifacts in Docker
-   repositories: a chart dependency on a Nexus Helm repository becomes
-   oci://repo.example.com/<name>, and its helm repo add line goes. The Nexus import does not
-   copy Nexus Helm repositories, so ask me which Docker repository holds the charts.
-3. Lockfiles: after a change to Chart.yaml dependencies, run helm dependency update to renew
-   Chart.lock.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names before I do it, and
-   never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets
-   it during a publish. Wire the variables in: in CI and on servers, log in from the secrets:
+   docker login, docker pull, helm registry login and helm repo add, and in CI files
+   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), scripts and READMEs. For each
+   Nexus repository not in my list, ask me its name and wait.
+2. Change every download address. Telesphorepo serves the registry at the root of its host,
+   and the repository name is the first part of the image name.
+   nexus.example.com:8082/team/app:1.0 becomes repo.example.com/docker-hosted/team/app:1.0.
+   Through a proxy of Docker Hub, an official image is repo.example.com/docker-hub/nginx:1.27
+   (or library/nginx). The manifests are the same, so each @sha256: digest stays valid. A
+   plain http:// server needs its host in insecure-registries of /etc/docker/daemon.json. Helm
+   charts are OCI artifacts in Docker repositories: a chart dependency on a Nexus Helm
+   repository becomes oci://repo.example.com/<name>, and its helm repo add line goes. The
+   Nexus copy does not include Nexus Helm repositories, so ask me which Docker repository
+   holds the charts.
+3. Lockfiles: after a change to the Chart.yaml dependencies, run helm dependency update to
+   renew Chart.lock.
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in TELESPHOREPO_READ_USER and
+   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names first, and never ask
+   me for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variables in. In CI and on servers, log in from the secrets:
      printf '%s' "$TELESPHOREPO_READ_TOKEN" | docker login repo.example.com -u "$TELESPHOREPO_READ_USER" --password-stdin
    For Kubernetes, I make the pull secret (kubectl create secret docker-registry ...); the
-   manifests name only the secret. On my computer, use the credential helper of the Telesphorepo
-   CLI instead. Install the CLI if telesphorepo version fails (curl -fsSL
+   manifests name only the secret. On my computer, use the credential helper of the CLI
+   instead. If telesphorepo version fails, install the CLI (curl -fsSL
    https://repo.example.com/install.sh | sh, or on Windows irm
-   https://repo.example.com/install.ps1 | iex), and run telesphorepo login
-   https://repo.example.com. It prints a link and a code, then waits; ME: give me the link and
-   the code, and I open the link, sign in, check the code and click Approve device with my
-   second step. Then add "credHelpers": {"repo.example.com": "telesphorepo"} to
+   https://repo.example.com/install.ps1 | iex). Run telesphorepo login
+   https://repo.example.com; it prints a link and a code, then waits. ME: give me the link and
+   the code; I open the link, sign in, check the code and click Approve device with my second
+   step. Then add "credHelpers": {"repo.example.com": "telesphorepo"} to
    ~/.docker/config.json, keeping its other keys. Docker, Podman, Helm and ORAS then pull what
    my account can read, with no docker login.
 5. Watch for these. If the server is behind Cloudflare, each image layer must be under 100 MB
    for a push; tell me about larger layers.
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (remove the local copies of the images with docker
-   image rm, pull each image again with docker compose pull or docker pull, and run docker build
-   --pull --no-cache), and check in its output that the downloads come from repo.example.com. If
-   a private repository needs the token variables and your shell does not have them, ask me to
-   run it and send you the output.
-7. Report: every file you changed, each Nexus address left and why, and each place you were
+   Build with an empty cache (remove the local images with docker image rm, pull each image
+   again with docker compose pull or docker pull, and run docker build --pull --no-cache), and
+   check that every download comes from repo.example.com. If your shell lacks the token
+   variables, ask me to run the build and send you the output.
+7. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -1015,12 +988,11 @@ Do this:
 <Path title="Docker and Helm: full switch-over with publishing" ecosystem="docker" scope="full">
 
 ```text title="Prompt: Docker and Helm, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -1032,89 +1004,79 @@ Nexus Docker hosts and ports (host or port -> Nexus name):
 - nexus.example.com:8083 -> docker-hub
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, docker-hosted-rehearsal, and move to docker-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, docker-hosted-rehearsal, and move to docker-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   Docker repository named docker-hosted-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories docker-hosted-rehearsal and docker-hosted. Tell me the values
-   to enter: for GitHub Actions, the GitHub repository, the workflow file and the branch; for
-   Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host, for /repository/ and for the Nexus Docker hosts and ports. Look in:
-   Dockerfile* (FROM, COPY --from), compose files (image:), Kubernetes manifests and Kustomize
-   (image:, images:, imagePullSecrets), Helm Chart.yaml (dependencies), Chart.lock, values*.yaml
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted Docker repository named docker-hosted-rehearsal (Repositories page,
+   New repository), where my account has Publish. A server admin adds the CI pipeline of this
+   project (Settings › People and CI › CI pipelines) with the repositories
+   docker-hosted-rehearsal and docker-hosted. Tell me the values for it: for GitHub Actions,
+   the GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address
+   and the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host, for /repository/ and for the Nexus Docker hosts and ports. Look in Dockerfile* (FROM,
+   COPY --from), compose files (image:), Kubernetes manifests and Kustomize (image:, images:,
+   imagePullSecrets), Helm Chart.yaml (dependencies), Chart.lock, values*.yaml
    (image.registry, image.repository), helmfile, skaffold, Tiltfile, devcontainer files, and
-   docker login, docker pull, helm registry login and helm repo add in CI and scripts. Look also
-   in CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Note how the project publishes to
-   Nexus today. Tell me each Nexus repository the project uses that is not in my list, and wait
-   for its name.
-3. Change every download address to its Telesphorepo address. Address: Telesphorepo serves the
-   registry at the root of its host, and the repository name is the first part of the image
-   name. nexus.example.com:8082/team/app:1.0 becomes
-   repo.example.com/docker-hosted/team/app:1.0. Through a proxy of Docker Hub, an official image
-   is repo.example.com/docker-hub/nginx:1.27 (or library/nginx). The manifests are the same, so
-   each @sha256: digest stays valid. A plain http:// server needs its host in
-   insecure-registries of /etc/docker/daemon.json. Helm charts are OCI artifacts in Docker
-   repositories: a chart dependency on a Nexus Helm repository becomes
-   oci://repo.example.com/<name>, and its helm repo add line goes. The Nexus import does not
-   copy Nexus Helm repositories, so ask me which Docker repository holds the charts.
-4. Lockfiles: after a change to Chart.yaml dependencies, run helm dependency update to renew
-   Chart.lock.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names before I do it, and
-   never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets
-   it during a publish. Wire the variables in: in CI and on servers, log in from the secrets:
+   docker login, docker pull, helm registry login and helm repo add, and in CI files
+   (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), scripts and READMEs. Note how
+   the project publishes to Nexus today. For each Nexus repository not in my list, ask me its
+   name and wait.
+3. Change every download address. Telesphorepo serves the registry at the root of its host,
+   and the repository name is the first part of the image name.
+   nexus.example.com:8082/team/app:1.0 becomes repo.example.com/docker-hosted/team/app:1.0.
+   Through a proxy of Docker Hub, an official image is repo.example.com/docker-hub/nginx:1.27
+   (or library/nginx). The manifests are the same, so each @sha256: digest stays valid. A
+   plain http:// server needs its host in insecure-registries of /etc/docker/daemon.json. Helm
+   charts are OCI artifacts in Docker repositories: a chart dependency on a Nexus Helm
+   repository becomes oci://repo.example.com/<name>, and its helm repo add line goes. The
+   Nexus copy does not include Nexus Helm repositories, so ask me which Docker repository
+   holds the charts.
+4. Lockfiles: after a change to the Chart.yaml dependencies, run helm dependency update to
+   renew Chart.lock.
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in TELESPHOREPO_READ_USER and
+   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names first, and never ask
+   me for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variables in. In CI and on servers, log in from the secrets:
      printf '%s' "$TELESPHOREPO_READ_TOKEN" | docker login repo.example.com -u "$TELESPHOREPO_READ_USER" --password-stdin
    For Kubernetes, I make the pull secret (kubectl create secret docker-registry ...); the
-   manifests name only the secret. On my computer, use the credential helper of the Telesphorepo
-   CLI instead. Install the CLI if telesphorepo version fails (curl -fsSL
-   https://repo.example.com/install.sh | sh, or on Windows irm
-   https://repo.example.com/install.ps1 | iex), and run telesphorepo login
-   https://repo.example.com. It prints a link and a code, then waits; ME: give me the link and
-   the code, and I open the link, sign in, check the code and click Approve device with my
-   second step. Then add "credHelpers": {"repo.example.com": "telesphorepo"} to
-   ~/.docker/config.json, keeping its other keys. Docker, Podman, Helm and ORAS then pull what
-   my account can read, with no docker login.
+   manifests name only the secret. On my computer, the credential helper of steps 8 to 10
+   does the pulls.
 6. Watch for these. If the server is behind Cloudflare, each image layer must be under 100 MB
    for a push; tell me about larger layers.
 7. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (remove the local copies of the images with docker
-   image rm, pull each image again with docker compose pull or docker pull, and run docker build
-   --pull --no-cache), and check in its output that the downloads come from repo.example.com. If
-   a private repository needs the token variables and your shell does not have them, ask me to
-   run it and send you the output.
-8. Install the Telesphorepo CLI if telesphorepo version fails:
+   Build with an empty cache (remove the local images with docker image rm, pull each image
+   again with docker compose pull or docker pull, and run docker build --pull --no-cache), and
+   check that every download comes from repo.example.com. If your shell lacks the token
+   variables, ask me to run the build and send you the output.
+8. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+9. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
 10. Remove the Nexus publishing: docker login to Nexus, the Nexus push credentials, and helm
     push or curl uploads to Nexus. Images publish with docker push
     repo.example.com/<repo>/<image>:<tag>, and the credential helper gives Docker the publish
-    token: add "credHelpers": {"repo.example.com": "telesphorepo"} to ~/.docker/config.json
-    after I say yes (telesphorepo login does not add it; telesphorepo status shows it). A chart
-    folder gets a telesphorepo.toml, and telesphorepo publish runs helm package, then helm push.
-    Images need no telesphorepo.toml. List the CI secrets that are no longer used.
-11. For a Helm chart only: write telesphorepo.toml in the project folder, next to Chart.yaml. It
-    holds no secret, and the project commits it:
+    token: after I say yes, add "credHelpers": {"repo.example.com": "telesphorepo"} to
+    ~/.docker/config.json, keeping its other keys (telesphorepo login does not add it;
+    telesphorepo status shows it). Images need no telesphorepo.toml. A chart folder gets one,
+    and telesphorepo publish runs helm package, then helm push. List the CI secrets nothing
+    uses now.
+11. For a Helm chart only: write telesphorepo.toml next to Chart.yaml. It holds no secret, and
+    the project commits it:
       server = "https://repo.example.com"
       repo = "docker-hosted-rehearsal"
-12. CI for an image, GitHub Actions: the job needs permissions: id-token: write (keep contents:
+12. CI for an image. GitHub Actions: the job gets permissions: id-token: write (keep contents:
     read), and these steps (change app to the image name):
       - uses: actions/checkout@v7
       - run: docker build -t "repo.example.com/docker-hosted-rehearsal/app:$GITHUB_SHA" .
@@ -1132,25 +1094,25 @@ Do this:
     withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]):
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
-    and the three lines of the GitHub step, with ${GIT_COMMIT:-$BUILD_NUMBER} as the tag. For a
-    Helm chart, CI installs Helm (for example azure/setup-helm@v4), then the CLI, and runs
-    telesphorepo publish. With its identity token, a job reads only what anonymous people read,
-    so to build from a private base image, log in with the read token before the build. ME:
-    Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    and then the three lines of the GitHub publish step, with ${GIT_COMMIT:-$BUILD_NUMBER} as
+    the tag. CI for a Helm chart installs Helm (for example azure/setup-helm@v4), then the CLI,
+    and runs telesphorepo publish. With its identity token, a job reads only what anyone can
+    read, so to build from a private base image, log in with the read token before the build.
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
     https://repo.example.com.
 13. Publish from this computer: run telesphorepo status and check the credential helper entry,
     then docker push repo.example.com/docker-hosted-rehearsal/<image>:<tag>. For a chart, run
-    telesphorepo publish in its folder. If the server says my account may not publish, ask me to
-    give it Publish on docker-hosted-rehearsal.
+    telesphorepo publish in its folder. If the server says my account may not publish, ask me
+    for Publish on docker-hosted-rehearsal.
 14. Verify: remove the local image, then docker pull
-    repo.example.com/docker-hosted-rehearsal/<image>:<tag>; for a chart, helm pull
+    repo.example.com/docker-hosted-rehearsal/<image>:<tag>. For a chart, run helm pull
     oci://repo.example.com/docker-hosted-rehearsal/<chart> --version <version> in a new
-    temporary folder. Then delete the folder.
-15. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to docker-hosted (for images, the image names), check that the CI
-    pipeline lists docker-hosted, publish once, then delete docker-hosted-rehearsal.
+    temporary folder, then delete the folder.
+15. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: point the
+    image names and the repo of telesphorepo.toml at docker-hosted, check that the CI pipeline
+    lists docker-hosted, publish once, then delete docker-hosted-rehearsal.
 ```
 
 </Path>
@@ -1158,12 +1120,11 @@ Do this:
 <Path title="Debian or raw files: download addresses only" ecosystem="debian" scope="downloads">
 
 ```text title="Prompt: Debian or raw files, download addresses only"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -1172,47 +1133,42 @@ Repositories (Nexus name -> Telesphorepo name):
 - raw-files -> raw-files
 Private repositories (they need a read token): none
 
-Scope: the download addresses only. Leave publishing on Nexus: the publish addresses, the
-publish credentials and the publish steps stay as they are.
+Scope: the download addresses only. Publishing stays on Nexus: leave the publish addresses,
+credentials and steps as they are.
 
 Do this:
-1. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: apt sources (/etc/apt/sources.list.d/*.list
-   and *.sources, and the Dockerfiles, Ansible, cloud-init or scripts that write them), keyrings
-   and signed-by, and curl or wget of Nexus files in scripts, Dockerfiles and CI. Look also in
-   CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Tell me each Nexus repository the
-   project uses that is not in my list, and wait for its name.
-2. Change every download address to its Telesphorepo address. apt address: deb
-   https://nexus.example.com/repository/<nexus name>/ <dist> main becomes deb
-   [signed-by=/etc/apt/keyrings/<name>.asc] https://repo.example.com/debian/<name> <dist> main.
-   The import keeps the distribution of the Nexus repository and puts every package in the
-   component main. Ask me which signing key the repository got: with the Nexus key, clients keep
-   their trust; with another key, they install it from
-   https://repo.example.com/debian/<name>/key.asc into /etc/apt/keyrings/<name>.asc. Raw
-   address: https://nexus.example.com/repository/<nexus name>/<path> becomes
-   https://repo.example.com/raw/<name>/<path>; the files keep their paths.
+1. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in apt sources (/etc/apt/sources.list.d/*.list and
+   *.sources, and the Dockerfiles, Ansible, cloud-init files or scripts that write them),
+   keyrings and signed-by, curl or wget of Nexus files, and in CI files (.github/workflows,
+   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs.
+   For each Nexus repository not in my list, ask me its name and wait.
+2. Change every download address. apt: deb https://nexus.example.com/repository/<nexus name>/
+   <dist> main becomes deb [signed-by=/etc/apt/keyrings/<name>.asc]
+   https://repo.example.com/debian/<name> <dist> main. The copy keeps the distribution of the
+   Nexus repository and puts every package in the component main. Ask me which signing key
+   the repository got: with the Nexus key, the machines keep their trust; with another key,
+   they install it from https://repo.example.com/debian/<name>/key.asc into
+   /etc/apt/keyrings/<name>.asc. Raw: https://nexus.example.com/repository/<nexus name>/<path>
+   becomes https://repo.example.com/raw/<name>/<path>; the files keep their paths.
 3. Checksums: keep every sha256sum or checksum check of a downloaded file as it is.
-4. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names before I do it, and
-   never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets
-   it during a publish. Wire the variables in: curl gets the credentials on stdin, never as an
-   argument:
+4. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in TELESPHOREPO_READ_USER and
+   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names first, and never ask
+   me for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variables in. curl gets the credentials on stdin, never as an argument:
      printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" | curl -fsSL -K - -o <file> <address>
-   apt reads credentials only from /etc/apt/auth.conf.d/. Give me the lines to run, which read
-   the token at a hidden prompt:
+   apt reads credentials only from /etc/apt/auth.conf.d/. Give me these lines to run; they
+   read the token at a hidden prompt:
      printf 'Read token: '; read -rs READ_TOKEN; echo
      sudo install -m 600 /dev/null /etc/apt/auth.conf.d/<name>.conf
      printf 'machine %s login <user> password %s\n' https://repo.example.com/debian/<name> "$READ_TOKEN" | sudo tee -a /etc/apt/auth.conf.d/<name>.conf > /dev/null
 5. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (for apt, apt-get update in a throwaway debian
-   container with the new source and key; for raw files, each download with curl and its
-   checksum), and check in its output that the downloads come from repo.example.com. If a
-   private repository needs the token variables and your shell does not have them, ask me to run
-   it and send you the output.
-6. Report: every file you changed, each Nexus address left and why, and each place you were
+   Then test the downloads (for apt, apt-get update in a throwaway debian container with the
+   new source and key; for raw files, each download with curl and its checksum), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run it and send you the output.
+6. Report: each file you changed, each Nexus address left and why, and each place you were
    unsure about.
 ```
 
@@ -1221,12 +1177,11 @@ Do this:
 <Path title="Debian or raw files: full switch-over with publishing" ecosystem="debian" scope="full">
 
 ```text title="Prompt: Debian or raw files, full switch-over with publishing"
-Move this project from our Nexus server to Telesphorepo. We do it together: you do every step
-you can, and for each step marked ME, you tell me exactly what to do and wait until I say it is
-done. Never write a password or a token into a file, a command line or this chat: read each
-secret from an environment variable or a CI secret. Change files outside the project only after
-I say yes. Keep every checksum and hash: the files in Telesphorepo are the same bytes as in
-Nexus.
+Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
+each step marked ME, tell me exactly what to do, then wait until I say it is done. Never put a
+password or a token in a file, a command line or this chat: read each secret from an
+environment variable or a CI secret. Ask me before you change a file outside the project. Keep
+every checksum and hash: Telesphorepo holds the same bytes as Nexus.
 
 Telesphorepo: https://repo.example.com
 Nexus: https://nexus.example.com
@@ -1235,142 +1190,146 @@ Repositories (Nexus name -> Telesphorepo name):
 - raw-files -> raw-files
 Private repositories (they need a read token): none
 
-Scope: the full switch-over. First the download addresses, then publishing with the Telesphorepo
-CLI. The Telesphorepo copies of Nexus refuse uploads until the switch-over, so we rehearse
-publishing on a test repository, apt-hosted-rehearsal, and move to apt-hosted after the
-switch-over.
+Scope: the full switch-over. First the download addresses, then publishing with the
+Telesphorepo CLI. The copies refuse uploads until the switch-over, so we rehearse on a test
+repository, apt-hosted-rehearsal, and move to apt-hosted after the switch-over.
 
 Do this:
-1. ME, before you start: ask me for the test repository and the CI pipeline, so I do them while
-   you work. On the Repositories page of Telesphorepo, I click New repository and make a hosted
-   Debian or Raw repository named apt-hosted-rehearsal; my account needs Publish on it. Then, on
-   Settings › People and CI › CI pipelines, I (or a server admin) add the CI pipeline of this
-   project, with the repositories apt-hosted-rehearsal and apt-hosted. Tell me the values to
-   enter: for GitHub Actions, the GitHub repository, the workflow file and the branch; for
-   Jenkins, the Jenkins address and the full job name.
-2. Find every place that names Nexus: search every file of the repository, hidden folders too,
-   for the Nexus host and for /repository/. Look in: apt sources (/etc/apt/sources.list.d/*.list
-   and *.sources, and the Dockerfiles, Ansible, cloud-init or scripts that write them), keyrings
-   and signed-by, and curl or wget of Nexus files in scripts, Dockerfiles and CI. Look also in
-   CI files (.github/workflows, Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose
-   files, shell and PowerShell scripts, and docs and READMEs. Note how the project publishes to
-   Nexus today. Tell me each Nexus repository the project uses that is not in my list, and wait
-   for its name.
-3. Change every download address to its Telesphorepo address. apt address: deb
-   https://nexus.example.com/repository/<nexus name>/ <dist> main becomes deb
-   [signed-by=/etc/apt/keyrings/<name>.asc] https://repo.example.com/debian/<name> <dist> main.
-   The import keeps the distribution of the Nexus repository and puts every package in the
-   component main. Ask me which signing key the repository got: with the Nexus key, clients keep
-   their trust; with another key, they install it from
-   https://repo.example.com/debian/<name>/key.asc into /etc/apt/keyrings/<name>.asc. Raw
-   address: https://nexus.example.com/repository/<nexus name>/<path> becomes
-   https://repo.example.com/raw/<name>/<path>; the files keep their paths.
+1. ME, first: ask me for the test repository and the CI pipeline, so I make them while you
+   work. I make a hosted Debian or Raw repository named apt-hosted-rehearsal (Repositories
+   page, New repository), where my account has Publish. A server admin adds the CI pipeline of
+   this project (Settings › People and CI › CI pipelines) with the repositories
+   apt-hosted-rehearsal and apt-hosted. Tell me the values for it: for GitHub Actions, the
+   GitHub repository, the workflow file and the branch; for Jenkins, the Jenkins address and
+   the full job name.
+2. Find every place that names Nexus. Search every file, hidden folders too, for the Nexus
+   host and for /repository/. Look in apt sources (/etc/apt/sources.list.d/*.list and
+   *.sources, and the Dockerfiles, Ansible, cloud-init files or scripts that write them),
+   keyrings and signed-by, curl or wget of Nexus files, and in CI files (.github/workflows,
+   Jenkinsfile, .gitlab-ci.yml and others), Dockerfiles, compose files, scripts and READMEs.
+   Note how the project publishes to Nexus today. For each Nexus repository not in my list,
+   ask me its name and wait.
+3. Change every download address. apt: deb https://nexus.example.com/repository/<nexus name>/
+   <dist> main becomes deb [signed-by=/etc/apt/keyrings/<name>.asc]
+   https://repo.example.com/debian/<name> <dist> main. The copy keeps the distribution of the
+   Nexus repository and puts every package in the component main. Ask me which signing key
+   the repository got: with the Nexus key, the machines keep their trust; with another key,
+   they install it from https://repo.example.com/debian/<name>/key.asc into
+   /etc/apt/keyrings/<name>.asc. Raw: https://nexus.example.com/repository/<nexus name>/<path>
+   becomes https://repo.example.com/raw/<name>/<path>; the files keep their paths.
 4. Checksums: keep every sha256sum or checksum check of a downloaded file as it is.
-5. Private repositories: if the list of private repositories above names one, ME: I make a read
-   token. In Telesphorepo, I open Settings › Tokens, click New read token, type a name and click
-   Create token. I set it, with my username, in TELESPHOREPO_READ_USER and
-   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names before I do it, and
-   never ask me for the token. Never use the name TELESPHOREPO_TOKEN: the Telesphorepo CLI sets
-   it during a publish. Wire the variables in: curl gets the credentials on stdin, never as an
-   argument:
+5. Private repositories, only if my list names one. ME: I make a read token (Settings › Tokens,
+   New read token, Create token) and set it, with my username, in TELESPHOREPO_READ_USER and
+   TELESPHOREPO_READ_TOKEN, here and as CI secrets. Tell me these names first, and never ask
+   me for the token. Never use the name TELESPHOREPO_TOKEN: the CLI sets it when it publishes.
+   Wire the variables in. curl gets the credentials on stdin, never as an argument:
      printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" | curl -fsSL -K - -o <file> <address>
-   apt reads credentials only from /etc/apt/auth.conf.d/. Give me the lines to run, which read
-   the token at a hidden prompt:
+   apt reads credentials only from /etc/apt/auth.conf.d/. Give me these lines to run; they
+   read the token at a hidden prompt:
      printf 'Read token: '; read -rs READ_TOKEN; echo
      sudo install -m 600 /dev/null /etc/apt/auth.conf.d/<name>.conf
      printf 'machine %s login <user> password %s\n' https://repo.example.com/debian/<name> "$READ_TOKEN" | sudo tee -a /etc/apt/auth.conf.d/<name>.conf > /dev/null
 6. Check: search again for the Nexus host and /repository/, and explain each hit that is left.
-   Then run a clean build with an empty cache (for apt, apt-get update in a throwaway debian
-   container with the new source and key; for raw files, each download with curl and its
-   checksum), and check in its output that the downloads come from repo.example.com. If a
-   private repository needs the token variables and your shell does not have them, ask me to run
-   it and send you the output.
-7. Install the Telesphorepo CLI if telesphorepo version fails:
+   Then test the downloads (for apt, apt-get update in a throwaway debian container with the
+   new source and key; for raw files, each download with curl and its checksum), and check
+   that every download comes from repo.example.com. If your shell lacks the token variables,
+   ask me to run it and send you the output.
+7. If telesphorepo version fails, install the CLI:
      curl -fsSL https://repo.example.com/install.sh | sh    (Linux and macOS)
      irm https://repo.example.com/install.ps1 | iex         (Windows PowerShell)
-   It installs into ~/.local/bin (on Windows, %LOCALAPPDATA%\Programs\telesphorepo); use the
-   full path if that folder is not on your PATH yet.
-8. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link and
-   a code, then waits. If your shell shows output only when a command ends, run it in the
-   background and read the output. ME: give me the link and the code. I open the link, sign in,
-   check the code, click Approve device and confirm with my second step. Wait until the CLI
-   prints "This computer is device". From then on, this computer can publish to every repository
-   where my account has Publish.
-9. Remove the Nexus publishing: curl -u uploads to Nexus and their passwords. telesphorepo
+   It goes into ~/.local/bin (Windows: %LOCALAPPDATA%\Programs\telesphorepo). Use the full
+   path if that folder is not on your PATH yet.
+8. Approve this computer: run telesphorepo login https://repo.example.com. It prints a link
+   and a code, then waits. If your shell shows output only when a command ends, run it in the
+   background and read its output. ME: give me the link and the code. I open the link, sign
+   in, check the code, click Approve device and confirm with my second step. Wait until the
+   CLI prints "This computer is device". This computer can then publish wherever my account
+   has Publish.
+9. Remove the Nexus publishing: the curl -u uploads to Nexus and their passwords. telesphorepo
    publish <file> uploads files: for raw into the folder path of telesphorepo.toml, for Debian
-   each .deb into dist and component. List the CI secrets that are no longer used.
-10. Write telesphorepo.toml in the project folder, next to the build script. It holds no secret,
-    and the project commits it:
+   each .deb into dist and component. List the CI secrets nothing uses now.
+10. Write telesphorepo.toml next to the build script. It holds no secret, and the project
+    commits it:
       server = "https://repo.example.com"
       repo = "apt-hosted-rehearsal"
-    For a raw repository, add path = "<folder in the repository>". For a Debian repository, add
-    dist = "<distribution>" and component = "main".
-11. CI. GitHub Actions: the publish job needs permissions: id-token: write (keep contents:
+    For a raw repository, add path = "<folder in the repository>". For a Debian repository,
+    add dist = "<distribution>" and component = "main".
+11. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
     read), then actions/checkout@v7, the build step that makes the files, then
       - run: curl -fsSL https://repo.example.com/install.sh | sh
       - run: telesphorepo publish <files>
     Jenkins: keep the build stage (the build that makes the files), and add a publish stage
-    after it. Only that stage gets the identity token, because it is good for 10 minutes. Inside
-    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]),
-    it runs on a Unix agent:
+    after it. Only that stage gets the identity token, which lasts 10 minutes. Inside
+    withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')])
+    it runs, on a Unix agent:
       curl -fsSL https://repo.example.com/install.sh | sh
       export PATH="$HOME/.local/bin:$PATH"
       telesphorepo publish <files>
     and on a Windows agent, in powershell:
       & ([scriptblock]::Create((irm https://repo.example.com/install.ps1)))
       telesphorepo publish <files>
-    ME: Jenkins needs the plugin OpenID Connect Provider and a credential of the kind "OpenID
+    ME: Jenkins needs the plugin OpenID Connect Provider, and a credential of the kind "OpenID
     Connect id token" with the ID telesphorepo-id-token and the audience
-    https://repo.example.com. If a CI job downloads from a private repository, give its build
-    the read token variables from secrets.
-12. Publish from this computer: run telesphorepo status and check the command it names, then run
-    telesphorepo publish with the files, for example telesphorepo publish
-    build/hello_1.0_amd64.deb. If the server says my account may not publish, ask me to give it
+    https://repo.example.com. A CI job that downloads from a private repository gets the read
+    token variables from secrets.
+12. Publish from this computer: run telesphorepo status and check the command it names, then
+    run telesphorepo publish with the files, for example telesphorepo publish
+    build/hello_1.0_amd64.deb. If the server says my account may not publish, ask me for
     Publish on apt-hosted-rehearsal.
-13. Verify: for raw, download the file with curl and compare its SHA-256; for Debian, in a
-    throwaway debian container, add the source and key of apt-hosted-rehearsal, then apt-get
-    update and apt-get install <package>.
-14. Report: every file you changed, each Nexus address left and why, each place you were unsure
-    about, the CI secrets that are no longer used, and this note for the switch-over day: set
-    repo in telesphorepo.toml to apt-hosted, check that the CI pipeline lists apt-hosted,
-    publish once, then delete apt-hosted-rehearsal.
+13. Verify: for raw, download the file with curl and compare its SHA-256. For Debian, in a
+    throwaway debian container, add the source and key of apt-hosted-rehearsal, then run
+    apt-get update and apt-get install <package>.
+14. Report: each file you changed, each Nexus address left and why, each place you were unsure
+    about, the CI secrets nothing uses now, and this note for the switch-over day: set repo in
+    telesphorepo.toml to apt-hosted, check that the CI pipeline lists apt-hosted, publish
+    once, then delete apt-hosted-rehearsal.
 ```
 
 </Path>
 
 ## The steps that need you
 
-The agent asks for each of these when it needs it, and waits until you say it is done.
+The agent asks for each step when it needs it. It waits until you say it is done.
 
-- **Approve the computer** (full switch-over, and Docker pulls from a private repository). The agent runs `telesphorepo login` and gives you a link and a code. Open the link, sign in, check the code, click **Approve device**, and confirm with your second step. With single sign-on, you sign in again at your provider. After that, the computer can publish to every repository where your account has **Publish**.
-- **Make a read token** (only for a private repository). **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**. Put it in the environment variables that the agent names, on your computer and as CI secrets. Do not paste it to the agent.
-- **Make the rehearsal repository** (full switch-over). See [Rehearse publishing](#rehearse-publishing).
-- **Add the CI pipeline** (full switch-over). On **Settings** › **People and CI** › **CI pipelines**, add the pipeline of the project with the values that the agent gives you, and list the rehearsal repository and the real one. A server admin does this. For Jenkins, also install the plugin **OpenID Connect Provider** and add the credential `telesphorepo-id-token`, as in [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
+- **Approve the computer.** Open the link that the agent gives you, and sign in. Check the code, click **Approve device**, and confirm with your second step.
+- **Make a read token**, only for a private repository. Open **Settings › Tokens**, click **New read token**, type a name, and click **Create token**. Put it in the variables that the agent names. Never paste it to the agent.
+- **Make the test repository**, for the full switch-over. Open the **Repositories** page, and click **New repository**. Make a hosted repository where your account has **Publish**.
+- **Add the CI pipeline**, for the full switch-over. A server admin adds it on **Settings › People and CI › CI pipelines**, with the values that the agent gives you. For Jenkins, see also [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
 
-## Rehearse publishing
+## After the switch-over
 
-The copies of Nexus refuse uploads until the switch-over, so that Nexus and Telesphorepo do not part ways. With a prompt for the full switch-over, the agent publishes to a test repository, such as `maven-releases-rehearsal`, and checks the result with you. You make the test repository and give your account and the CI pipeline **Publish** on it. [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing) has each step.
+When your admin has [switched over](/move-from-nexus/#switch-over), follow the note in the agent's report:
 
-After the [switch-over](/move-from-nexus/), follow the note that the agent leaves in its report: set `repo` in the project's `telesphorepo.toml` to the real repository, check that the CI pipeline lists the real repository, publish again, then delete the test repository.
+<Steps>
 
-<Aside>
-A rehearsal also checks your CI pipeline: the trust policy, the identity token and the CLI install step. These do not depend on the repository.
-</Aside>
+1. Set `repo` in `telesphorepo.toml` to the real repository.
+
+2. Check that the CI pipeline lists the real repository.
+
+3. Publish once.
+
+4. Delete the test repository.
+
+</Steps>
 
 ## Use the skill
 
-The skill [telesphorepo-migrate](https://github.com/Telesphorepo/Telesphorepo/tree/main/skills/telesphorepo-migrate) holds the same steps for every ecosystem in one file. With it, Claude Code asks you for the addresses, the scope and the repository names, finds the ecosystems in the project by itself, and follows the same steps as the prompts.
+With Claude Code, you can use the skill [telesphorepo-migrate](https://github.com/Telesphorepo/Telesphorepo/tree/main/skills/telesphorepo-migrate) instead of a prompt. It asks you for the addresses and names, and finds the ecosystems in the project by itself.
 
-Copy the folder into `~/.claude/skills/` for every project, or into `.claude/skills/` of one project:
+<Steps>
 
-```sh
-git clone --depth 1 https://github.com/Telesphorepo/Telesphorepo.git /tmp/telesphorepo
-mkdir -p ~/.claude/skills
-cp -r /tmp/telesphorepo/skills/telesphorepo-migrate ~/.claude/skills/
-```
+1. Copy the skill into `~/.claude/skills/`, or into `.claude/skills/` of one project. On Windows, the user folder is `%USERPROFILE%\.claude\skills\`.
 
-On Windows, the user folder is `%USERPROFILE%\.claude\skills\`. Then open Claude Code in the project folder and ask, for example:
+   ```sh
+   git clone --depth 1 https://github.com/Telesphorepo/Telesphorepo.git /tmp/telesphorepo
+   mkdir -p ~/.claude/skills
+   cp -r /tmp/telesphorepo/skills/telesphorepo-migrate ~/.claude/skills/
+   ```
 
-```text
-Move this project from Nexus to Telesphorepo.
-```
+2. Open Claude Code in the project folder, and ask:
+
+   ```text
+   Move this project from Nexus to Telesphorepo.
+   ```
+
+</Steps>

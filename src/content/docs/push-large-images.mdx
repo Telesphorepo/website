@@ -1,0 +1,63 @@
+---
+title: Push large images
+description: Push Docker image layers over 100 MB when Cloudflare sits in front of the server.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit.
+
+Not behind Cloudflare? You have nothing to do.
+
+## Add an upload address
+
+The layers can skip Cloudflare through a second address. People still push to the main address, and the server sends the layers to the upload address.
+
+<Aside type="caution">
+This makes the IP address of your server public.
+</Aside>
+
+<Steps>
+
+1. In Cloudflare, add a second name for your server, such as `upload.example.com`. Make the record **DNS only**.
+
+2. Serve that name over HTTPS too, as in [Serve over HTTPS](/run-the-server/#serve-over-https). With Caddy, list both names:
+
+   ```text title="/etc/caddy/Caddyfile"
+   repo.example.com, upload.example.com {
+       reverse_proxy localhost:8080
+   }
+   ```
+
+3. In the firewall of your server, open the HTTPS port for the computers that push.
+
+4. Open **Settings** › **General**. Under **Docker**, set **Docker upload address** to `https://upload.example.com`.
+
+5. Turn on **Expose the origin IP for Docker uploads**, then click **Save**.
+
+</Steps>
+
+## Push with ORAS and Helm 4
+
+ORAS and Helm 4 send layers only to the address in the command. Push to the upload address:
+
+```sh
+helm push mychart-0.1.0.tgz oci://upload.example.com/docker
+oras push upload.example.com/docker/team/art:1.0 file.txt
+```
+
+## If something goes wrong
+
+<details>
+<summary>A push stops with `413` behind Cloudflare</summary>
+
+The layer is over 100 MB. Add an [upload address](#add-an-upload-address).
+
+</details>
+
+<details>
+<summary>A push of a layer over 2 GiB fails</summary>
+
+The server takes files up to its **Max upload size**, 2 GiB by default. Raise it on **Settings** › **General**, then click **Save**.
+
+</details>

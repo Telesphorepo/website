@@ -1,0 +1,105 @@
+---
+title: Back up and restore
+description: Back up the server, keep the master key safe, and restore a backup.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## Back up
+
+The server backs itself up into the `/backups` volume every 24 hours, and keeps the newest 7. Put that volume on another disk if you can.
+
+To back up now:
+
+<Steps>
+
+1. Open **Settings** › **Backups**.
+
+2. Click **Back up now**.
+
+</Steps>
+
+A backup holds the database, the master key and the stored files.
+
+With R2 or S3, the files stay in the bucket. Back up the bucket too, with its versioning or replication.
+
+<details>
+<summary>Back up from the command line</summary>
+
+This works while the server runs:
+
+```sh
+docker run --rm -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+  ghcr.io/telesphorepo/telesphorepo:latest backup /backups
+```
+
+</details>
+
+## Keep the master key safe
+
+The master key encrypts the secret settings. The server keeps it in the data volume, and each backup holds a copy.
+
+To keep it out of the volume instead:
+
+<Steps>
+
+1. Before the first start, make a key and save it as a secret.
+
+   ```sh
+   openssl rand -base64 32
+   ```
+
+2. Pass it to the server in `TR_MASTER_KEY`.
+
+   ```sh
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+     -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
+     ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+</Steps>
+
+Never change it later. Backups then hold no key, so keep the key with them.
+
+## Restore
+
+<Steps>
+
+1. On **Settings** › **Backups**, point at a backup to see its folder name, such as `20261020T201500.123Z`.
+
+2. Remove the server container.
+
+   ```sh
+   docker rm -f telesphorepo
+   ```
+
+3. Restore the backup into a new, empty volume.
+
+   ```sh
+   docker run --rm -v telesphorepo-backups:/backups -v telesphorepo-restored:/data \
+     ghcr.io/telesphorepo/telesphorepo:latest restore /backups/20261020T201500.123Z
+   ```
+
+4. Start the server on that volume.
+
+   ```sh
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-restored:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+</Steps>
+
+## If something goes wrong
+
+<details>
+<summary>The Backups page says backups are off</summary>
+
+The downloaded program has no backup folder. Set **Folder** on **Settings** › **Backups**.
+
+</details>
+
+<details>
+<summary>The restore says the backup is from a newer version</summary>
+
+Start the server with the image of the version that the restore names.
+
+</details>

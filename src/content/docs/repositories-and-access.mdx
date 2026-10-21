@@ -1,69 +1,61 @@
 ---
 title: Repositories and access
-description: Make hosted repositories, proxies and groups, give people Publish, add CI pipelines and limit the networks that a repository takes requests from.
+description: Make repositories, proxies and groups, give people Publish, add CI pipelines and limit the networks a repository takes requests from.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-
-This page is for the server admin, and for people who manage a repository.
 
 ## Make a repository
 
 <Steps>
 
-1. Open **Settings** › **Repositories**, then click **New repository**.
+1. Open **Settings** › **Repositories**, and click **New repository**.
 
-2. Type a name, such as `releases`.
+2. Choose **A repository**.
 
-3. Choose the format: **Maven / Gradle**, **npm**, **Python (PyPI)**, **Cargo (Rust)**, **NuGet**, **Debian (apt)** or **Raw files**. For Docker, see [Make a Docker repository](#make-a-docker-repository).
+3. Type a name, such as `releases`.
 
-4. Choose **Hosted** for your own packages.
+4. Choose the format.
 
-5. Click **Create repository**.
+5. Under **Who can download**, choose **Private** or **Public**.
+
+6. Click **Create repository**.
 
 </Steps>
 
-The address of each format is under [Repository addresses](/commands-and-settings/#repository-addresses). The **Use this repository** tab of the repository shows the snippets for its clients.
+The **Use this repository** tab of the new repository shows the setup for its clients. All addresses are in [Repository addresses](/commands-and-settings/#repository-addresses).
 
 ## Add public packages
 
-A **proxy** keeps a copy of each package that people download from a public registry. A **group** joins several repositories under one address. With a group of your hosted repository and a proxy, people install your packages and the public ones through one address.
+A **proxy** keeps a copy of each package that people download from a public registry.
+
+A **group** puts several repositories behind one address. Put your repository and a proxy in a group, and people get both through one address.
 
 <Steps>
 
-1. Make a repository of the same format, and choose **Proxy**. Pick the remote, such as Maven Central, `registry.npmjs.org`, PyPI, crates.io or nuget.org.
+1. Click **New repository**, and choose **A proxy of a remote repository**.
 
-2. Make a repository of the same format, and choose **Group**.
+2. Type a name, pick the format, and click a well-known remote, such as **Maven Central** or **npm registry**.
 
-3. Add the members in order: your hosted repository first, then the proxy.
+3. Click **Create proxy**.
 
-4. Click **Create repository**.
+4. Click **New repository** again, and choose **A group of repositories**.
+
+5. Type a name, pick the same format, and tick your repository and the proxy. Your own repositories come first.
+
+6. Click **Create group**.
 
 </Steps>
 
-Neither kind takes uploads. A group serves its members in order:
-
-- In an npm, Python, Cargo or NuGet group, the first member that has a package name owns it, and the group serves every version of that name from that member only. So a public package with the name of your private package cannot take its place.
-- A Maven group merges `maven-metadata.xml` over its members, so the versions of all members show.
-- A Docker group serves each file from the first member that has it, and lists the tags of all members.
+A group reads its members in order. In an npm, Python, Cargo or NuGet group, the first member that has a package name owns that name. So a public package cannot take the place of your private one.
 
 ## Make a Docker repository
 
-A Docker repository holds container images, Helm charts and other OCI files.
+Make it as above, and choose **Docker** as the format. It holds container images, Helm charts and other OCI files.
 
-<Steps>
+The name, such as `docker`, is the first part of every image name.
 
-1. Open **Settings** › **Repositories**, then click **New repository**.
-
-2. Type a name, such as `docker`. It is the first part of every image name.
-
-3. Choose **Docker**. Choose **Hosted** to push images to it. Choose **Proxy** to keep copies of Docker Hub, GitHub Container Registry or Quay. Choose **Group** to join several repositories.
-
-4. Click **Create repository**.
-
-</Steps>
-
-Docker needs the server at the root of a host, such as `https://repo.example.com`. It cannot use an address with a path. For large images and the upload address, see [Push large images](/run-the-server/#push-large-images). People push and pull as in [Docker and Helm](/docker/).
+Docker needs the server at the root of a host, such as `https://repo.example.com`. For big images, see [Push large images](/push-large-images/).
 
 ## Give people Publish
 
@@ -71,31 +63,31 @@ Docker needs the server at the root of a host, such as `https://repo.example.com
 
 1. Open **Settings** › **Repositories** › your repository › **Access**.
 
-2. Click **Give access**.
+2. Under **People**, click **Give access**.
 
-3. Choose the people.
+3. Tick the people.
 
 4. Tick **Publish**.
 
-5. Click the button that gives them access.
+5. Click **Give 1 person access**.
 
 </Steps>
 
-To add a person first, open **Settings** › **People** and click **New account**. See [People and sign-in](/people-and-sign-in/) for every permission.
+To add a person first, see [People and sign-in](/people-and-sign-in/).
 
-Then send people three links: [Install the CLI](/install-cli/) and [Publish from a project](/publish-from-a-project/) for publishing, and the page of your format to use the packages: [Gradle and Maven](/download/), [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), or [Debian, raw and curl](/debian-and-raw/).
+Then send them [Install the CLI](/install-cli/) and [Publish from a project](/publish-from-a-project/). For downloads, send [Use packages in your builds](/use-packages/).
 
 ## Add a CI pipeline
 
-A CI pipeline is a trust policy: it lets the jobs of one GitHub repository or one Jenkins publish to the repositories that it lists, with the identity token of the job and no stored secret. A developer sends you the values. [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline) tells them which ones.
+A CI pipeline lets the jobs of one GitHub repository or one Jenkins publish, with no stored secret. A developer sends you the values. [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline) tells them which ones.
 
 <Steps>
 
-1. Open **Settings** › **CI pipelines**, then click **New CI pipeline**.
+1. Open **Settings** › **CI pipelines**, and click **New CI pipeline**.
 
 2. Choose **GitHub Actions** or **Jenkins**.
 
-3. Fill in the values that the developer sent you.
+3. Fill in the values from the developer.
 
 4. Tick the repository.
 
@@ -103,17 +95,15 @@ A CI pipeline is a trust policy: it lets the jobs of one GitHub repository or on
 
 </Steps>
 
-You can also start from the repository: on its **Access** tab, under **Publish**, click **Add CI pipeline**.
-
 ### Jenkins: a freestyle job or a Jenkinsfile
 
-Both kinds of job use the same CI pipeline. Under **Jobs**, write the full job name with its folders, such as `team/app`. A branch of a multibranch pipeline is a job of its own, such as `app/main`.
+Both kinds of job use the same CI pipeline.
 
-If this server cannot reach Jenkins, open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys**. Do it again when Jenkins changes its keys.
+Under **Jobs**, write each full job name with its folders, such as `team/app`. A branch of a multibranch pipeline is its own job, such as `app/main`.
 
 ## Limit where requests come from
 
-Each repository can take downloads, publishes or both from some networks only. No rule means any network.
+A repository can take downloads or publishes from some networks only. With no rule, any network works.
 
 <Steps>
 
@@ -121,18 +111,44 @@ Each repository can take downloads, publishes or both from some networks only. N
 
 2. Under **Download** or **Publish**, find **From where**.
 
-3. Click **Add network list** to pick a list, such as GitHub Actions, or **Add addresses** to paste addresses and ranges.
+3. Click **Add network list** to pick a list, such as **GitHub Actions**. Or click **Add addresses** to paste addresses.
 
-4. Click **Save** in the bar at the bottom, then **Save access**.
+4. Click **Save**, then **Save access**.
 
 </Steps>
 
-The rules hold for everyone, admins included. A request from another address gets `403` with `your address is not allowed to read this repository` or `your address is not allowed to publish this repository`. The audit log records the address; no other page shows it.
-
-The server sees each visitor's own address only when it trusts the proxy in front of it. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+The rules hold for everyone, admins too.
 
 ### Network lists
 
-Open **Settings** › **People and CI** › **Networks**. Under **Downloaded lists**, the server keeps two lists from their owners and refreshes them every day: Cloudflare and GitHub Actions. Under **Your lists**, click **New network list** to make your own, and paste the addresses in any common layout: one per line, CSV or a table. The server keeps the ranges it finds, and names each line that holds none.
+Open **Settings** › **Networks**.
 
-A rule names a list, so a change to the list applies to every repository that uses it. A list that a rule uses cannot be deleted.
+- **Downloaded lists**: Cloudflare and GitHub Actions. The server refreshes them every day.
+- **Your lists**: click **New network list**, and paste addresses in any layout.
+
+A change to a list applies to every repository that uses it.
+
+## If something goes wrong
+
+<details>
+<summary>A proxy cannot reach its remote</summary>
+
+Check the address. To create the proxy anyway, click **Create anyway**.
+
+</details>
+
+<details>
+<summary>Jenkins jobs cannot publish, and the server cannot reach Jenkins</summary>
+
+Open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys** on the CI pipeline. Do it again when Jenkins changes its keys.
+
+</details>
+
+<details>
+<summary>A request gets 403: your address is not allowed</summary>
+
+The address is outside the **From where** rules of the repository. **Activity** shows the address.
+
+If every visitor seems to have the address of your proxy, the server does not trust that proxy yet. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+
+</details>

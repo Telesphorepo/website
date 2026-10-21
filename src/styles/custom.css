@@ -87,11 +87,15 @@
 
     --sl-text-h1: clamp(2.125rem, 1.75rem + 1.6vw, 3rem);
     --sl-text-h2: clamp(1.5rem, 1.3rem + 0.8vw, 1.875rem);
-    --sl-text-h3: 1.1875rem;
-    --sl-text-h4: 1rem;
-    --sl-line-height: 1.65;
-    --sl-content-width: 56rem;
-    --sl-sidebar-width: 17rem;
+    --sl-text-h3: 1.25rem;
+    --sl-text-h4: 1.0625rem;
+    --sl-text-body: 1.0625rem;
+    --sl-text-code: 0.875rem;
+    --sl-line-height: 1.7;
+    /* A reading column of about 830 px, and a narrow "On this page" column (see Table of contents). */
+    --sl-content-width: 52rem;
+    --tr-toc-width: 15rem;
+    --sl-sidebar-width: 17.5rem;
     --sl-nav-height: 3.75rem;
 
     color-scheme: dark;
@@ -226,12 +230,20 @@ body {
     line-height: 1.15;
 }
 
+/*
+ * Space: a heading takes about three times the paragraph gap above it, and a small gap below it,
+ * so it belongs to the text that follows.
+ */
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
-    margin-top: 3rem;
+    margin-top: 3.5rem;
 }
 
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h3 {
-    margin-top: 2rem;
+    margin-top: 2.5rem;
+}
+
+.sl-markdown-content .sl-heading-wrapper + * {
+    margin-top: 0.625rem;
 }
 
 .sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + :is(.sl-heading-wrapper.level-h4, .sl-heading-wrapper.level-h5, .sl-heading-wrapper.level-h6) {
@@ -351,7 +363,7 @@ body {
     mask: var(--tr-perforation) left center / 12px 4px repeat-x;
 }
 
-/* Quotes and details: a filled block, no side rule. */
+/* Quotes: a filled block, no side rule. */
 
 .sl-markdown-content blockquote:not(:where(.not-content *)) {
     border: 0;
@@ -361,44 +373,68 @@ body {
     color: var(--tr-muted);
 }
 
-.sl-markdown-content details:not(:where(.not-content *)) {
-    border: 0;
-    border-radius: 6px;
-    padding: 0.625rem 1rem;
-    background-color: var(--tr-surface);
-}
-
-.sl-markdown-content details:not([open]):hover:not(:where(.not-content *)),
-.sl-markdown-content details:has(> summary:hover):not(:where(.not-content *)) {
-    background-color: var(--tr-hover);
-}
-
 /*
  * A run of details is a list of problems, one per entry, each titled with what the reader sees.
- * The entries sit close together, so the run reads as one list. An open entry keeps its fill, and
- * its summary stays the hover target.
+ * No box: a hairline between the entries, and a chevron that turns when the entry opens.
  */
+.sl-markdown-content details:not(:where(.not-content *)) {
+    border: 0;
+    border-top: 1px solid var(--tr-line);
+    border-radius: 0;
+    padding: 0;
+    background: none;
+}
+
+.sl-markdown-content details:not(:has(+ details)):not(:where(.not-content *)) {
+    border-bottom: 1px solid var(--tr-line);
+}
+
 .sl-markdown-content details + details:not(:where(.not-content *)) {
-    margin-top: 0.375rem;
+    margin-top: 0;
 }
 
 .sl-markdown-content details > summary:not(:where(.not-content *)) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    padding: 0.75rem 0;
     color: var(--tr-heading);
     font-weight: 500;
     text-wrap: pretty;
+    list-style: none;
     cursor: pointer;
+    transition: color 120ms ease;
 }
 
-.sl-markdown-content details[open] > summary:not(:where(.not-content *)) {
-    margin-bottom: 0.5rem;
+.sl-markdown-content details > summary::-webkit-details-marker {
+    display: none;
 }
 
-.sl-markdown-content details:has(> summary:hover)[open]:not(:where(.not-content *)) {
-    background-color: var(--tr-surface);
+.sl-markdown-content details > summary:not(:where(.not-content *))::before {
+    content: '';
+    flex: none;
+    align-self: center;
+    width: 0.75rem;
+    height: 0.75rem;
+    background-color: var(--tr-muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transition: rotate 150ms ease;
 }
 
-.sl-markdown-content details[open]:has(> summary:hover) > summary:not(:where(.not-content *)) {
+.sl-markdown-content details[open] > summary:not(:where(.not-content *))::before {
+    rotate: 90deg;
+}
+
+.sl-markdown-content details > summary:hover:not(:where(.not-content *)) {
     color: var(--tr-link);
+}
+
+.sl-markdown-content details[open]:not(:where(.not-content *)) {
+    padding-bottom: 1rem;
+}
+
+.sl-markdown-content details > :not(summary):not(:where(.not-content *)) {
+    margin-inline-start: 1.375rem;
 }
 
 /* Asides: a tinted block. The kind sets the fill and the title color. */
@@ -441,7 +477,18 @@ starlight-file-tree ul {
     border: 0;
 }
 
-/* Sidebar: quiet links. Hover and the current page fill the whole row. */
+/*
+ * Sidebar: a plain list. A group heading is a small muted label that does not fold. The links are
+ * 15 px with room to breathe; hover and the current page take a quiet tint.
+ */
+
+#starlight__sidebar .top-level > li + li {
+    margin-top: 1.75rem;
+}
+
+#starlight__sidebar .top-level > li:has(> a) + li:has(> a) {
+    margin-top: 0.125rem;
+}
 
 #starlight__sidebar ul ul li {
     border: 0;
@@ -449,109 +496,99 @@ starlight-file-tree ul {
     padding-inline-start: 0;
 }
 
-#starlight__sidebar summary .large {
-    font-size: 0.9375rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--tr-heading);
+#starlight__sidebar summary {
+    padding: 0 0.75rem 0.5rem;
+    cursor: default;
+    pointer-events: none;
 }
 
-#starlight__sidebar a {
+#starlight__sidebar summary .caret {
+    display: none;
+}
+
+#starlight__sidebar summary .large {
+    color: var(--tr-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#starlight__sidebar a,
+#starlight__sidebar a.large {
     margin-block: 1px;
     border-radius: 6px;
-    padding-inline: 0.625rem;
-    color: var(--tr-muted);
-    font-size: 0.875rem;
+    padding: 0.4375rem 0.75rem;
+    color: var(--tr-body);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.4;
     transition: background-color 120ms ease, color 120ms ease;
 }
 
 #starlight__sidebar a:hover,
 #starlight__sidebar a:focus-visible {
-    background-color: var(--tr-hover);
+    background-color: var(--tr-surface);
     color: var(--tr-heading);
-}
-
-#starlight__sidebar a.large {
-    font-weight: 400;
 }
 
 #starlight__sidebar a[aria-current='page'],
+#starlight__sidebar a[aria-current='page']:hover,
 #starlight__sidebar a[aria-current='page']:focus {
-    background-color: var(--tr-gold);
+    background-color: var(--tr-accent-low);
     box-shadow: none;
-    color: var(--tr-gold-ink);
+    color: var(--tr-heading);
     font-weight: 600;
-}
-
-#starlight__sidebar a[aria-current='page']:hover {
-    background-color: var(--tr-gold-light);
-    color: var(--tr-gold-ink);
 }
 
 /*
- * A page that is one step of a sequence (data-step, set in astro.config.mjs) shows its number in a
- * small round chip before the label, as the Steps component numbers its steps.
+ * Table of contents: a narrow, quiet column of the h2 headings. The reading column takes the rest
+ * of the space right of the sidebar, and sits in its middle.
  */
-#starlight__sidebar a[data-step] {
-    justify-content: flex-start;
-    gap: 0.5rem;
-}
 
-#starlight__sidebar a[data-step]::before {
-    content: attr(data-step);
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-    border-radius: 999px;
-    background-color: var(--tr-raised);
-    color: var(--tr-heading);
-    font-size: 0.6875rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
+@media (min-width: 72rem) {
+    [data-has-toc] .right-sidebar-container {
+        width: var(--tr-toc-width);
+    }
 
-#starlight__sidebar a[data-step][aria-current='page']::before {
-    background-color: var(--tr-gold-ink);
-    color: var(--tr-gold);
+    [data-has-sidebar][data-has-toc] .main-pane {
+        --sl-content-margin-inline: auto;
+        width: calc(100% - var(--tr-toc-width));
+    }
 }
-
-/* Table of contents: no column rule. Hover and the current heading fill the whole row. */
 
 .right-sidebar {
     border-inline-start: 0;
 }
 
 starlight-toc h2 {
-    font-size: 0.9375rem;
+    color: var(--tr-muted);
+    font-size: 0.75rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
-    color: var(--tr-heading);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 starlight-toc a {
-    --pad-inline: 0.75rem;
+    --pad-inline: 0.625rem;
     margin-inline-end: 0.75rem;
     border-radius: 6px;
+    color: var(--tr-muted);
     font-size: 0.8125rem;
-    line-height: 1.35;
+    line-height: 1.4;
     transition: background-color 120ms ease, color 120ms ease;
 }
 
 starlight-toc a:hover {
-    background-color: var(--tr-hover);
     color: var(--tr-heading);
 }
 
 starlight-toc a[aria-current='true'],
 starlight-toc a[aria-current='true']:hover {
-    background-color: var(--tr-raised);
+    background: none;
     box-shadow: none;
     color: var(--tr-heading);
-    font-weight: 600;
+    font-weight: 500;
 }
 
 mobile-starlight-toc .dropdown a:hover {
@@ -578,18 +615,49 @@ mobile-starlight-toc details[open] .toggle {
     color: var(--tr-heading);
 }
 
-/* Steps: filled numbers with no line down the side. */
+/*
+ * Steps: a plain numbered list in the flow of the text. The number sits at the start of the
+ * step's first line, and the step's code runs the full width of the column.
+ */
+
+.sl-steps > li {
+    padding-inline-start: 0;
+    min-height: 0;
+}
+
+.sl-steps > li + li {
+    margin-top: 1.75rem;
+}
 
 .sl-steps > li::before {
-    background-color: var(--tr-raised);
+    content: counter(steps-counter) '.';
+    position: static;
+    float: inline-start;
+    width: auto;
+    height: auto;
+    margin-inline-end: 0.5em;
+    border-radius: 0;
+    background: none;
     box-shadow: none;
     color: var(--tr-heading);
+    font-size: inherit;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    line-height: var(--sl-line-height);
+    text-align: start;
 }
 
 .sl-steps > li::after {
     display: none;
+}
+
+.sl-steps > li > :first-child {
+    transform: none;
+    margin-bottom: 0;
+}
+
+.sl-steps > li > * + * {
+    clear: both;
 }
 
 /* Tabs: a row of pills. Hover and the selected tab fill the whole tab. */
@@ -934,89 +1002,32 @@ starlight-tabs .tab > [role='tab'][aria-selected='true'] {
     outline: 0;
 }
 
-/*
- * Start here, on the landing page: one block for each kind of reader, two across from 56rem. A
- * block that is a sequence numbers its cards with the round chips of the Steps component.
- */
+/* Start here, on the landing page: four cards, two across from 48rem. */
 
-.tr-readers {
+.tr-start {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 2.5rem 3rem;
-    margin-top: 2rem;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
 }
 
-@media (min-width: 56rem) {
-    .tr-readers {
+@media (min-width: 48rem) {
+    .tr-start {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 }
 
-.tr-reader h3 {
-    margin: 0;
-    color: var(--tr-heading);
-    font-size: 1.375rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-    text-wrap: balance;
-}
-
-.tr-reader p {
-    max-width: 34rem;
-    margin: 0.375rem 0 1rem;
-    color: var(--tr-muted);
-    font-size: 0.9375rem;
-    text-wrap: pretty;
-}
-
-.tr-reader-links {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.tr-reader-steps {
-    counter-reset: tr-step;
-}
-
-.tr-reader-steps > li {
-    display: grid;
-    grid-template-columns: 1.75rem minmax(0, 1fr);
-    column-gap: 0.625rem;
-    align-items: center;
-    counter-increment: tr-step;
-}
-
-.tr-reader-steps > li::before {
-    content: counter(tr-step);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 999px;
-    background-color: var(--tr-raised);
-    color: var(--tr-heading);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-}
-
-.tr-reader-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-}
-
-.tr-reader-grid .sl-link-card {
+.tr-start .sl-link-card {
     height: 100%;
-    padding-block: 0.75rem;
+    margin: 0;
+    padding: 1.125rem 1.25rem;
 }
 
-.tr-reader-grid .sl-link-card .title {
+.tr-start .sl-link-card .title {
+    font-size: 1.125rem;
+}
+
+.tr-start .sl-link-card .description {
     font-size: 0.9375rem;
 }
 
