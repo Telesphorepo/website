@@ -13,6 +13,7 @@ This page is for the server admin.
 <Choice questions={[
     {key: 'engine', label: 'How do you run the server?', options: [
         {value: 'docker', label: 'Docker'},
+        {value: 'compose', label: 'Docker Compose'},
         {value: 'podman', label: 'Podman'},
         {value: 'binary', label: 'Download the program'},
     ]},
@@ -37,6 +38,44 @@ This page is for the server admin.
    ```
 
 </Steps>
+
+</Path>
+
+<Path title="Docker Compose" engine="compose" level={3}>
+
+<Steps>
+
+1. Save this as `compose.yaml` in a folder of its own.
+
+   ```yaml title="compose.yaml"
+   services:
+     telesphorepo:
+       image: ghcr.io/telesphorepo/telesphorepo:latest
+       restart: unless-stopped
+       ports:
+         - "8080:8080"
+       volumes:
+         - data:/data
+
+   volumes:
+     data:
+   ```
+
+2. Start the server.
+
+   ```sh
+   docker compose up -d
+   ```
+
+3. Copy the admin password from the log.
+
+   ```sh
+   docker compose logs telesphorepo
+   ```
+
+</Steps>
+
+For HTTPS and backups in the same file, see [Run with Docker Compose](/production/#run-with-docker-compose).
 
 </Path>
 

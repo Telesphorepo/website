@@ -144,38 +144,131 @@ docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data \
 
 Do not change `TR_MASTER_KEY` later.
 
+## Run with Docker Compose
+
+This one file runs the server, Caddy for HTTPS, and a volume for backups.
+
+<Steps>
+
+1. Save these two files in a folder of their own. Put your address in place of `repo.example.com` in both.
+
+   ```yaml title="compose.yaml"
+   services:
+     telesphorepo:
+       image: ghcr.io/telesphorepo/telesphorepo:latest
+       restart: unless-stopped
+       environment:
+         TR_BASE_URL: https://repo.example.com
+         TR_BACKUP_DIR: /backups
+       volumes:
+         - data:/data
+         - backups:/backups
+       depends_on:
+         backups-owner:
+           condition: service_completed_successfully
+
+     # The server runs as user 65532. A new volume belongs to root, so this gives the backups volume to the server once.
+     backups-owner:
+       image: alpine:3
+       command: chown 65532:65532 /backups
+       volumes:
+         - backups:/backups
+
+     caddy:
+       image: caddy:2
+       restart: unless-stopped
+       ports:
+         - "80:80"
+         - "443:443"
+         - "443:443/udp"
+       volumes:
+         - ./Caddyfile:/etc/caddy/Caddyfile:ro
+         - caddy-data:/data
+         - caddy-config:/config
+
+   volumes:
+     data:
+     backups:
+     caddy-data:
+     caddy-config:
+   ```
+
+   ```text title="Caddyfile"
+   repo.example.com {
+       reverse_proxy telesphorepo:8080
+   }
+   ```
+
+2. Point the DNS name at the host, then start everything:
+
+   ```sh
+   docker compose up -d
+   ```
+
+3. Copy the admin password from the log, and sign in at `https://repo.example.com`:
+
+   ```sh
+   docker compose logs telesphorepo
+   ```
+
+4. Trust Caddy: open **Settings** › **Network and proxy**, click **Trust** on the row of Caddy under **Detected proxies**, then **Save** and **Save changes**.
+
+</Steps>
+
+`TR_BASE_URL` and `TR_BACKUP_DIR` set the public address and the backup folder from the file, so the UI shows them read-only. Leave them out to set them in **Settings** instead. To keep the master key out of the data volume, add `TR_MASTER_KEY` from a secret (see below).
+
 ## Back up
 
-Back up the data volume, and the bucket if you use S3. The simplest safe backup stops the server for a moment:
+The server backs itself up. Set a folder under **Settings** › **Server** › **Backups** (or `TR_BACKUP_DIR`, as in the Compose file above). It then writes a backup every 24 hours and keeps the newest 7; change both on the same page, or click **Back up now**.
+
+A backup is a folder with a copy of the database, the master key and, with local disk storage, the stored files. Files in an S3 bucket stay in the bucket, so back up the bucket too, with its versioning or replication. A master key in `TR_MASTER_KEY` is not written into the backup; keep it with the backups.
+
+The backup volume must belong to the server's user, 65532. Give a new volume to it once:
 
 ```sh
-docker stop telesphorepo
-docker run --rm -v telesphorepo-data:/data -v "$PWD":/backup alpine \
-  tar czf /backup/telesphorepo-$(date +%F).tar.gz -C /data .
-docker start telesphorepo
+docker run --rm -v telesphorepo-backups:/b alpine chown 65532:65532 /b
 ```
 
 <details>
-<summary>Back up while the server runs</summary>
+<summary>Back up from the command line</summary>
 
-Copy the database with the SQLite backup command. The image has no `sqlite3`, so run it on the host:
+This works while the server runs:
 
 ```sh
-sqlite3 /path/to/data/telesphorepo.db ".backup '/backups/telesphorepo.db'"
+docker run --rm -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+  ghcr.io/telesphorepo/telesphorepo:latest backup /backups
 ```
 
-Then copy `master.key` and the `blobs/` folder. Do not copy only `telesphorepo.db` from a running server.
-
-For S3, use the versioning or the replication of your bucket.
-
 </details>
+
+## Restore
+
+Restore a backup folder into an empty volume, then start the server on that volume:
+
+```sh
+docker run --rm -v telesphorepo-backups:/backups -v telesphorepo-restored:/data \
+  ghcr.io/telesphorepo/telesphorepo:latest restore /backups/20261020T201500.123Z
+```
+
+The restore checks the database against its checksum, refuses a volume that is not empty, and says whether the backup is from the same version of Telesphorepo as the image.
 
 ## Upgrade
 
 <Steps>
 
-1. Back up.
+1. Back up: click **Back up now** under **Settings** › **Server** › **Backups**.
 2. Pull the new image and start a new container on the same volume:
+
+   <Tabs>
+   <TabItem label="Docker Compose">
+
+   ```sh
+   docker compose pull
+   docker compose up -d
+   ```
+
+   </TabItem>
+   <TabItem label="Docker">
 
    ```sh
    docker pull ghcr.io/telesphorepo/telesphorepo:latest
@@ -184,17 +277,20 @@ For S3, use the versioning or the replication of your bucket.
    docker run -d --name telesphorepo -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
+   </TabItem>
+   </Tabs>
+
 3. Check that it runs:
 
    ```sh
-   curl http://localhost:8080/healthz
+   curl https://repo.example.com/healthz
    ```
 
    The answer is `ok`.
 
 </Steps>
 
-Pass the same `-e` variables as before. The server checks the structure of its database when it starts. It refuses to start on a database with another structure. To go back to an older version, restore the backup.
+Pass the same `-e` variables as before. On its first start, a new version updates the database to its own structure, one step at a time, and the log names each step. The server refuses to start on a database from a newer version. To go back to an older version, restore the backup you made in step 1.
 
 <Aside>
 All settings live in the database. Change them in **Settings**. Each change applies at once, with no restart. See [Reference](/reference/) for the environment variables.
