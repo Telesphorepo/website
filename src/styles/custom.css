@@ -92,8 +92,8 @@
     --sl-text-body: 1.0625rem;
     --sl-text-code: 0.875rem;
     --sl-line-height: 1.7;
-    /* A reading column of about 830 px, and a narrow "On this page" column (see Table of contents). */
-    --sl-content-width: 52rem;
+    /* A reading column of up to 960 px, and a narrow "On this page" column (see Table of contents). */
+    --sl-content-width: 60rem;
     --tr-toc-width: 15rem;
     --sl-sidebar-width: 17.5rem;
     --sl-nav-height: 3.75rem;
@@ -646,7 +646,12 @@ mobile-starlight-toc details[open] .toggle {
 }
 
 .sl-steps > li + li {
-    margin-top: 1.5rem;
+    margin-top: 0.75rem;
+}
+
+/* A step that ends with code keeps a little more space after it. */
+.sl-steps > li:has(> .expressive-code:last-child) + li {
+    margin-top: 1.25rem;
 }
 
 .sl-steps > li::before {

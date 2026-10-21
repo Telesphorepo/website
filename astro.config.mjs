@@ -8,7 +8,6 @@ import starlightUtils from "@lorenzo_lewis/starlight-utils";
 import starlightLlmsTxt from 'starlight-llms-txt';
 
 const sidebar = [
-    {label: 'Overview', link: '/'},
     {
         label: 'Publish your packages',
         items: [
@@ -51,12 +50,11 @@ const sidebar = [
         ]
     },
 ];
-// The docs page ids in sidebar order. The landing page is the Overview entry; the header links are
-// not docs pages.
-const pageOrder = sidebar
+// The docs page ids in sidebar order, after the landing page. The header links are not docs pages.
+const pageOrder = ['index', ...sidebar
     .filter((entry) => entry.label !== 'leadingNavLinks')
     .flatMap((entry) => 'items' in entry ? entry.items : [entry])
-    .map((entry) => entry.link === '/' ? 'index' : entry.link.slice(1));
+    .map((entry) => entry.link.slice(1))];
 
 // Pages that moved: the old address answers with a redirect to the new one. A fragment of the old
 // address (such as /production/#back-up) stays on the new one, so the merged pages keep the old

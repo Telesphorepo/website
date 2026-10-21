@@ -16,8 +16,8 @@ bun run preview  # serve the production build
 ```
 
 The pages are in `src/content/docs/<page>.mdx`. The sidebar, the redirects of moved pages and the
-`llms.txt` sets are in `astro.config.mjs`. The sidebar opens with Overview (the landing page),
-then Publish your packages, Use packages in your builds (one page: each repository in the server shows the
+`llms.txt` sets are in `astro.config.mjs`. The site title leads to the landing page.
+The sidebar holds Publish your packages, Use packages in your builds (one page: each repository in the server shows the
 setup of its format), Move from Nexus and Administration.
 The theme is in `src/styles/custom.css`. The fonts are Geist, and Geist Mono for code, from
 `@fontsource/geist` and `@fontsource/geist-mono`. The landing page components are in
