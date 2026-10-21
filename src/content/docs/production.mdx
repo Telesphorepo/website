@@ -35,6 +35,12 @@ Before you start, point a DNS name (`repo.example.com` below) at the host, and o
    docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
+   The server prints the password of the user `admin` once, on its first start. Copy it from the log:
+
+   ```sh
+   docker logs telesphorepo 2>&1 | grep 'password:'
+   ```
+
 3. Put this in `/etc/caddy/Caddyfile`, in place of what is there:
 
    ```text title="/etc/caddy/Caddyfile"
@@ -68,6 +74,12 @@ Before you start, point a DNS name (`repo.example.com` below) at the host, and o
    docker run -d --name telesphorepo --network telesphorepo -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
+   The server prints the password of the user `admin` once, on its first start. Copy it from the log:
+
+   ```sh
+   docker logs telesphorepo 2>&1 | grep 'password:'
+   ```
+
 3. Save this as `Caddyfile`:
 
    ```text title="Caddyfile"
@@ -98,7 +110,7 @@ Then, in either case:
 
 <Steps>
 
-1. Open `https://repo.example.com` and sign in.
+1. Open `https://repo.example.com` and sign in as `admin` with the password from the log. If the log no longer has it, set a new one: `docker exec -it telesphorepo /telesphorepo-server user passwd admin`.
 
 2. Trust the proxy. Open **Settings** › **Network and proxy**. Under **Detected proxies**, click **Trust** on the row of Caddy. Click **Save**, then **Save changes**.
 
@@ -278,10 +290,10 @@ This one file runs the server, Caddy for HTTPS, and a volume for the backups, wh
    docker compose up -d
    ```
 
-3. Copy the admin password from the log, and sign in at `https://repo.example.com`:
+3. Copy the password of the user `admin` from the log, and sign in at `https://repo.example.com`:
 
    ```sh
-   docker compose logs telesphorepo
+   docker compose logs telesphorepo 2>&1 | grep 'password:'
    ```
 
 4. Trust Caddy: open **Settings** › **Network and proxy**, click **Trust** on the row of Caddy under **Detected proxies**, then **Save** and **Save changes**.
