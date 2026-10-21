@@ -172,51 +172,51 @@ To let the server do TLS itself, set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to
 
 </details>
 
-## Store files in S3
+## Store files in Cloudflare R2
 
-The server keeps files on its local disk by default. To use a bucket, such as Cloudflare R2, AWS S3 or SeaweedFS:
+The server keeps files on its local disk by default. Cloudflare R2 is the usual choice for a bucket: R2 charges nothing for downloads. Any S3-compatible bucket works too, such as AWS S3 or SeaweedFS.
 
 <Steps>
 
-1. Create the bucket and an access key that can read, write and delete in it.
-2. Open **Settings** › **Storage**. Under **Storage type**, choose **An S3 bucket**. Enter the **Address**, the **Region**, the **Bucket**, the **Access key ID** and the **Secret access key**. Leave the **Address** empty for AWS S3.
+1. In Cloudflare, create the bucket. Then create an R2 API token with **Object Read & Write** on it, and copy its **Access Key ID** and **Secret Access Key**: Cloudflare shows them once.
+2. Open **Settings** › **Storage**. Under **Storage type**, choose **A Cloudflare R2 bucket, or another S3-compatible bucket**, and enter:
+
+   | Setting | Value |
+   |---|---|
+   | Address | `https://<account id>.r2.cloudflarestorage.com`, with nothing after the host. The bucket's **Settings** page shows it under **S3 API**. |
+   | Region | leave it empty |
+   | Bucket | the bucket's name |
+   | Access key ID and Secret access key | from the token |
+   | Path-style addresses | off |
+
+   A custom domain of the bucket does not work here: it serves public downloads only, and the server writes and signs links through the S3 API.
 3. Click **Test connection**. The server writes, reads and deletes one test file.
-4. Click **Save** and confirm. If the server has files, it copies them to the bucket in the background. Downloads and uploads keep working during the copy.
+4. Click **Save** and confirm. If the server has files, it copies them to the bucket in the background, 16 at a time. Downloads and uploads keep working during the copy.
 
 </Steps>
 
-<details>
-<summary>Values for R2 and SeaweedFS</summary>
-
-<Tabs>
-<TabItem label="Cloudflare R2">
-
-| Setting | Value |
-|---|---|
-| Address | `https://<account>.r2.cloudflarestorage.com` |
-| Region | leave it empty, or `auto` |
-| Path-style addresses | off |
-
-</TabItem>
-<TabItem label="SeaweedFS">
-
-| Setting | Value |
-|---|---|
-| Address | `http://seaweedfs:8333` |
-| Region | any name, for example `us-east-1` |
-| Path-style addresses | on |
-
-</TabItem>
-</Tabs>
-
-By default, a download from S3 goes straight from the bucket to the client. If clients cannot reach the bucket, turn off **Download from the bucket**.
-
 The old files stay where they were. Delete them yourself when the new storage works.
 
-With an address and no region, the server signs requests for the region `auto`, which R2 needs. AWS needs a real region, for example `us-east-1`.
+### Who sends the bytes
+
+| Setup | Who answers a download | Who sends the bytes |
+|---|---|---|
+| Local disk | your server | your server |
+| R2 (default, **Download from the bucket** on) | your server: it checks the account and the rules of the repository, then sends the build to a signed link that lasts a few minutes | R2, straight to the build |
+| R2 and [edge delivery](https://github.com/Telesphorepo/Telesphorepo/tree/main/edge) | a Cloudflare Worker near the build, with the rules of the repository at the edge | R2, from the bucket nearest the build |
+
+With R2, each download still makes one trip to your server first. Edge delivery takes that trip away, and keeps copies in buckets in several regions. If the builds cannot reach the bucket, turn off **Download from the bucket**: then your server sends the bytes.
+
+<details>
+<summary>AWS S3 and SeaweedFS</summary>
+
+| Setting | AWS S3 | SeaweedFS |
+|---|---|---|
+| Address | leave it empty | `http://seaweedfs:8333` |
+| Region | the bucket's region, for example `us-east-1` | any name, for example `us-east-1` |
+| Path-style addresses | off | on |
 
 </details>
-
 ## Keep the master key safe
 
 The server encrypts secret settings with a master key. By default it writes the key to `master.key` in the data volume. Without the key, the server cannot read the S3 secret, the single sign-on secret, the signing keys and the authenticator apps.
