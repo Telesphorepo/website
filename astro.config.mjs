@@ -29,6 +29,7 @@ const sidebar = [
         collapsed: true,
         items: [
             {label: 'Move from Nexus', link: '/move-from-nexus'},
+            {label: 'Move your projects', link: '/move-projects'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
             {label: 'Run in production', link: '/production'},
             {label: 'Settings and commands', link: '/reference'},
@@ -136,7 +137,7 @@ export default defineConfig({
                 },
                 {
                     label: 'Operations',
-                    paths: ['run-the-server', 'production', 'move-from-nexus', 'reference'],
+                    paths: ['run-the-server', 'production', 'move-from-nexus', 'move-projects', 'reference'],
                     description: 'HTTPS, storage, backups, upgrades, the move from Nexus, commands, environment variables and settings',
                 },
             ],

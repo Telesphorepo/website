@@ -1,0 +1,120 @@
+---
+title: Move your projects
+description: Two prompts for a coding assistant that move a project from Nexus to Telesphorepo, and a rehearsal of publishing before the switch-over.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+When Telesphorepo holds a copy of your Nexus repositories (see [Move from Nexus](/move-from-nexus/)), each project still names Nexus: in its build files, its CI, its Dockerfiles and its docs. Two prompts do that work in a project. Paste each one into a coding assistant, such as Claude Code, in the folder of the project.
+
+- **Prompt 1** moves the downloads. Run it in each project while Telesphorepo copies Nexus: the copies already serve downloads.
+- **Prompt 2** sets up publishing. Run it once, then [rehearse publishing](#rehearse-publishing) on a test repository, because the copies of Nexus take uploads only after the switch-over.
+
+Before you paste a prompt, fill in its first lines: your Nexus address, your Telesphorepo address, and the name of each repository in Telesphorepo. The **Repositories** page of Telesphorepo lists the names. Read the changes the assistant makes before you commit them.
+
+## Prompt 1: the download addresses
+
+```text title="Prompt 1"
+Move this project's downloads from our Nexus server to Telesphorepo.
+
+Nexus: https://nexus.example.com
+Telesphorepo: https://repo.example.com
+Repositories (Nexus name -> Telesphorepo name):
+- maven-public -> maven-public
+- npm-group -> npm-group
+
+Telesphorepo addresses, by format (<name> is the Telesphorepo name):
+- Maven and Gradle: https://repo.example.com/maven/<name>
+- npm, pnpm, Yarn, Bun: https://repo.example.com/npm/<name>/
+- pip, uv, Poetry: https://repo.example.com/pypi/<name>/simple/
+- Cargo: sparse+https://repo.example.com/cargo/<name>/index/
+- NuGet: https://repo.example.com/nuget/<name>/index.json
+- Docker and Helm (OCI): repo.example.com/<name>/IMAGE:TAG (Nexus Docker hosts or ports become this one host)
+- apt: https://repo.example.com/debian/<name>
+- Raw files: https://repo.example.com/raw/<name>/<path>
+A Nexus address has the form https://nexus.example.com/repository/<nexus name>/...
+
+Do this:
+1. Find every place that names the Nexus server, in every file of the repository: build files
+   (pom.xml, settings.xml, build.gradle(.kts), settings.gradle(.kts), gradle.properties, init
+   scripts), package manager config (.npmrc, .yarnrc.yml, bunfig.toml, pip.conf, requirements
+   files, pyproject.toml, .cargo/config.toml, nuget.config, NuGet.Config), lockfiles,
+   Dockerfiles, compose files, Helm values and Kubernetes manifests, CI files (.github/workflows,
+   Jenkinsfile, .gitlab-ci.yml and others), shell scripts, apt sources, and docs and READMEs.
+   Search for the host name, for /repository/, and for the Docker hosts or ports of Nexus.
+2. Change each download address to its Telesphorepo address from the list above.
+3. Lockfiles: where the lockfile keeps the full address (package-lock.json, yarn.lock,
+   pnpm-lock.yaml, bun.lock, poetry.lock, Cargo.lock, packages.lock.json), change the address
+   and keep every checksum: the files in Telesphorepo are the same bytes. If a tool records the
+   registry in another form, run the tool to update its lockfile instead of editing it.
+4. Credentials for downloads: a private repository needs a read token of Telesphorepo, not the
+   Nexus password. Keep the existing variable names where you can, and read the token from the
+   environment or the CI secrets. Never write a token into a file.
+5. Do not touch publishing: leave distributionManagement, publishing blocks, publish URLs and
+   their credentials as they are. A second step moves publishing.
+6. List every file you changed, and every place you were not sure about.
+```
+
+When the assistant is done, run a clean build, with an empty local cache where the tool has one, and check in its output that it downloads from `repo.example.com`.
+
+## Prompt 2: publishing
+
+```text title="Prompt 2"
+Set up this project to publish to Telesphorepo, in place of our Nexus server.
+
+Nexus: https://nexus.example.com
+Telesphorepo: https://repo.example.com
+
+How Telesphorepo publishes: the Telesphorepo CLI runs the project's own publish command
+(mvn deploy, gradle publish, npm publish, uv build and upload, cargo publish, dotnet pack and
+push, helm push, docker push) with a publish token that lasts a few minutes. The CLI gives the
+tool the repository address and the token. The project keeps no publish address and no
+publish password. "telesphorepo setup" writes the file telesphorepo.toml with the server and
+the repository; I run it myself.
+
+Do this:
+1. Find how the project publishes to Nexus today: distributionManagement and <server> entries,
+   Gradle publishing { repositories { maven { ... } } } blocks, publishConfig and auth lines in
+   .npmrc, twine or uv publish settings and ~/.pypirc use, Cargo registry entries for
+   publishing, nuget push sources and API keys, docker login and push steps, curl uploads, and
+   the CI jobs and secrets that do it.
+2. Remove the Nexus publish addresses and the Nexus publish credentials from the project and from
+   the CI files. Keep the build steps that make the artifacts.
+3. Keep the download addresses as they are.
+4. In the CI files, replace the publish steps with a placeholder comment
+   "TELESPHOREPO PUBLISH STEP" where the publish ran, and keep the job's permissions. I paste
+   the steps from the Publish tab of the Telesphorepo repository.
+5. Do not add the Telesphorepo CLI, a token or telesphorepo.toml yourself.
+6. List what you removed, the CI secrets that are no longer used, and anything that still needs
+   Nexus.
+```
+
+Then set up the project with the CLI, as in [Set up a project](/set-up/): run the setup line from the **Publish to this repository** tab in the project folder, and paste the CI steps that the tab shows where the prompt left its placeholder.
+
+## Rehearse publishing
+
+The copies of Nexus refuse uploads until the switch-over, so that Nexus and Telesphorepo do not part ways. To try publishing before then, publish to a test repository, then point the project at the real one.
+
+<Steps>
+
+1. Make a hosted repository of the same format, for example `maven-rehearsal`. Give your account, and the CI pipeline of the project, **Publish** on it.
+
+2. In the project folder, run the setup line of the **Publish to this repository** tab of `maven-rehearsal`.
+
+3. Publish, on your computer and from CI:
+
+   ```sh
+   telesphorepo publish
+   ```
+
+4. Install what you published, from `maven-rehearsal`, in another project or a clean folder.
+
+5. After the [switch-over](/move-from-nexus/), set `repo` in the project's `telesphorepo.toml` to the real repository, add the real repository to the CI pipeline, and publish again.
+
+6. Delete `maven-rehearsal`.
+
+</Steps>
+
+<Aside>
+A rehearsal also checks your CI pipeline: the trust policy, the identity token and the CLI install step. These do not depend on the repository.
+</Aside>
