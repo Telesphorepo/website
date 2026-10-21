@@ -1,13 +1,17 @@
 ---
-title: Move your projects
-description: A prompt for a coding agent for each ecosystem, which moves a project from Nexus to Telesphorepo with you, a rehearsal of publishing before the switch-over, and the skill for Claude Code.
+title: Move your projects with an AI agent
+description: A prompt for a coding agent for each ecosystem, which moves a project from Nexus to Telesphorepo with you, the steps that need you, a rehearsal of publishing before the switch-over, and the skill for Claude Code.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
-When Telesphorepo holds a copy of your Nexus repositories (see [Move from Nexus](/move-from-nexus/)), each project still names Nexus. A coding agent, such as Claude Code, moves a project with you: the agent changes the files, and asks you for the few steps that need a person. Choose what the project uses and how far to move it, then paste the prompt into the agent in the project folder. With Claude Code, you can also [use the skill](#use-the-skill).
+To make the same changes yourself, see [Move your projects by hand](/move-projects-by-hand/).
+
+When Telesphorepo holds a copy of your Nexus repositories (see [Copy your repositories from Nexus](/move-from-nexus/)), each project still names Nexus. A coding agent, such as Claude Code, moves a project with you: the agent changes the files, and asks you for the few steps that need a person. Choose what the project uses and how far to move it, then paste the prompt into the agent in the project folder. With Claude Code, you can also [use the skill](#use-the-skill).
+
+## Choose the prompt
 
 <Choice questions={[
     {key: 'ecosystem', label: 'What does the project use?', options: [
@@ -1341,36 +1345,13 @@ The agent asks for each of these when it needs it, and waits until you say it is
 - **Approve the computer** (full switch-over, and Docker pulls from a private repository). The agent runs `telesphorepo login` and gives you a link and a code. Open the link, sign in, check the code, click **Approve device**, and confirm with your second step. With single sign-on, you sign in again at your provider. After that, the computer can publish to every repository where your account has **Publish**.
 - **Make a read token** (only for a private repository). **Settings** › **Tokens** › **New read token**. Type a name, then click **Create token**. Put it in the environment variables that the agent names, on your computer and as CI secrets. Do not paste it to the agent.
 - **Make the rehearsal repository** (full switch-over). See [Rehearse publishing](#rehearse-publishing).
-- **Add the CI pipeline** (full switch-over). On **Settings** › **People and CI** › **CI pipelines**, add the pipeline of the project with the values that the agent gives you, and list the rehearsal repository and the real one. A server admin does this. For Jenkins, also install the plugin **OpenID Connect Provider** and add the credential `telesphorepo-id-token`, as in [Set up a project](/set-up/).
+- **Add the CI pipeline** (full switch-over). On **Settings** › **People and CI** › **CI pipelines**, add the pipeline of the project with the values that the agent gives you, and list the rehearsal repository and the real one. A server admin does this. For Jenkins, also install the plugin **OpenID Connect Provider** and add the credential `telesphorepo-id-token`, as in [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
 
 ## Rehearse publishing
 
-The copies of Nexus refuse uploads until the switch-over, so that Nexus and Telesphorepo do not part ways. To try publishing before then, publish to a test repository, then point the project at the real one. With a prompt for the full switch-over, the agent does steps 2 to 4 with you.
+The copies of Nexus refuse uploads until the switch-over, so that Nexus and Telesphorepo do not part ways. With a prompt for the full switch-over, the agent publishes to a test repository, such as `maven-releases-rehearsal`, and checks the result with you. You make the test repository and give your account and the CI pipeline **Publish** on it. [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing) has each step.
 
-<Steps>
-
-1. Make a hosted repository of the same format, for example `maven-releases-rehearsal`: on the **Repositories** page, click **New repository**. Give your account, and the CI pipeline of the project, **Publish** on it.
-
-2. Set `repo` in the project's `telesphorepo.toml` to `maven-releases-rehearsal`:
-
-   ```toml title="telesphorepo.toml"
-   server = "https://repo.example.com"
-   repo = "maven-releases-rehearsal"
-   ```
-
-3. Publish, on your computer and from CI:
-
-   ```sh
-   telesphorepo publish
-   ```
-
-4. Install what you published, from `maven-releases-rehearsal`, in another project or a clean folder.
-
-5. After the [switch-over](/move-from-nexus/), set `repo` in the project's `telesphorepo.toml` to the real repository, check that the CI pipeline lists the real repository, and publish again.
-
-6. Delete `maven-releases-rehearsal`.
-
-</Steps>
+After the [switch-over](/move-from-nexus/), follow the note that the agent leaves in its report: set `repo` in the project's `telesphorepo.toml` to the real repository, check that the CI pipeline lists the real repository, publish again, then delete the test repository.
 
 <Aside>
 A rehearsal also checks your CI pipeline: the trust policy, the identity token and the CLI install step. These do not depend on the repository.

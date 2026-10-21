@@ -1,12 +1,14 @@
 ---
-title: Move from Nexus
+title: Copy your repositories from Nexus
 description: Copy your Nexus 3 repositories into Telesphorepo, keep them in sync, then switch over.
 ---
 
 import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
 import NexusMove from '../../components/diagrams/NexusMove.astro';
 
-Telesphorepo copies the repositories of a Nexus 3 server and keeps them in sync. Your builds keep using Nexus during the copy. When you are ready, you switch over, and your builds publish to Telesphorepo.
+The move from Nexus has three parts. First, Telesphorepo copies the repositories of a Nexus 3 server and keeps them in sync: this page. Then you move each project, [by hand](/move-projects-by-hand/) or [with an AI agent](/move-projects-with-an-agent/). Last, you switch over, and your builds publish to Telesphorepo.
+
+Your builds keep using Nexus during the copy.
 
 <NexusMove />
 
@@ -39,13 +41,13 @@ Telesphorepo only reads from Nexus. It never changes Nexus.
    | `https://nexus.example.com/repository/pypi-hosted/simple/` | `https://repo.example.com/pypi/pypi-hosted/simple/` |
    | `https://nexus.example.com/repository/nuget-hosted/index.json` | `https://repo.example.com/nuget/nuget-hosted/index.json` |
 
-   A Cargo repository becomes `sparse+https://repo.example.com/cargo/<name>/index/`, and a Docker repository `repo.example.com/<name>/IMAGE:TAG`. See [Repository addresses](/reference/#repository-addresses).
+   A Cargo repository becomes `sparse+https://repo.example.com/cargo/<name>/index/`, and a Docker repository `repo.example.com/<name>/IMAGE:TAG`. See [Repository addresses](/commands-and-settings/#repository-addresses).
 
-   See the page of each format for the client setup, for example [Gradle and Maven](/download/) or [npm](/npm/). With a prompt of [Move your projects](/move-projects/), a coding agent changes every address in a project with you.
+   [Move your projects by hand](/move-projects-by-hand/) lists the files and the addresses for each ecosystem. With a prompt of [Move your projects with an AI agent](/move-projects-with-an-agent/), a coding agent changes every address in a project with you.
 
-5. Prepare publishing. Set up each project as in [Set up a project](/set-up/), and keep publishing to Nexus for now. With a prompt of [Move your projects](/move-projects/) for the full switch-over, a coding agent does this step and the next with you.
+5. Prepare publishing. Set up each project as in [Move publishing](/move-projects-by-hand/#move-publishing), and keep publishing to Nexus for now. With a prompt of [Move your projects with an AI agent](/move-projects-with-an-agent/) for the full switch-over, a coding agent does this step and the next with you.
 
-6. Rehearse publishing on a test repository: the copies take uploads only after the switch-over. See [Rehearse publishing](/move-projects/#rehearse-publishing).
+6. Rehearse publishing on a test repository: the copies take uploads only after the switch-over. See [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing).
 
 7. Stop all publishing to Nexus. A file that reaches Nexus after the final sync does not get copied.
 
@@ -53,12 +55,12 @@ Telesphorepo only reads from Nexus. It never changes Nexus.
 
    Telesphorepo runs one final sync. Then the repositories accept uploads, and Telesphorepo forgets the Nexus password.
 
-9. Point each project at its real repository: set `repo` in its `telesphorepo.toml`, and publish.
+9. Point each project at its real repository: set `repo` in its `telesphorepo.toml`, and publish. See [After the switch-over](/move-projects-by-hand/#after-the-switch-over).
 
 </Steps>
 
 <Aside type="caution">
-Back up the data of Telesphorepo before the first sync. See [Run in production](/production/#back-up).
+Back up the data of Telesphorepo before the first sync. See [Back up](/run-the-server/#back-up).
 </Aside>
 
 <details>

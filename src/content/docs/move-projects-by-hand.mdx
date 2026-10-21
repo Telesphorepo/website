@@ -1,0 +1,594 @@
+---
+title: Move your projects by hand
+description: Move a project from Nexus to Telesphorepo yourself, for each ecosystem. The files that name Nexus, the new addresses, the lockfiles, the read token, publishing, a rehearsal and the switch-over day.
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+
+To let a coding agent make these changes with you, see [Move your projects with an AI agent](/move-projects-with-an-agent/).
+
+When Telesphorepo holds a copy of your Nexus repositories (see [Copy your repositories from Nexus](/move-from-nexus/)), each project still names Nexus. This page moves one project, one git repository, in two stages:
+
+- **The download addresses.** The builds download from Telesphorepo, and publishing stays on Nexus. You can do this while the copy syncs.
+- **Publishing.** The project publishes with `telesphorepo publish` and CI. You rehearse it on a test repository, and point the project at its real repository after the switch-over.
+
+The examples use the Telesphorepo server `https://repo.example.com` and the Nexus server `https://nexus.example.com`. The files in Telesphorepo are the same bytes as in Nexus, so keep every checksum and hash.
+
+<Choice questions={[
+    {key: 'ecosystem', label: 'What does the project use?', options: [
+        {value: 'gradle', label: 'Gradle or Maven'},
+        {value: 'npm', label: 'npm, pnpm, Yarn or Bun'},
+        {value: 'python', label: 'Python'},
+        {value: 'cargo', label: 'Rust and Cargo'},
+        {value: 'nuget', label: '.NET and NuGet'},
+        {value: 'docker', label: 'Docker and Helm'},
+        {value: 'debian', label: 'Debian or raw files'},
+    ]},
+]} />
+
+## Before you start
+
+Write down the name of each repository in Nexus and in Telesphorepo. The **Repositories** page of Telesphorepo lists every repository with its format, and shows a lock after each private repository: only signed-in people can download from it.
+
+## Find every Nexus address
+
+Search every file of the git repository, hidden folders too, for the Nexus host name and for `/repository/`, the path that every Nexus address has. For Docker, also search for each Nexus Docker host and port, such as `nexus.example.com:8082`.
+
+Beyond the build files, look in Dockerfiles, compose files, Helm values, Kubernetes manifests, CI files (`.github/workflows/`, `Jenkinsfile`, `.gitlab-ci.yml` and others), shell and PowerShell scripts, Ansible, Terraform and cloud-init files, devcontainer files, and docs and READMEs.
+
+<Path title="Gradle or Maven: where Nexus hides" ecosystem="gradle" part="find" level={4}>
+
+`pom.xml`, `.mvn/maven.config`, every `settings.xml` in the project, `build.gradle(.kts)`, `settings.gradle(.kts)` (`pluginManagement` and `dependencyResolutionManagement`), `gradle.properties`, `gradle/*.gradle(.kts)`, `buildSrc/`, `build-logic/`, init scripts, and `gradle/wrapper/gradle-wrapper.properties` when Nexus serves the Gradle distribution. On your computer: `~/.m2/settings.xml`, `~/.gradle/gradle.properties` and `~/.gradle/init.d/`.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: where Nexus hides" ecosystem="npm" part="find" level={4}>
+
+`.npmrc` (in the project and `~/.npmrc`), `.yarnrc.yml`, `.yarnrc` (Yarn 1), `bunfig.toml`, `package.json` (`publishConfig` and the scripts), the lockfiles, Dockerfiles (`npm config set registry`, build arguments) and CI (`registry-url` of `actions/setup-node`).
+
+</Path>
+
+<Path title="Python: where Nexus hides" ecosystem="python" part="find" level={4}>
+
+`pip.conf` or `pip.ini` (in the project, `~/.config/pip/pip.conf` and `/etc/pip.conf`), `requirements*.txt` and constraints files (`--index-url`, `--extra-index-url`, `--trusted-host`), `pyproject.toml` (`[[tool.uv.index]]`, `[[tool.poetry.source]]`, `[tool.pdm]`), `uv.toml`, `poetry.toml`, `setup.cfg`, `tox.ini`, `noxfile.py`, Dockerfiles and CI (`PIP_INDEX_URL`, `PIP_EXTRA_INDEX_URL`, `UV_INDEX_URL`, `UV_DEFAULT_INDEX`), and `.pypirc` for publishing.
+
+</Path>
+
+<Path title="Rust and Cargo: where Nexus hides" ecosystem="cargo" part="find" level={4}>
+
+`.cargo/config.toml` (in the project and `~/.cargo/config.toml`), `Cargo.toml` (`registry =` of the dependencies, `publish =`), `Cargo.lock`, Dockerfiles and CI.
+
+</Path>
+
+<Path title=".NET and NuGet: where Nexus hides" ecosystem="nuget" part="find" level={4}>
+
+`nuget.config` or `NuGet.Config` (in the solution folder, its parents and your user folder), `Directory.Build.props` and `.targets` (`RestoreSources`, `RestoreAdditionalProjectSources`), `*.csproj` and `*.fsproj`, Dockerfiles and CI (`dotnet nuget add source`, `--source`, `source-url` of `actions/setup-dotnet`).
+
+</Path>
+
+<Path title="Docker and Helm: where Nexus hides" ecosystem="docker" part="find" level={4}>
+
+`Dockerfile*` (`FROM`, `COPY --from`), compose files (`image:`), Kubernetes manifests and Kustomize (`image:`, `images:`, `imagePullSecrets`), Helm `Chart.yaml` (`dependencies`), `Chart.lock`, `values*.yaml` (`image.registry`, `image.repository`), helmfile, skaffold, Tiltfile, devcontainer files and CI (`docker login`, `docker pull`, `helm registry login`, `helm repo add`).
+
+</Path>
+
+<Path title="Debian or raw files: where Nexus hides" ecosystem="debian" part="find" level={4}>
+
+apt sources (`/etc/apt/sources.list.d/*.list` and `*.sources`, and the Dockerfiles, Ansible, cloud-init files or scripts that write them), keyrings, and `curl` and `wget` of Nexus files in scripts, Dockerfiles, CI and docs.
+
+</Path>
+
+## Change the download addresses
+
+Change every download address to its Telesphorepo address. Leave publishing as it is for now: the publish addresses, the publish credentials and the publish steps stay on Nexus until you [move publishing](#move-publishing).
+
+<Path title="Gradle or Maven: the addresses" ecosystem="gradle" part="address" level={4}>
+
+`https://nexus.example.com/repository/<nexus name>/` becomes `https://repo.example.com/maven/<telesphorepo name>`. The files keep their paths, so only the prefix changes.
+
+- Point a `<mirror>` with `<mirrorOf>*</mirrorOf>` at a Telesphorepo group.
+- A `distributionUrl` on a Nexus raw repository becomes `https://repo.example.com/raw/<name>/<path>`. Keep `distributionSha256Sum`.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the addresses" ecosystem="npm" part="address" level={4}>
+
+`https://nexus.example.com/repository/<nexus name>/` becomes `https://repo.example.com/npm/<telesphorepo name>/`, with the slash at the end. Change scoped registries (`@acme:registry=`) the same way. Remove the Nexus `_auth`, `always-auth` and `email` lines.
+
+- Yarn 2 and later: change `npmRegistryServer` and `npmScopes.<scope>.npmRegistryServer`. On a hosted repository, add `npmMinimalAgeGate: 0`, or Yarn 4 installs a version only once it is a week old. On a group or a proxy, list your own packages in `npmPreapprovedPackages` instead. A plain `http://` server needs its host in `unsafeHttpWhitelist`.
+- Bun reads `.npmrc`. `bunfig.toml` can set `[install] registry` and the scopes.
+
+</Path>
+
+<Path title="Python: the addresses" ecosystem="python" part="address" level={4}>
+
+`https://nexus.example.com/repository/<nexus name>/simple/`, with or without `simple/`, becomes `https://repo.example.com/pypi/<telesphorepo name>/simple/`. On a plain `http://` server, pip needs `trusted-host = <host>` and uv needs `allow-insecure-host`.
+
+</Path>
+
+<Path title="Rust and Cargo: the addresses" ecosystem="cargo" part="address" level={4}>
+
+The index becomes `sparse+https://repo.example.com/cargo/<telesphorepo name>/index/`. Keep the registry names that `Cargo.toml` uses, and change only `index` in `[registries.<name>]`. For a proxy or a group of crates.io, also add this:
+
+```toml title=".cargo/config.toml"
+[source.crates-io]
+replace-with = "<name>"
+```
+
+</Path>
+
+<Path title=".NET and NuGet: the addresses" ecosystem="nuget" part="address" level={4}>
+
+`https://nexus.example.com/repository/<nexus name>/index.json`, or the v2 address without `index.json`, becomes `https://repo.example.com/nuget/<telesphorepo name>/index.json`. Keep the source keys, so that `packageSourceMapping` and the credentials still match. A source on plain `http://` needs `allowInsecureConnections="true"`.
+
+</Path>
+
+<Path title="Docker and Helm: the addresses" ecosystem="docker" part="address" level={4}>
+
+Telesphorepo serves the registry at the root of its host, and the repository name is the first part of the image name. `nexus.example.com:8082/team/app:1.0`, on a Nexus Docker port or host, becomes `repo.example.com/<telesphorepo name>/team/app:1.0`. Through a proxy of Docker Hub, an official image is `repo.example.com/<proxy name>/nginx:1.27`, or `library/nginx`. The manifests are the same, so each `@sha256:` digest stays valid. A plain `http://` server needs its host in `insecure-registries` of `/etc/docker/daemon.json`.
+
+Telesphorepo keeps Helm charts as OCI artifacts in Docker repositories. A chart dependency `repository: https://nexus.example.com/repository/<helm repo>/` becomes `oci://repo.example.com/<name>`, and the `helm repo add` lines for it go. Telesphorepo does not copy Nexus Helm repositories, so ask your admin which Docker repository holds the charts.
+
+</Path>
+
+<Path title="Debian or raw files: the addresses" ecosystem="debian" part="address" level={4}>
+
+An apt source changes like this:
+
+```text
+deb https://nexus.example.com/repository/<nexus name>/ <dist> main
+deb [signed-by=/etc/apt/keyrings/<name>.asc] https://repo.example.com/debian/<name> <dist> main
+```
+
+The copy keeps the distribution of the Nexus repository, and puts every package in the component `main`. Ask your admin which signing key the repository got at the copy. With the Nexus key, the machines keep their trust. With another key, install it from `https://repo.example.com/debian/<name>/key.asc` into `/etc/apt/keyrings/<name>.asc`.
+
+A raw address `https://nexus.example.com/repository/<nexus name>/<path>` becomes `https://repo.example.com/raw/<name>/<path>`. The files keep their paths.
+
+</Path>
+
+## Update the lockfiles
+
+<Path title="Gradle or Maven: the lockfiles" ecosystem="gradle" part="lock" level={4}>
+
+Gradle lockfiles and `gradle/verification-metadata.xml` hold no addresses. Keep them as they are.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the lockfiles" ecosystem="npm" part="lock" level={4}>
+
+In `package-lock.json`, a Yarn 1 `yarn.lock`, `pnpm-lock.yaml` and `bun.lock`, change the prefix `https://nexus.example.com/repository/<nexus name>/` to `https://repo.example.com/npm/<telesphorepo name>/`. The tarballs keep their paths (`<name>/-/<file>.tgz`) and their `integrity`. A Yarn 2 or later `yarn.lock` holds no address. Then run the frozen install of the tool: `npm ci`, `pnpm install --frozen-lockfile`, `yarn install --immutable` or `bun install --frozen-lockfile`.
+
+</Path>
+
+<Path title="Python: the lockfiles" ecosystem="python" part="lock" level={4}>
+
+`uv.lock` and `poetry.lock` hold file addresses whose paths differ between Nexus and Telesphorepo. Run the lock command instead of an edit: `uv lock`, or `poetry lock` (with Poetry 1, `poetry lock --no-update`). Then read `git diff`: the same versions and the same hashes, other addresses only. In requirements files with `--hash`, change only the index lines.
+
+</Path>
+
+<Path title="Rust and Cargo: the lockfiles" ecosystem="cargo" part="lock" level={4}>
+
+In `Cargo.lock`, change each `source = "sparse+<Nexus index>"`, or `registry+`, to the Telesphorepo index, exactly as in the config. Keep every `checksum`. Then run `cargo fetch --locked`.
+
+</Path>
+
+<Path title=".NET and NuGet: the lockfiles" ecosystem="nuget" part="lock" level={4}>
+
+`packages.lock.json` holds no address. Keep it as it is.
+
+</Path>
+
+<Path title="Docker and Helm: the lockfiles" ecosystem="docker" part="lock" level={4}>
+
+Run `helm dependency update` to renew `Chart.lock`. Image digests stay valid.
+
+</Path>
+
+<Path title="Debian or raw files: the lockfiles" ecosystem="debian" part="lock" level={4}>
+
+apt and raw downloads have no lockfiles.
+
+</Path>
+
+## Give the builds a read token
+
+A private repository needs a read token for downloads. A read token only reads; it never publishes.
+
+<Steps>
+
+1. In Telesphorepo, open **Settings** › **Tokens**, click **New read token**, type a name such as `my-app builds`, then click **Create token**. Copy it now: it shows once.
+
+2. Put it, with your username, in the environment variables of the ecosystem below, on your computer and as CI secrets of the project.
+
+</Steps>
+
+Where the tool lets you choose the names, use `TELESPHOREPO_READ_USER` and `TELESPHOREPO_READ_TOKEN`. Never use `TELESPHOREPO_TOKEN`: the CLI sets that name to the publish token when it runs a publish. A single sign-on account cannot make a read token; ask your admin for an account with a password.
+
+<Path title="Gradle or Maven: the read token" ecosystem="gradle" part="token" level={4}>
+
+Gradle: in the `maven { }` block, set `name = "<gradleName>"` and `credentials(PasswordCredentials::class)` (in Groovy, `credentials(PasswordCredentials)`). The name is the repository name as a Gradle identifier: `my-libs` is `myLibs`. Gradle then reads `ORG_GRADLE_PROJECT_<gradleName>Username` and `ORG_GRADLE_PROJECT_<gradleName>Password`.
+
+Maven: add a `<server>` whose `<id>` is the `<id>` of the repository or the mirror, in `~/.m2/settings.xml` and in a settings file of the project that CI passes with `-s`:
+
+```xml title="settings.xml"
+<server>
+  <id>maven-public</id>
+  <username>${env.TELESPHOREPO_READ_USER}</username>
+  <password>${env.TELESPHOREPO_READ_TOKEN}</password>
+</server>
+```
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the read token" ecosystem="npm" part="token" level={4}>
+
+`.npmrc` gets this line, and Yarn gets `npmAlwaysAuth: true` and `npmAuthToken: "${NPM_TOKEN}"`. Set `NPM_TOKEN` to the read token, and give it to the install step of CI from a secret.
+
+```ini title=".npmrc"
+//repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}
+```
+
+</Path>
+
+<Path title="Python: the read token" ecosystem="python" part="token" level={4}>
+
+pip reads the credentials from the address, so put the whole address in the environment, and keep the address without credentials in the files:
+
+```sh
+export PIP_INDEX_URL="https://$TELESPHOREPO_READ_USER:$TELESPHOREPO_READ_TOKEN@repo.example.com/pypi/<name>/simple/"
+```
+
+uv reads `UV_INDEX_<NAME>_USERNAME` and `UV_INDEX_<NAME>_PASSWORD`: the index name in capitals, with `_` for every other character. Poetry reads `POETRY_HTTP_BASIC_<SOURCE>_USERNAME` and `POETRY_HTTP_BASIC_<SOURCE>_PASSWORD`.
+
+</Path>
+
+<Path title="Rust and Cargo: the read token" ecosystem="cargo" part="token" level={4}>
+
+Add `credential-provider = "cargo:token"` to the registry. Cargo reads the token from `CARGO_REGISTRIES_<NAME>_TOKEN`: the registry name in capitals, with `_` for `-`. This needs Cargo 1.74 or later.
+
+</Path>
+
+<Path title=".NET and NuGet: the read token" ecosystem="nuget" part="token" level={4}>
+
+Add `<packageSourceCredentials>` with an element named after the source key, here `dotnet`, and the values from variables. A key that starts with a digit is written `_x003N_...`.
+
+```xml title="nuget.config"
+<packageSourceCredentials>
+  <dotnet>
+    <add key="Username" value="%NUGET_USERNAME%" />
+    <add key="ClearTextPassword" value="%NUGET_TOKEN%" />
+  </dotnet>
+</packageSourceCredentials>
+```
+
+</Path>
+
+<Path title="Docker and Helm: the read token" ecosystem="docker" part="token" level={4}>
+
+On a computer with the CLI, approve the computer (`telesphorepo login https://repo.example.com`), then add the credential helper to the Docker config file (`~/.docker/config.json`, or `$DOCKER_CONFIG/config.json`), and keep every other key. With a port, the key carries it too.
+
+```json title="~/.docker/config.json"
+{
+  "credHelpers": {
+    "repo.example.com": "telesphorepo"
+  }
+}
+```
+
+Docker, buildx, Podman, Helm and ORAS then pull what you can read, and push with no `docker login`. `telesphorepo login` does not add the entry. `telesphorepo status` shows it.
+
+In CI, on servers and in Kubernetes, log in with the read token from a secret:
+
+```sh
+printf '%s' "$TELESPHOREPO_READ_TOKEN" | docker login repo.example.com -u "$TELESPHOREPO_READ_USER" --password-stdin
+```
+
+For Kubernetes, make the pull secret with `kubectl create secret docker-registry`. The manifests name only the secret.
+
+</Path>
+
+<Path title="Debian or raw files: the read token" ecosystem="debian" part="token" level={4}>
+
+apt reads credentials only from `/etc/apt/auth.conf.d/`. Run these lines; they read the token at a hidden prompt:
+
+```sh
+printf 'Read token: '; read -rs READ_TOKEN; echo
+sudo install -m 600 /dev/null /etc/apt/auth.conf.d/<name>.conf
+printf 'machine %s login <user> password %s\n' https://repo.example.com/debian/<name> "$READ_TOKEN" \
+  | sudo tee -a /etc/apt/auth.conf.d/<name>.conf > /dev/null
+```
+
+For `curl`, pass the credentials on stdin, never as an argument:
+
+```sh
+printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" | curl -fsSL -K - -o <file> <address>
+```
+
+</Path>
+
+## Know what differs from Nexus
+
+<Path title="Gradle or Maven: the differences" ecosystem="gradle" part="diff" level={4}>
+
+A hosted repository holds only its own packages: keep `mavenCentral()`, or use a group with a proxy of Maven Central. A Maven group merges the versions of all its members, as Nexus does. Maven refuses `http://` addresses other than `localhost`; Gradle needs `isAllowInsecureProtocol = true` for one.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the differences" ecosystem="npm" part="diff" level={4}>
+
+In an npm group, the first member that has a package name owns it, and the group serves every version of that name from that member only. A Nexus group merges them. If the project needs versions of one name from two members, ask your admin. Telesphorepo does not serve `npm audit`: point an audit step at `--registry=https://registry.npmjs.org/`.
+
+</Path>
+
+<Path title="Python: the differences" ecosystem="python" part="diff" level={4}>
+
+A hosted repository holds only your own packages: their dependencies need a group with a proxy of PyPI, or PyPI itself. In a PyPI group, the first member that has a project name owns it, with every file of that project.
+
+</Path>
+
+<Path title="Rust and Cargo: the differences" ecosystem="cargo" part="diff" level={4}>
+
+In a Cargo group, the first member that has a crate name owns it.
+
+</Path>
+
+<Path title=".NET and NuGet: the differences" ecosystem="nuget" part="diff" level={4}>
+
+In a NuGet group, the first member that has a package id owns it.
+
+</Path>
+
+<Path title="Docker and Helm: the differences" ecosystem="docker" part="diff" level={4}>
+
+The registry is at the root of the host, never under a path, and the repository name is the first part of every image name. Helm charts live in Docker repositories, as OCI artifacts.
+
+</Path>
+
+<Path title="Debian or raw files: the differences" ecosystem="debian" part="diff" level={4}>
+
+Every copied package sits in the component `main`, and Telesphorepo builds its own indexes.
+
+</Path>
+
+## Check the build
+
+Search again for the Nexus host, `/repository/` and the Nexus Docker hosts, and find out why each hit is left. Then build with an empty cache, and check in the output that every download comes from `repo.example.com`.
+
+<Path title="Gradle or Maven: the check" ecosystem="gradle" part="check" level={4}>
+
+```sh
+./gradlew build --refresh-dependencies
+mvn -U -Dmaven.repo.local=/tmp/empty-m2 verify
+```
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the check" ecosystem="npm" part="check" level={4}>
+
+Remove `node_modules`, then run the frozen install: `npm ci`, `pnpm install --frozen-lockfile`, `yarn install --immutable` or `bun install --frozen-lockfile`.
+
+</Path>
+
+<Path title="Python: the check" ecosystem="python" part="check" level={4}>
+
+Install into a new virtual environment with the cache off, such as `pip install --no-cache-dir -r requirements.txt`, or run `uv sync` or `poetry install`.
+
+</Path>
+
+<Path title="Rust and Cargo: the check" ecosystem="cargo" part="check" level={4}>
+
+```sh
+cargo fetch --locked
+cargo build
+```
+
+</Path>
+
+<Path title=".NET and NuGet: the check" ecosystem="nuget" part="check" level={4}>
+
+```sh
+dotnet nuget locals all --clear
+dotnet restore
+```
+
+</Path>
+
+<Path title="Docker and Helm: the check" ecosystem="docker" part="check" level={4}>
+
+Build without the cache with `docker build --no-cache --pull .`, and pull each image of the compose files and manifests.
+
+</Path>
+
+<Path title="Debian or raw files: the check" ecosystem="debian" part="check" level={4}>
+
+Run `sudo apt update`, then install a package. Download each raw file with `curl`, and compare its SHA-256 with the one you had.
+
+</Path>
+
+For downloads only, you are done: commit the changes. Move publishing when you are ready to switch over.
+
+## Move publishing
+
+The copies of Nexus refuse uploads until the switch-over, so the project first publishes to a test repository. Ask your admin for the two steps that need the server:
+
+- **A test repository.** On the **Repositories** page, click **New repository**, and make a hosted repository of the same format, named after the real one, such as `maven-releases-rehearsal`. Your account needs **Publish** on it.
+- **A CI pipeline.** On **Settings** › **People and CI** › **CI pipelines**, add a CI pipeline for this project with the values from [Ask for a CI pipeline](/publish-from-ci/#ask-for-a-ci-pipeline). Under its repositories, choose the test repository, and the real one for after the switch-over.
+
+Then change the project:
+
+<Steps>
+
+1. [Install the CLI](/install-cli/), and approve this computer:
+
+   ```sh
+   telesphorepo login https://repo.example.com
+   ```
+
+   The CLI prints a link and a code. Open the link, sign in, check the code, click **Approve device**, and confirm with your second step. With single sign-on, you sign in again at your provider. The computer can then publish to every repository where your account has **Publish**.
+
+2. Remove the Nexus publishing from the project and its CI, as below: the publish addresses, the publish credentials and the publish steps. Keep the build steps that make the artifacts. Delete the CI secrets that nothing uses any more.
+
+3. Write `telesphorepo.toml` in the project folder, the folder of the build file, and commit it. It holds no secret:
+
+   ```toml title="telesphorepo.toml"
+   server = "https://repo.example.com"
+   repo = "maven-releases-rehearsal"
+   ```
+
+   Run `git check-ignore telesphorepo.toml`: if git ignores it, CI does not see it. [telesphorepo.toml](/commands-and-settings/#telesphorepotoml) lists the other keys.
+
+4. Add the CI steps, as in [Publish from CI](/publish-from-ci/), with the toolchain of the ecosystem below.
+
+</Steps>
+
+<Path title="Gradle or Maven: publishing" ecosystem="gradle" part="publish" level={4}>
+
+Remove the `<distributionManagement>` entries and the `<server>` credentials for Nexus, and the Nexus staging plugins (`nexus-staging-maven-plugin`, `io.github.gradle-nexus.publish-plugin`) when they target this Nexus. In Gradle, remove the Nexus repository from `publishing { repositories { } }`: `gradle publish` publishes to every repository listed there. Keep the `maven-publish` plugin, the publications, `group` and `version`: a Gradle project needs them.
+
+`telesphorepo publish` runs `mvn deploy` (or `./mvnw`) with the repository as the target, or `gradle publish` (or `./gradlew`) with an init script that adds the repository to each project that applies `maven-publish`. The build files keep no publish address.
+
+CI: in GitHub Actions, `actions/setup-java@v6` with `distribution: temurin` and the Java version of the project, and no build step. In Jenkins, the build stage runs `./gradlew build` (on Windows, `.\gradlew.bat build`) or `mvn -B verify`.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: publishing" ecosystem="npm" part="publish" level={4}>
+
+Remove `publishConfig.registry`, the Nexus publish auth lines, and the `npm publish` steps of CI with their secrets. `telesphorepo publish` picks the tool by the lockfile: `pnpm publish` (`pnpm-lock.yaml`), `yarn npm publish` (`yarn.lock`), `bun publish` (`bun.lock`), else `npm publish`. In a workspace, put a `telesphorepo.toml` in the folder of each package that publishes.
+
+CI: [the CI file for npm](/npm/#the-ci-file-for-npm) has the toolchain and install step of each tool. In Jenkins, the build stage runs the same install command.
+
+</Path>
+
+<Path title="Python: publishing" ecosystem="python" part="publish" level={4}>
+
+Remove the use of `.pypirc`, `twine upload`, `uv publish` and `publish-url`, `poetry publish -r` and the Poetry repository config for Nexus, and their CI secrets. `telesphorepo publish` runs `poetry build` (with `[tool.poetry]`), `uv build` (with `uv.lock`) or `python -m build`, then uploads every wheel and sdist. `telesphorepo publish dist/*.whl` uploads files that you built.
+
+CI: [the CI file for Python](/python/#the-ci-file-for-python) has the toolchain of each tool. In Jenkins, uv and Poetry need no build stage, but the agent needs the tool installed; with pip, the build stage runs `python3 -m pip install --user build`.
+
+</Path>
+
+<Path title="Rust and Cargo: publishing" ecosystem="cargo" part="publish" level={4}>
+
+Where `Cargo.toml` names the Nexus registry in `publish =`, set `publish = ["telesphorepo"]`: the CLI publishes with `--registry telesphorepo`, and Cargo refuses a registry that the list does not name. Keep the key: without it, a plain `cargo publish` goes to crates.io. Remove the `cargo publish --registry <nexus>` steps and the Nexus tokens. `telesphorepo publish` runs `cargo publish` to the repository.
+
+CI: in GitHub Actions, `dtolnay/rust-toolchain@stable`. In Jenkins, the build stage runs `cargo test`.
+
+</Path>
+
+<Path title=".NET and NuGet: publishing" ecosystem="nuget" part="publish" level={4}>
+
+Remove the `dotnet nuget push` or `nuget push` steps to Nexus, `<apikeys>`, and the API key secrets. `telesphorepo publish` runs `dotnet pack -c Release` and pushes each package. `telesphorepo publish <file>.nupkg` pushes packages that you built.
+
+CI: in GitHub Actions, `actions/setup-dotnet@v5` with the SDK version of the project. In Jenkins, the build stage runs `dotnet build -c Release`.
+
+</Path>
+
+<Path title="Docker and Helm: publishing" ecosystem="docker" part="publish" level={4}>
+
+Remove `docker login` to Nexus, the Nexus push credentials, and `helm push` or `curl` uploads to Nexus. Images publish with `docker push repo.example.com/<repo>/<image>:<tag>` through the credential helper, and need no `telesphorepo.toml`. A chart folder, with `Chart.yaml`, gets a `telesphorepo.toml`: `telesphorepo publish` runs `helm package`, then `helm push` to `oci://repo.example.com/<repo>`.
+
+CI: [Push an image from CI](/docker/#push-an-image-from-ci) has the files. With its identity token, a job reads only what anonymous people read: to build from a private base image, log in with the read token before the build. For a chart, CI installs Helm, for example with `azure/setup-helm@v4`, then the CLI, and runs `telesphorepo publish`.
+
+</Path>
+
+<Path title="Debian or raw files: publishing" ecosystem="debian" part="publish" level={4}>
+
+Remove the `curl -u` uploads to Nexus and their passwords. `telesphorepo publish <file>` uploads files: for raw into the folder `path` of `telesphorepo.toml`, for Debian each `.deb` into `dist` and `component` (by default `stable` and `main`).
+
+CI: no toolchain. The publish step is `telesphorepo publish <files>`.
+
+</Path>
+
+## Rehearse publishing
+
+<Steps>
+
+1. Run `telesphorepo status` in the project folder, and check the command that it names.
+
+2. Publish to the test repository:
+
+   ```sh
+   telesphorepo publish
+   ```
+
+   A 403 means that your account lacks **Publish** on the test repository. Ask your admin.
+
+3. Install what you published from the test repository, in a new folder outside the project, with an empty cache. Then remove the folder.
+
+4. To rehearse CI too, push the change to a branch that the CI pipeline lists, and check the run.
+
+</Steps>
+
+<Path title="Gradle or Maven: the install check" ecosystem="gradle" part="verify" level={4}>
+
+Write a small Gradle or Maven build that depends on the `group:artifact:version` that you published, from `https://repo.example.com/maven/<test repository>`, and build it with an empty cache.
+
+</Path>
+
+<Path title="npm, pnpm, Yarn or Bun: the install check" ecosystem="npm" part="verify" level={4}>
+
+Run `npm init -y`, write an `.npmrc` with the test registry, then run `npm install <package>@<version>`.
+
+</Path>
+
+<Path title="Python: the install check" ecosystem="python" part="verify" level={4}>
+
+In a new virtual environment:
+
+```sh
+pip install --index-url https://repo.example.com/pypi/<test repository>/simple/ \
+  --extra-index-url https://pypi.org/simple/ <package>==<version>
+```
+
+</Path>
+
+<Path title="Rust and Cargo: the install check" ecosystem="cargo" part="verify" level={4}>
+
+Run `cargo new verify`, write a `.cargo/config.toml` with the test registry, run `cargo add <crate>@<version> --registry <name>`, then `cargo build`.
+
+</Path>
+
+<Path title=".NET and NuGet: the install check" ecosystem="nuget" part="verify" level={4}>
+
+Run `dotnet new console`, write a `nuget.config` with the test source, then run `dotnet add package <id> --version <version>`.
+
+</Path>
+
+<Path title="Docker and Helm: the install check" ecosystem="docker" part="verify" level={4}>
+
+Remove the local image, then run `docker pull repo.example.com/<test repository>/<image>:<tag>`. For a chart, run `helm pull oci://repo.example.com/<test repository>/<chart> --version <version>` in a new folder.
+
+</Path>
+
+<Path title="Debian or raw files: the install check" ecosystem="debian" part="verify" level={4}>
+
+For raw files, download the file with `curl`, and compare its SHA-256. For Debian, add the test source and its key in a throwaway `debian` container, then run `apt-get update` and `apt-get install <package>`.
+
+</Path>
+
+<Aside>
+A rehearsal also checks your CI pipeline: the trust policy, the identity token and the CLI install step. These do not depend on the repository.
+</Aside>
+
+## After the switch-over
+
+When your admin has [switched over](/move-from-nexus/), the copies take uploads.
+
+<Steps>
+
+1. Set `repo` in the project's `telesphorepo.toml` to the real repository:
+
+   ```toml title="telesphorepo.toml"
+   server = "https://repo.example.com"
+   repo = "maven-releases"
+   ```
+
+2. Check that the CI pipeline lists the real repository.
+
+3. Publish once.
+
+4. Delete the test repository.
+
+</Steps>
