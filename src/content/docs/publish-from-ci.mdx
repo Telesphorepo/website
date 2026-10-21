@@ -1,0 +1,346 @@
+---
+title: Publish from CI
+description: Publish from GitHub Actions or Jenkins with the identity token of the job. The CI pipeline on the server, the CI file, the Jenkins setup and the fixes for common problems.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+import Fill from '../../components/choice/Fill.astro';
+
+A CI job publishes with the identity token of its CI system, so the job stores no secret. Three things make it work: a **CI pipeline** on the server, which says which job may publish to which repository; a CI file that installs the CLI and runs `telesphorepo publish`; and, for Jenkins, a plugin that gives the job its token.
+
+[Set up the project](/publish-from-a-project/#set-up-the-project) first, so that the repository holds `telesphorepo.toml`. For Docker images, see [Push an image from CI](/docker/#push-an-image-from-ci).
+
+<Fill />
+
+<Choice questions={[
+    {key: 'from', label: 'Where does the job run?', options: [
+        {value: 'github', label: 'GitHub Actions'},
+        {value: 'jenkins-pipeline', label: 'Jenkins with a Jenkinsfile'},
+        {value: 'jenkins-freestyle', label: 'Jenkins freestyle job'},
+    ]},
+]} />
+
+## Get the CI file
+
+At setup, the CLI asks for a CI file.
+
+<Path title="GitHub Actions" from="github" level={4}>
+
+Choose **GitHub Actions**. The CLI writes `.github/workflows/publish.yml`.
+
+</Path>
+
+<Path title="Jenkins with a Jenkinsfile" from="jenkins-pipeline" level={4}>
+
+Choose **Jenkinsfile**. The CLI writes `Jenkinsfile`.
+
+</Path>
+
+<Path title="Jenkins freestyle job" from="jenkins-freestyle" level={4}>
+
+Choose **Jenkins freestyle job**. The CLI prints the build step. Keep it for [the job](#set-up-the-job).
+
+</Path>
+
+The **Publish to this repository** tab of the repository shows the same files with your values. To write the file yourself, see [Write the CI file by hand](#write-the-ci-file-by-hand). Commit the file with `telesphorepo.toml`, and push it.
+
+## Ask for a CI pipeline
+
+<Path title="GitHub Actions" from="github" level={4}>
+
+Ask your server admin to add a CI pipeline with these values. Put your GitHub repository in place of `your-org/your-app`.
+
+```text title="Send this to your server admin"
+Where the job runs   GitHub Actions
+GitHub repository    your-org/your-app
+Workflow file        publish.yml
+Branches             main
+Repositories         your-repo
+```
+
+</Path>
+
+<Path title="Jenkins" from="jenkins-pipeline jenkins-freestyle" level={4}>
+
+Ask your server admin to add a CI pipeline with these values. Put your Jenkins address and the full name of your job in their places.
+
+```text title="Send this to your server admin"
+Where the job runs   Jenkins
+Jenkins address      https://jenkins.example.com
+Jobs                 team/app
+Repositories         your-repo
+```
+
+</Path>
+
+The admin adds it as in [Add a CI pipeline](/repositories-and-access/#add-a-ci-pipeline).
+
+## Set up Jenkins
+
+<Path title="GitHub Actions" from="github" level={4}>
+
+GitHub Actions gives each job its identity token. Skip this part.
+
+</Path>
+
+<Path title="Jenkins: the identity token" from="jenkins-pipeline jenkins-freestyle" level={4}>
+
+Do this once for each Jenkins.
+
+<Steps>
+
+1. Install the Jenkins plugin **OpenID Connect Provider**.
+
+   **Manage Jenkins** › **Plugins** › **Available plugins**
+
+2. Open **Manage Jenkins** › **Credentials**, and add a credential.
+
+3. Choose the kind **OpenID Connect id token**.
+
+4. Fill in the **ID** and the **Audience**, then save.
+
+   ```text
+   ID         telesphorepo-id-token
+   Audience   https://your-server
+   ```
+
+</Steps>
+
+</Path>
+
+## Set up the job
+
+<Path title="GitHub Actions: the run" from="github" level={4}>
+
+GitHub Actions needs no setup: the workflow file is the job. Push to `main`.
+
+Done when the run shows a green check on the **Actions** tab of GitHub.
+
+</Path>
+
+<Path title="Jenkins with a Jenkinsfile: the job" from="jenkins-pipeline" level={4}>
+
+<Steps>
+
+1. Make a Pipeline job that reads the `Jenkinsfile` from your repository.
+
+2. Click **Build Now** on the job.
+
+</Steps>
+
+Done when the build log ends with `Finished: SUCCESS`.
+
+</Path>
+
+<Path title="Jenkins freestyle job: the job" from="jenkins-freestyle" level={4}>
+
+<Steps>
+
+1. Open your job, then click **Configure**.
+
+2. Under **Environment**, tick **Use secret text(s) or file(s)**.
+
+3. Under **Bindings**, click **Add**, then **Secret text**.
+
+4. Fill in the **Variable** and the **Credentials**.
+
+   ```text
+   Variable      OIDC_TOKEN
+   Credentials   telesphorepo-id-token
+   ```
+
+5. Under **Build Steps**, click **Add build step**, then **Execute shell**.
+
+6. Paste the build step that the CLI printed. For Gradle, it is this:
+
+   ```sh
+   ./gradlew build
+   curl -fsSL https://your-server/install.sh | sh
+   export PATH="$HOME/.local/bin:$PATH"
+   telesphorepo publish
+   ```
+
+7. Click **Save**, then **Build Now**.
+
+</Steps>
+
+Done when the build log ends with `Finished: SUCCESS`.
+
+</Path>
+
+## Download from a private repository in CI
+
+The identity token publishes only. When the build also downloads from a private repository, keep a read token in a CI secret, and give it to the build step. Each format reads its own variables:
+
+- Gradle: `ORG_GRADLE_PROJECT_telesphorepoUsername` and `ORG_GRADLE_PROJECT_telesphorepoPassword`. Maven: the variables that the `<server>` part of `settings.xml` names. See [Gradle and Maven](/download/).
+- npm, pnpm, Yarn and Bun: `NPM_TOKEN`. See [npm](/npm/).
+- Python: the variables of pip, uv or Poetry. See [Python](/python/).
+- Cargo: `CARGO_REGISTRIES_CRATES_TOKEN`, named after the registry. See [Rust and Cargo](/cargo/).
+- NuGet: `NUGET_USERNAME` and `NUGET_TOKEN`. See [.NET and NuGet](/nuget/).
+
+## Write the CI file by hand
+
+Put your server's address in place of `https://your-server`, and your repository's name in place of `your-repo`.
+
+<Path title="GitHub Actions" from="github" level={3}>
+
+Create `.github/workflows/publish.yml`. This one is for Gradle and Maven. The page of each format shows its own setup step in place of `actions/setup-java`: [npm](/npm/#the-ci-file-for-npm), [Python](/python/#the-ci-file-for-python), [Rust and Cargo](/cargo/#the-ci-file-for-cargo), [.NET and NuGet](/nuget/#the-ci-file-for-net).
+
+```yaml title=".github/workflows/publish.yml"
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: curl -fsSL https://your-server/install.sh | sh
+      - run: telesphorepo publish
+```
+
+In a workflow that you have already, add `id-token: write` to the `permissions`, and keep the other permissions. The install step puts the CLI on the `PATH` of the later steps.
+
+</Path>
+
+<Path title="Jenkinsfile" from="jenkins-pipeline" level={3}>
+
+Create `Jenkinsfile`. This one is for Gradle. For Maven, the build line is `mvn -B verify`. The **Publish to this repository** tab shows the file for the tool of your repository.
+
+```groovy title="Jenkinsfile"
+pipeline {
+  agent any
+  stages {
+    stage('Build') {
+      steps {
+        script {
+          if (isUnix()) {
+            sh './gradlew build'
+          } else {
+            powershell '.\\gradlew.bat build'
+          }
+        }
+      }
+    }
+    stage('Publish to your-repo') {
+      steps {
+        // The token is good for 10 minutes, so only this stage gets it.
+        withCredentials([string(credentialsId: 'telesphorepo-id-token', variable: 'OIDC_TOKEN')]) {
+          script {
+            if (isUnix()) {
+              sh '''
+                curl -fsSL https://your-server/install.sh | sh
+                export PATH="$HOME/.local/bin:$PATH"
+                telesphorepo publish
+              '''
+            } else {
+              powershell '''
+                & ([scriptblock]::Create((irm https://your-server/install.ps1)))
+                telesphorepo publish
+              '''
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+</Path>
+
+<Path title="Jenkins freestyle job" from="jenkins-freestyle" level={3}>
+
+A freestyle job needs no file. [Set up the job](#set-up-the-job) holds its steps.
+
+</Path>
+
+## If something goes wrong
+
+<details>
+<summary>GitHub Actions gave this job no identity token</summary>
+
+Add `id-token: write` under `permissions` in the workflow file.
+
+</details>
+
+<details>
+<summary>Jenkins gave this build no identity token</summary>
+
+Check the binding: the variable is `OIDC_TOKEN` and the credential is `telesphorepo-id-token`.
+
+</details>
+
+<details>
+<summary>The CLI refuses `OIDC_TOKEN` and names two addresses</summary>
+
+The **Audience** of the Jenkins credential must be the address of your server, the one in `telesphorepo.toml`.
+
+</details>
+
+<details>
+<summary>The server refuses the job's token</summary>
+
+Your server admin must set the **Public base URL** on **Settings** › **General**. See [Set the public address](/run-the-server/#set-the-public-address).
+
+</details>
+
+<details>
+<summary>The token is too old</summary>
+
+The server takes a job's token for 10 minutes only. A freestyle job gets its token when the build starts. If the build takes longer, use a Jenkinsfile: it gets the token only for the publish stage.
+
+</details>
+
+<details>
+<summary>No CI pipeline matches the job</summary>
+
+Ask your server admin to check the values of the CI pipeline.
+
+</details>
+
+<details>
+<summary>The server cannot reach Jenkins</summary>
+
+Ask your server admin to paste the Jenkins keys into the CI pipeline. See [Jenkins: a freestyle job or a Jenkinsfile](/repositories-and-access/#jenkins-a-freestyle-job-or-a-jenkinsfile).
+
+</details>
+
+<details>
+<summary>The Jenkins agent runs Windows</summary>
+
+A Jenkinsfile from the CLI runs PowerShell on a Windows agent. For a freestyle job, choose **Execute Windows PowerShell** and install the CLI with `irm https://your-server/install.ps1 | iex`.
+
+</details>
+
+<details>
+<summary>The project is in a subfolder of the git repository</summary>
+
+The CI job starts at the top folder. Put `cd` and the subfolder before `telesphorepo publish`. The CLI prints the line.
+
+</details>
+
+<details>
+<summary>Permission denied on `./gradlew` in CI</summary>
+
+Run `git update-index --chmod=+x gradlew`, then commit and push.
+
+</details>
+
+<details>
+<summary>`no telesphorepo.toml in this folder or above` in CI</summary>
+
+Commit `telesphorepo.toml` and push it. If git ignores the file, CI does not get it: see [Publish from a project](/publish-from-a-project/#if-something-goes-wrong).
+
+</details>

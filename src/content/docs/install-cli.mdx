@@ -8,6 +8,8 @@ import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
 
+Do this first, once on each computer that publishes. The Telesphorepo CLI runs every publish: `telesphorepo publish` for Gradle, Maven, npm, Python, Cargo, .NET, Helm, Debian and raw files, and its credential helper for Docker. Then [publish from a project](/publish-from-a-project/).
+
 Each Telesphorepo server serves the CLI of its own version. Install it from the server that you publish to. In the commands, put your server's address in place of `https://repo.example.com`.
 
 The web UI has the same lines with your address filled in. Open the account menu, then **Install the CLI**, or click **Install the CLI** in the **Set up a project** card of a repository's **Publish to this repository** tab. The page has a tab for each system, the archives with their SHA-256, and the update command.
@@ -118,7 +120,7 @@ export PATH="$HOME/.local/bin:$PATH"
 telesphorepo publish
 ```
 
-The CI files that the CLI writes hold these lines already. See [Set up a project](/set-up/).
+The CI files that the CLI writes hold these lines already. See [Publish from CI](/publish-from-ci/).
 
 ## Update the CLI
 
@@ -177,20 +179,50 @@ The **Install the CLI** page of the web UI lists the archives for your system wi
 ## If something goes wrong
 
 <details>
-<summary>Find your problem, then do the fix</summary>
+<summary>`telesphorepo` is not found in a new terminal</summary>
 
-**`telesphorepo` is not found in a new terminal.** Run the install line again, and answer `Y` when the script asks to add `~/.local/bin` to your `PATH`. Or add the line from the table above to the start-up file of your shell yourself. On Windows, open a new terminal: the install adds `%LOCALAPPDATA%\Programs\telesphorepo` to your user `PATH`.
+Run the install line again, and answer `Y` when the script asks to add `~/.local/bin` to your `PATH`. Or add the line from the table above to the start-up file of your shell yourself. On Windows, open a new terminal: the install adds `%LOCALAPPDATA%\Programs\telesphorepo` to your user `PATH`.
 
-**The script did not ask about the `PATH`.** It asks only on a terminal, and only when `~/.local/bin` is not on your `PATH`. Piped with no terminal, it prints the line and the file instead.
+</details>
 
-**The script says that the SHA-256 differs.** The download does not match the file that the server named, and the script installed nothing. Run the line again. If it fails again, a proxy between you and the server may cache an old file. Ask your server admin.
+<details>
+<summary>The script did not ask about the `PATH`</summary>
 
-**The script says that the server has no CLI for your system.** The server has the CLI for Linux, macOS and Windows on x86-64 and ARM only.
+It asks only on a terminal, and only when `~/.local/bin` is not on your `PATH`. Piped with no terminal, it prints the line and the file instead.
 
-**The page says that this server has no CLI downloads.** The server was built without the CLI. Ask your server admin to build it with `go tool task build`, or to install a release.
+</details>
 
-**`telesphorepo update` says that it cannot write the folder.** It names the folder and the install line. Run the install line again, or fix the rights of the folder.
+<details>
+<summary>The script says that the SHA-256 differs</summary>
 
-**You lost a laptop.** Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
+The download does not match the file that the server named, and the script installed nothing. Run the line again. If it fails again, a proxy between you and the server may cache an old file. Ask your server admin.
+
+</details>
+
+<details>
+<summary>The script says that the server has no CLI for your system</summary>
+
+The server has the CLI for Linux, macOS and Windows on x86-64 and ARM only.
+
+</details>
+
+<details>
+<summary>The page says that this server has no CLI downloads</summary>
+
+The server was built without the CLI. Ask your server admin to build it with `go tool task build`, or to install a release.
+
+</details>
+
+<details>
+<summary>`telesphorepo update` says that it cannot write the folder</summary>
+
+It names the folder and the install line. Run the install line again, or fix the rights of the folder.
+
+</details>
+
+<details>
+<summary>You lost a laptop</summary>
+
+Open **Settings** › **Devices** and revoke that laptop. To remove the key from a computer that you still have, run `telesphorepo logout`.
 
 </details>

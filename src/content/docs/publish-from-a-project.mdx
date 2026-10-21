@@ -1,0 +1,297 @@
+---
+title: Publish from a project
+description: Set up a project once, then publish it with one command from your computer. Gradle, Maven, npm, Python, Cargo, .NET, Helm charts, Debian packages and raw files.
+---
+
+import { Steps, Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+import Fill from '../../components/choice/Fill.astro';
+
+One person sets up each project once. After that, everyone on the project publishes with one command, `telesphorepo publish`. The steps are the same for Gradle, Maven, npm, Python, Cargo, .NET, Helm charts, Debian packages and raw files. For Docker images, see [Push an image from your computer](/docker/#push-an-image-from-your-computer).
+
+[Install the CLI](/install-cli/) first. In a project that is set up, your server's address is the `server` line of `telesphorepo.toml`. To publish from GitHub Actions or Jenkins, set up the project here, then go on to [Publish from CI](/publish-from-ci/).
+
+<Fill />
+
+## Set up the project
+
+Skip this part when the project folder holds `telesphorepo.toml` already: someone set the project up. Pull the latest commit, then [publish](#publish).
+
+<Steps>
+
+1. Open your repository in the web UI, then the **Publish to this repository** tab.
+
+2. Click **Set up a project**, and confirm with your second factor.
+
+   The page shows a setup line. The line works once, for 10 minutes.
+
+3. Open a terminal in the project folder. Paste the line, then press Enter.
+
+   <Tabs syncKey="os">
+   <TabItem label="macOS or Linux">
+
+   ```sh
+   curl -fsSL https://your-server/install.sh | sh -s -- setup 'https://your-server/#/setup/trsu_...'
+   ```
+
+   </TabItem>
+   <TabItem label="Windows">
+
+   ```powershell
+   & ([scriptblock]::Create((irm https://your-server/install.ps1))) setup 'https://your-server/#/setup/trsu_...'
+   ```
+
+   </TabItem>
+   <TabItem label="The CLI is installed">
+
+   ```sh
+   telesphorepo setup 'https://your-server/#/setup/trsu_...'
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   The line installs the Telesphorepo CLI and approves this computer. Then the CLI finds the project in the folder and writes `telesphorepo.toml`. It asks before it changes a file. It prints the repository, its format and your username, such as `publishing to your-repo (maven) as YOUR_USERNAME`.
+
+4. The CLI asks for a CI file. Choose **No CI file** to publish from your computer only.
+
+   To publish from CI as well, choose **GitHub Actions**, **Jenkinsfile** or **Jenkins freestyle job**. [Publish from CI](/publish-from-ci/) has the rest of those steps.
+
+</Steps>
+
+## Commit the files
+
+Commit `telesphorepo.toml`, and push it. Also add the CI file, if the CLI wrote one. The files hold no secrets.
+
+```sh
+git add telesphorepo.toml
+git commit -m "Publish to Telesphorepo"
+git push
+```
+
+Your teammates and CI read the same file, so they publish to the same repository. It names the server and the repository:
+
+```toml title="telesphorepo.toml"
+server = "https://your-server"
+repo = "your-repo"
+```
+
+A folder with both Gradle and Maven files also gets `kind`. A raw repository gets `path`, and a Debian repository gets `dist` and `component`. See [telesphorepo.toml](/commands-and-settings/#telesphorepotoml) for every key.
+
+## Publish
+
+<Steps>
+
+1. In the project folder, run the publish command.
+
+   ```sh
+   telesphorepo publish
+   ```
+
+2. The first time, the CLI prints a link and a code. Open the link, then click **Approve device**.
+
+</Steps>
+
+Done when the build tool says so: Gradle prints `BUILD SUCCESSFUL`, Maven prints `BUILD SUCCESS`, Cargo prints `Published`. For Python and .NET, the CLI prints `Uploaded` or `Pushed` for each file.
+
+The CLI finds the project in the folder and runs its own tool for you. It prints the command before it runs it. It gives the tool a publish token for this one repository, and ends the token when the tool ends.
+
+| Project | The CLI runs |
+|---|---|
+| Gradle | `./gradlew publish`, or `gradle publish` without a wrapper |
+| Maven | `./mvnw deploy`, or `mvn deploy` without a wrapper |
+| npm (`package.json`) | `npm publish`, `pnpm publish`, `yarn npm publish` or `bun publish`, by the lockfile |
+| Python (`pyproject.toml`, `setup.py`) | `poetry build`, `uv build` or `python -m build`, then an upload of each file |
+| Rust (`Cargo.toml`) | `cargo publish` |
+| .NET (`.sln`, `.csproj`, `.fsproj`) | `dotnet pack -c Release`, then a push of each package |
+| Helm chart (`Chart.yaml`) | `helm package`, then `helm push` |
+
+For a Debian or raw repository, name the files: `telesphorepo publish app-1.2.0.tar.gz`. For Python wheels or .NET packages that you built, name them too: `telesphorepo publish dist/*.whl` or `telesphorepo publish bin/Release/*.nupkg`. The CLI then builds nothing.
+
+What is different for each format is on its page: [npm](/npm/#publish-to-this-repository), [Python](/python/#publish-to-this-repository), [Rust and Cargo](/cargo/#publish-to-this-repository), [.NET and NuGet](/nuget/#publish-to-this-repository), [Docker and Helm](/docker/#push-an-image-from-your-computer), and [Debian, raw and curl](/debian-and-raw/#publish-debian-packages-and-raw-files).
+
+<Aside type="tip">
+Run `telesphorepo status` in the project folder to see what the CLI will run. Run `telesphorepo login https://your-server` to approve the computer before you publish.
+</Aside>
+
+## Set it up by hand
+
+The setup line does these steps for you. Do them yourself when you cannot use the line. Put your server's address in place of `https://your-server`, and your repository's name in place of `your-repo`.
+
+<Steps>
+
+1. [Install the CLI](/install-cli/).
+
+2. Approve this computer. The CLI prints a link and a code. Open the link, sign in, and approve the code.
+
+   ```sh
+   telesphorepo login https://your-server
+   ```
+
+3. Create `telesphorepo.toml` in the project folder, as in [Commit the files](#commit-the-files), and commit it.
+
+</Steps>
+
+You do not change the build files. The steps for npm, Python, Cargo and .NET are on their pages: [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/) and [.NET and NuGet](/nuget/). For Gradle, the project must apply the `maven-publish` plugin and give the project a group and a version:
+
+```kotlin title="build.gradle.kts"
+plugins {
+    `java-library`
+    `maven-publish`
+}
+
+group = "com.example"
+version = "1.0.0"
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") { from(components["java"]) }
+    }
+}
+```
+
+For Maven, `pom.xml` needs no `<distributionManagement>`. The CLI gives Maven the repository.
+
+The CI files by hand are on [Publish from CI](/publish-from-ci/#write-the-ci-file-by-hand).
+
+## If something goes wrong
+
+<details>
+<summary>The CLI does not find a project</summary>
+
+Run the line in the folder that holds the project file of the repository's format. The CLI names the files that it looks for:
+
+| Format | Project file |
+|---|---|
+| Maven / Gradle | `settings.gradle`, `settings.gradle.kts`, `build.gradle`, `build.gradle.kts` or `pom.xml` |
+| npm | `package.json` |
+| Python (PyPI) | `pyproject.toml` or `setup.py` |
+| Cargo (Rust) | `Cargo.toml` |
+| NuGet | a `.sln`, `.slnx`, `.csproj` or `.fsproj` file |
+| Docker | `Chart.yaml`, for a Helm chart |
+
+A Debian or raw repository needs no project file.
+
+</details>
+
+<details>
+<summary>`no telesphorepo.toml in this folder or above`</summary>
+
+The project is not set up, or the file is not committed. [Set up the project](#set-up-the-project), or pull the latest commit.
+
+</details>
+
+<details>
+<summary>The folder holds Gradle and Maven files</summary>
+
+The CLI asks which one to use, and writes the answer as `kind` in `telesphorepo.toml`.
+
+</details>
+
+<details>
+<summary>The setup line was used or ended</summary>
+
+A line works once, for 10 minutes. Click **Set up a project** again for a new line.
+
+</details>
+
+<details>
+<summary>The CLI says that git ignores `telesphorepo.toml`</summary>
+
+CI and your teammates then do not see the file. Remove the line that the warning names from `.gitignore`, or run `git add -f telesphorepo.toml`.
+
+</details>
+
+<details>
+<summary>The CLI cannot reach the server</summary>
+
+Check the address. Open it in a browser.
+
+</details>
+
+<details>
+<summary>`telesphorepo` is not found in a new terminal</summary>
+
+The install puts the CLI in `~/.local/bin` (on Windows, in `%LOCALAPPDATA%\Programs\telesphorepo`, which it adds to your user `PATH`). When `~/.local/bin` is not on your `PATH`, the script asks to add it to the start-up file of your shell, such as `~/.zshrc`. Answer `Y`, then open a new terminal. See [Install the CLI](/install-cli/).
+
+</details>
+
+<details>
+<summary>The browser page asks for two-step verification</summary>
+
+Click **Set up two-step verification**. Add your phone app, then approve.
+
+</details>
+
+<details>
+<summary>No browser page opens</summary>
+
+Copy the address that the terminal shows. Open it yourself.
+
+</details>
+
+<details>
+<summary>403 when you publish</summary>
+
+You cannot publish to this repository yet. Ask your server admin for **Publish**.
+
+</details>
+
+<details>
+<summary>409 when you publish</summary>
+
+That version is already on the server. Raise the version. In a Maven repository, you can publish a `-SNAPSHOT` version again and again. npm answers `403 version ... already exists` for the same reason.
+
+</details>
+
+<details>
+<summary>The CLI says that a tool is not on the PATH</summary>
+
+The CLI runs the tool of the project, such as `pnpm`, `poetry`, `cargo` or `dotnet`. Install it, then publish again.
+
+</details>
+
+<details>
+<summary>The server refused the device</summary>
+
+Run `telesphorepo login` with your server's address, and approve again. An approval lasts 90 days, unless someone removes the device.
+
+</details>
+
+<details>
+<summary>The CLI says that it needs a newer CLI</summary>
+
+Answer `Y` to update, or run `telesphorepo update`. The CLI then runs the command again.
+
+</details>
+
+<details>
+<summary>The CLI says that it needs a newer server</summary>
+
+Ask your server admin to update the server.
+
+</details>
+
+<details>
+<summary>Gradle says that no project applies `maven-publish`</summary>
+
+Add the `maven-publish` plugin to the build file of each project to publish.
+
+</details>
+
+<details>
+<summary>One Gradle project must not publish</summary>
+
+Add this line to the build file of that project:
+
+```kotlin title="build.gradle.kts"
+tasks.withType<PublishToMavenRepository>().configureEach { enabled = false }
+```
+
+</details>
+
+<details>
+<summary>You lost a laptop</summary>
+
+Open **Settings** › **Devices** and revoke that laptop.
+
+</details>

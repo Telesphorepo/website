@@ -13,7 +13,13 @@ interface Props {
 
 const { title, level = 2, ...when } = Astro.props;
 const attrs = Object.fromEntries(Object.entries(when).map(([key, value]) => [`data-${key}`, value]));
-const id = Object.values(when).join('-').replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
+// The id comes from the answers. A page can hold several blocks for the same answers (one per
+// section), so a repeated id gets a number: github, github-2, github-3.
+const base = Object.values(when).join('-').replace(/[^a-z0-9-]+/gi, '-').toLowerCase();
+const taken: Set<string> = ((Astro.locals as { trPathIds?: Set<string> }).trPathIds ??= new Set());
+let id = base;
+for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+taken.add(id);
 const Heading = `h${level}` as 'h2' | 'h3' | 'h4';
 ---
 
