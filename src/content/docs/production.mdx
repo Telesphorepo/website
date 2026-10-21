@@ -161,8 +161,8 @@ This one file runs the server, Caddy for HTTPS, and a volume for backups.
          TR_BASE_URL: https://repo.example.com
          TR_BACKUP_DIR: /backups
        volumes:
-         - data:/data
-         - backups:/backups
+         - telesphorepo-data:/data
+         - telesphorepo-backups:/backups
        depends_on:
          backups-owner:
            condition: service_completed_successfully
@@ -172,7 +172,7 @@ This one file runs the server, Caddy for HTTPS, and a volume for backups.
        image: alpine:3
        command: chown 65532:65532 /backups
        volumes:
-         - backups:/backups
+         - telesphorepo-backups:/backups
 
      caddy:
        image: caddy:2
@@ -183,14 +183,19 @@ This one file runs the server, Caddy for HTTPS, and a volume for backups.
          - "443:443/udp"
        volumes:
          - ./Caddyfile:/etc/caddy/Caddyfile:ro
-         - caddy-data:/data
-         - caddy-config:/config
+         - telesphorepo-caddy-data:/data
+         - telesphorepo-caddy-config:/config
 
+   # Named in full, so the volumes keep these names whatever the folder is called.
    volumes:
-     data:
-     backups:
-     caddy-data:
-     caddy-config:
+     telesphorepo-data:
+       name: telesphorepo-data
+     telesphorepo-backups:
+       name: telesphorepo-backups
+     telesphorepo-caddy-data:
+       name: telesphorepo-caddy-data
+     telesphorepo-caddy-config:
+       name: telesphorepo-caddy-config
    ```
 
    ```text title="Caddyfile"

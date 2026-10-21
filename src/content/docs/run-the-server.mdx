@@ -55,10 +55,11 @@ This page is for the server admin.
        ports:
          - "8080:8080"
        volumes:
-         - data:/data
+         - telesphorepo-data:/data
 
    volumes:
-     data:
+     telesphorepo-data:
+       name: telesphorepo-data
    ```
 
 2. Start the server.
