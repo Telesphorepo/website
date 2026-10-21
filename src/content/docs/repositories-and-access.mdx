@@ -1,0 +1,138 @@
+---
+title: Repositories and access
+description: Make hosted repositories, proxies and groups, give people Publish, add CI pipelines and limit the networks that a repository takes requests from.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+This page is for the server admin, and for people who manage a repository.
+
+## Make a repository
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, then click **New repository**.
+
+2. Type a name, such as `releases`.
+
+3. Choose the format: **Maven / Gradle**, **npm**, **Python (PyPI)**, **Cargo (Rust)**, **NuGet**, **Debian (apt)** or **Raw files**. For Docker, see [Make a Docker repository](#make-a-docker-repository).
+
+4. Choose **Hosted** for your own packages.
+
+5. Click **Create repository**.
+
+</Steps>
+
+The address of each format is under [Repository addresses](/commands-and-settings/#repository-addresses). The **Use this repository** tab of the repository shows the snippets for its clients.
+
+## Add public packages
+
+A **proxy** keeps a copy of each package that people download from a public registry. A **group** joins several repositories under one address. With a group of your hosted repository and a proxy, people install your packages and the public ones through one address.
+
+<Steps>
+
+1. Make a repository of the same format, and choose **Proxy**. Pick the remote, such as Maven Central, `registry.npmjs.org`, PyPI, crates.io or nuget.org.
+
+2. Make a repository of the same format, and choose **Group**.
+
+3. Add the members in order: your hosted repository first, then the proxy.
+
+4. Click **Create repository**.
+
+</Steps>
+
+Neither kind takes uploads. A group serves its members in order:
+
+- In an npm, Python, Cargo or NuGet group, the first member that has a package name owns it, and the group serves every version of that name from that member only. So a public package with the name of your private package cannot take its place.
+- A Maven group merges `maven-metadata.xml` over its members, so the versions of all members show.
+- A Docker group serves each file from the first member that has it, and lists the tags of all members.
+
+## Make a Docker repository
+
+A Docker repository holds container images, Helm charts and other OCI files.
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, then click **New repository**.
+
+2. Type a name, such as `docker`. It is the first part of every image name.
+
+3. Choose **Docker**. Choose **Hosted** to push images to it. Choose **Proxy** to keep copies of Docker Hub, GitHub Container Registry or Quay. Choose **Group** to join several repositories.
+
+4. Click **Create repository**.
+
+</Steps>
+
+Docker needs the server at the root of a host, such as `https://repo.example.com`. It cannot use an address with a path. For large images and the upload address, see [Push large images](/run-the-server/#push-large-images). People push and pull as in [Docker and Helm](/docker/).
+
+## Give people Publish
+
+<Steps>
+
+1. Open **Settings** › **Repositories** › your repository › **Access**.
+
+2. Click **Give access**.
+
+3. Choose the people.
+
+4. Tick **Publish**.
+
+5. Click the button that gives them access.
+
+</Steps>
+
+To add a person first, open **Settings** › **People** and click **New account**. See [People and sign-in](/people-and-sign-in/) for every permission.
+
+Then send people three links: [Install the CLI](/install-cli/) and [Publish from a project](/publish-from-a-project/) for publishing, and the page of your format to use the packages: [Gradle and Maven](/download/), [npm](/npm/), [Python](/python/), [Rust and Cargo](/cargo/), [.NET and NuGet](/nuget/), [Docker and Helm](/docker/), or [Debian, raw and curl](/debian-and-raw/).
+
+## Add a CI pipeline
+
+A CI pipeline is a trust policy: it lets the jobs of one GitHub repository or one Jenkins publish to the repositories that it lists, with the identity token of the job and no stored secret. A developer sends you the values. [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline) tells them which ones.
+
+<Steps>
+
+1. Open **Settings** › **CI pipelines**, then click **New CI pipeline**.
+
+2. Choose **GitHub Actions** or **Jenkins**.
+
+3. Fill in the values that the developer sent you.
+
+4. Tick the repository.
+
+5. Click **Create CI pipeline**.
+
+</Steps>
+
+You can also start from the repository: on its **Access** tab, under **Publish**, click **Add CI pipeline**.
+
+### Jenkins: a freestyle job or a Jenkinsfile
+
+Both kinds of job use the same CI pipeline. Under **Jobs**, write the full job name with its folders, such as `team/app`. A branch of a multibranch pipeline is a job of its own, such as `app/main`.
+
+If this server cannot reach Jenkins, open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys**. Do it again when Jenkins changes its keys.
+
+## Limit where requests come from
+
+Each repository can take downloads, publishes or both from some networks only. No rule means any network.
+
+<Steps>
+
+1. Open **Settings** › **Repositories** › your repository › **Access**.
+
+2. Under **Download** or **Publish**, find **From where**.
+
+3. Click **Add network list** to pick a list, such as GitHub Actions, or **Add addresses** to paste addresses and ranges.
+
+4. Click **Save** in the bar at the bottom, then **Save access**.
+
+</Steps>
+
+The rules hold for everyone, admins included. A request from another address gets `403` with `your address is not allowed to read this repository` or `your address is not allowed to publish this repository`. The audit log records the address; no other page shows it.
+
+The server sees each visitor's own address only when it trusts the proxy in front of it. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+
+### Network lists
+
+Open **Settings** › **People and CI** › **Networks**. Under **Downloaded lists**, the server keeps two lists from their owners and refreshes them every day: Cloudflare and GitHub Actions. Under **Your lists**, click **New network list** to make your own, and paste the addresses in any common layout: one per line, CSV or a table. The server keeps the ranges it finds, and names each line that holds none.
+
+A rule names a list, so a change to the list applies to every repository that uses it. A list that a rule uses cannot be deleted.

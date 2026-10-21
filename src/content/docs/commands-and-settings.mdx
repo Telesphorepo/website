@@ -1,0 +1,304 @@
+---
+title: Commands and settings
+description: The server commands, the CLI commands, telesphorepo.toml, the environment variables, every setting by area, the repository addresses and the licenses.
+---
+
+## Server commands
+
+The program `telesphorepo-server` runs the server and changes its data. In the container, put `docker exec -it telesphorepo /telesphorepo-server` before the command. The `user` commands change the database in `TR_DATA_DIR`. Each command shows its own examples with `telesphorepo-server help <command>`.
+
+### serve
+
+Runs the server. `telesphorepo-server` with no command does the same. On its first start, it creates the user `admin` and prints its password once.
+
+```sh
+telesphorepo-server serve
+TR_DATA_DIR=/srv/tr telesphorepo-server serve
+```
+
+### dev
+
+Runs a local server on `http://localhost:8080` with demo repositories, demo users and demo data, in `./.telesphorepo-dev`. Add `--empty` for one empty repository per format. Delete the folder to start over.
+
+```sh
+telesphorepo-server dev
+telesphorepo-server dev --empty
+```
+
+### user add
+
+Creates a user, and asks for the password twice. `--admin` gives every server permission. From a pipe, it reads the password as one line.
+
+```sh
+telesphorepo-server user add alice
+telesphorepo-server user add ops --admin
+```
+
+### user passwd
+
+Sets a new password and signs the user out everywhere.
+
+```sh
+telesphorepo-server user passwd alice
+```
+
+### user reset-2fa
+
+Removes every authenticator app, passkey and recovery code of a user who lost them all. The user adds a new second factor at the next sign-in.
+
+```sh
+telesphorepo-server user reset-2fa alice
+```
+
+### backup
+
+Writes one backup of the data folder into a backup folder, while the server runs. See [Back up](/run-the-server/#back-up).
+
+```sh
+telesphorepo-server backup /mnt/backups
+```
+
+### restore
+
+Restores a backup into an empty data folder: `--data-dir`, else `TR_DATA_DIR`, else `./data`. See [Restore](/run-the-server/#restore).
+
+```sh
+telesphorepo-server restore /mnt/backups/20261020T201500.123Z --data-dir /srv/tr
+```
+
+### version and help
+
+Print the version, or the help of a command.
+
+```sh
+telesphorepo-server version
+telesphorepo-server help user add
+```
+
+## CLI commands
+
+The server serves the Telesphorepo CLI of its own version. [Install the CLI](/install-cli/) from your server. Each command shows its own examples with `telesphorepo help <command>`.
+
+### setup
+
+Sets up the project of this folder from the setup line of the **Publish to this repository** tab. It approves the computer and writes `telesphorepo.toml`. For a Docker repository, it offers to add the credential helper to the Docker config instead. On a terminal, it then offers a CI file. `--name` names the device; the default is the host name.
+
+```sh
+telesphorepo setup 'https://repo.example.com/#/setup/trsu_...'
+telesphorepo setup 'https://repo.example.com/#/setup/trsu_...' --name "build box"
+```
+
+### publish
+
+Publishes the project of this folder: Gradle, Maven, npm, Python, Cargo, .NET or a Helm chart. For a raw or Debian repository, it uploads each file that you name. For Python and .NET, the files are wheels, sdists or `.nupkg` files to upload with no build. See [Publish from a project](/publish-from-a-project/#publish).
+
+```sh
+telesphorepo publish
+telesphorepo publish build/hello_1.0_amd64.deb
+telesphorepo publish dist/app-1.0-py3-none-any.whl
+```
+
+### login
+
+Approves this computer for a server, with no project. The CLI prints a link and a code: open the link, sign in and approve the code.
+
+```sh
+telesphorepo login https://repo.example.com
+```
+
+### logout
+
+Revokes the approval of this computer, and removes its files and its Docker helper entries. Without a server, it acts on the server of the project in this folder, else on the one server of this computer.
+
+```sh
+telesphorepo logout https://repo.example.com
+```
+
+### status
+
+Shows the approvals of this computer, whether each server accepts them, the Docker helper entries, and the project of this folder with the command that `telesphorepo publish` runs. It shows no secret.
+
+```sh
+telesphorepo status
+```
+
+### update
+
+Installs the CLI of the server: the server of the project in this folder, else the server that you name, else the one server of this computer. A newer CLI stays, because it works with an older server.
+
+```sh
+telesphorepo update
+telesphorepo update https://repo.example.com
+```
+
+### version and help
+
+Print the version, or the help of a command with examples.
+
+```sh
+telesphorepo version
+telesphorepo help publish
+```
+
+The CLI keeps the key of each approved computer in `~/.telesphorepo/<server>/device.json`. Only you can read the file. Next to the CLI, `docker-credential-telesphorepo` is the same program under the name that Docker, Podman, Helm and ORAS call.
+
+## telesphorepo.toml
+
+The project file that `telesphorepo setup` writes. Commit it: it holds no secret.
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"   # the address of the server
+repo = "releases"                     # the repository
+
+# Only when needed:
+kind = "gradle"       # maven or gradle, when the folder holds both
+path = "app"          # the folder in a raw repository
+dist = "stable"       # the distribution of a Debian repository
+component = "main"    # the component of a Debian repository
+```
+
+### CI variables
+
+- `OIDC_TOKEN`: the identity token of a Jenkins job. Its audience must be the address of the server. GitHub Actions needs no variable: the job needs `id-token: write`.
+- `TELESPHOREPO_SERVER`: the server of the Docker credential helper in CI.
+
+## Environment variables
+
+No variable is required. A change to these needs a restart.
+
+- `TR_DATA_DIR`: the folder for the database, the files and the master key. Default `./data`, and `/data` in the image.
+- `TR_LISTEN`: the listen address. Default `:8080`.
+- `TR_MASTER_KEY`: the key that encrypts secret settings, 32 bytes in base64. Default: a file in the data folder. See [Keep the master key safe](/run-the-server/#keep-the-master-key-safe).
+- `TR_BOOTSTRAP_ADMIN_USER` and `TR_BOOTSTRAP_ADMIN_PASSWORD`: the first admin. Default `admin` and a random password. The server reads them only while it has no users.
+
+## Settings
+
+Change settings in the web UI, under **Settings**. A change applies at once.
+
+You can also force any setting from the environment. The name is `TR_` plus the key in capitals, with `_` for each `.`. For example, `s3.bucket` becomes `TR_S3_BUCKET`. The web UI then shows the setting as read only.
+
+### General
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `base_url` | none | The address that clients use (**Public base URL**) |
+| `log.level` | `info` | The log level |
+| `max_upload_size` | `2GiB` | The largest upload (**Max upload size**) |
+| `max_json_size` | `1MiB` | The largest API request body |
+| `cookie.secure` | `true` | Send the session cookie over HTTPS only |
+| `session_ttl` | `168h` | How long a web session lasts |
+| `audit.retention` | `8760h` | How long the audit log keeps events |
+| `index.debounce` | `2s` | How long the server waits before it builds the indexes of a repository again |
+| `index.max_delay` | `30s` | The longest wait before the indexes build |
+| `blobs.gc_grace` | `1h` | How long a file that no repository uses stays on the storage |
+| `upload.session_ttl` | `24h` | How long a resumable upload can wait for its next part |
+| `tls.cert_file`, `tls.key_file` | none | A certificate and a key (PEM) for HTTPS in the server. Set both or neither. They apply at the next start |
+| `nexus.sync_interval` | `15m` | The time between two Nexus syncs, at least `1m` |
+
+### Publishing
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `publish.session_ttl` | `15m` | How long a publish token works, at most `1h` |
+| `publish.device_ttl` | `2160h` | How long an approved computer can publish |
+
+### Docker
+
+On **Settings** › **General**, under **Docker**. See [Push large images](/run-the-server/#push-large-images).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `docker.direct_uploads` | `false` | Send the layer bytes of a push to `docker.upload_url` (**Expose the origin IP for Docker uploads**). It makes the IP address of the server public |
+| `docker.upload_url` | none | The DNS-only name of the server that takes the layer bytes (**Docker upload address**), such as `https://upload.example.com`. Only a scheme and a host. Needed when `docker.direct_uploads` is on |
+| `docker.link_grace` | `24h` | How long a Docker layer that no image uses stays before the server removes it, at least `1s` |
+
+### Storage
+
+On **Settings** › **Storage**. See [Store files in Cloudflare R2](/run-the-server/#store-files-in-cloudflare-r2).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `storage` | `fs` | `fs` for the local disk, `s3` for a bucket (R2 and SeaweedFS are S3 buckets) |
+| `fs.root` | `blobs/` in the data folder | The folder for files on the local disk |
+| `s3.endpoint` | none | The address of the bucket. Empty means AWS |
+| `s3.bucket`, `s3.access_key_id`, `s3.secret_access_key` | none | The bucket and its keys |
+| `s3.region` | none | The region of the bucket. AWS needs it. With an endpoint and no region, the server uses `auto` |
+| `s3.prefix` | none | A prefix for every object name |
+| `s3.path_style` | `false` | Path-style addresses, for SeaweedFS and MinIO |
+| `s3.redirect` | `true` | Send downloads straight from the bucket (**Download from the bucket**) |
+| `presign_ttl` | `5m` | How long a bucket download link works |
+
+### Backups
+
+On **Settings** › **Server** › **Backups**. See [Back up](/run-the-server/#back-up).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `backup.dir` | `/backups` in the image, none for the program | The folder for the backups. Empty turns backups off |
+| `backup.interval` | `24h` | The time between two backups, at least `1m` |
+| `backup.keep` | `7` | How many backups to keep, at most 1000 |
+
+### Network
+
+On **Settings** › **Network and proxy**. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `trusted_proxies` | none | The reverse proxies that the server trusts |
+
+### Edge delivery
+
+On **Settings** › **Server** › **Edge delivery**. See [edge delivery](https://github.com/Telesphorepo/Telesphorepo/tree/main/edge) in the source repository.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `edge.enabled` | `false` | Serve downloads from a Cloudflare Worker. Needs bucket storage and a public address without a path |
+| `edge.home_hint` | none | The region of the home bucket: `wnam`, `enam`, `weur`, `eeur`, `apac` or `oc` |
+| `edge.regions` | none | The buckets in other regions, as `<region>=<bucket>` |
+| `edge.access_ttl` | `30s` | How long the Worker caches the access rules, at most 5 minutes. A change of access reaches the edge within this time |
+
+### Single sign-on and password sign-in
+
+On **Settings** › **Sign-in options**. See [Single sign-on](/people-and-sign-in/#single-sign-on).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `oidc.issuer`, `oidc.client_id`, `oidc.client_secret` | none | The single sign-on provider |
+| `oidc.redirect_url` | `base_url` + `/api/auth/oidc/callback` | The redirect address at the provider |
+| `oidc.scopes` | `openid profile email` | The scopes to ask for |
+| `oidc.permission_claim` | none | The claim of the sign-in token whose values give server permissions |
+| `oidc.permission_map` | `{}` | For each value of the claim, the server permissions it gives, such as `{"repo-admins": ["repositories.all"]}` |
+| `oidc.session_ttl` | `12h` | How long a single sign-on session lasts |
+| `oidc.approval_max_age` | `5m` | The oldest single sign-on that can approve a computer |
+| `signin.password_login` | `all` | `all`: every local account can sign in with a password. `publishers`: a person who manages signs in with single sign-on only |
+
+## Repository addresses
+
+The examples use the server `https://repo.example.com` and a repository named `REPO`.
+
+- **Maven / Gradle**, hosted, proxy and group: `https://repo.example.com/maven/REPO`
+- **npm**, hosted, proxy and group: `https://repo.example.com/npm/REPO/`
+- **Python (PyPI)**, hosted, proxy and group: `https://repo.example.com/pypi/REPO/simple/` to install, `https://repo.example.com/pypi/REPO/` to upload
+- **Cargo (Rust)**, hosted, proxy and group: `sparse+https://repo.example.com/cargo/REPO/index/`
+- **NuGet**, hosted, proxy and group: `https://repo.example.com/nuget/REPO/index.json`
+- **Docker**, hosted, proxy and group: `repo.example.com/REPO/IMAGE:TAG`, at the root of the host
+- **Debian (apt)**, hosted and proxy: `https://repo.example.com/debian/REPO`
+- **Raw files**, hosted: `https://repo.example.com/raw/REPO`
+
+A proxy keeps a copy of each file that people download from its remote. A group serves its members in order, and takes no uploads. See [Add public packages](/repositories-and-access/#add-public-packages) for how each kind of group picks a member.
+
+## HTTP API
+
+The web UI uses a JSON API under `/api/`. The full list of routes is in [SPEC.md](https://github.com/Telesphorepo/Telesphorepo/blob/main/SPEC.md#http-surface) in the source repository.
+
+`GET /healthz` answers `ok` when the server runs. Use it for health checks.
+
+## Licenses
+
+The server is [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Telesphorepo CLI and its Docker credential helper are [MIT](https://github.com/Telesphorepo/Telesphorepo/tree/main/cmd/telesphorepo).
+
+Your artifacts stay yours. Files that you store on the server do not fall under the AGPL. If you change the server and let other people use it over a network, offer them the source of your changed version.
