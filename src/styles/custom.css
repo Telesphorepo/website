@@ -296,6 +296,26 @@ body {
     box-shadow: none;
 }
 
+/* A terminal block with no title shows no title bar: only the commands. */
+.sl-markdown-content .expressive-code .frame.is-terminal:not(.has-title) .header {
+    display: none;
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal:not(.has-title) pre {
+    border-top: var(--ec-brdWd) solid var(--ec-brdCol);
+    border-radius: var(--ec-brdRad);
+}
+
+/* Body text: 17 px. */
+.sl-markdown-content {
+    font-size: var(--sl-text-body);
+}
+
+/* A page that opens with a heading keeps clear space under the title. */
+.sl-markdown-content > .sl-heading-wrapper:first-child {
+    margin-top: 2rem;
+}
+
 /*
  * Tables: a filled header, light rules between the rows, and a whole-row fill on hover. Every
  * cell has the same padding, so the first column does not touch the edge.
@@ -626,7 +646,7 @@ mobile-starlight-toc details[open] .toggle {
 }
 
 .sl-steps > li + li {
-    margin-top: 1.75rem;
+    margin-top: 1.5rem;
 }
 
 .sl-steps > li::before {
