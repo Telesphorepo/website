@@ -94,6 +94,25 @@ For a Debian or raw repository, name the files:
 telesphorepo publish app-1.2.0.tar.gz
 ```
 
+## Send releases and snapshots to different repositories
+
+Add a rule to `telesphorepo.toml`. The CLI reads the project's version, and a version that matches the rule goes to its repository. You never edit the file for a release.
+
+```toml title="telesphorepo.toml"
+server = "https://your-server"
+repo = "maven-releases"
+
+[[when]]
+version = "*-SNAPSHOT"
+repo = "maven-snapshots"
+```
+
+See [Publish by version](/commands-and-settings/#publish-by-version).
+
+## Publish to more than one repository
+
+A `telesphorepo.toml` names one repository. When one git repository publishes to two, such as jars and a Debian package, give each its own folder with its own `telesphorepo.toml`, and run `telesphorepo publish` in each folder.
+
 ## Push Docker images
 
 Do this once on each computer.

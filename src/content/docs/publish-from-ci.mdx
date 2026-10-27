@@ -64,6 +64,8 @@ Branches             main
 Repositories         your-repo
 ```
 
+If you added the publish steps to a workflow you had, send its file name, such as `build.yml`. The server checks the repository, the workflow file and the branch, so a GitHub environment on the job changes nothing. List every repository the job publishes to.
+
 </Path>
 
 <Path title="Jenkins" from="jenkins-pipeline jenkins-freestyle" level={4}>
@@ -275,7 +277,7 @@ For a freestyle job, choose **Execute Windows PowerShell**, and install the CLI 
 <details>
 <summary>The project is in a subfolder of the git repository</summary>
 
-Put `cd` and the subfolder before `telesphorepo publish`. The CLI prints the line.
+Put `cd` and the subfolder before `telesphorepo publish`. The CLI prints the line. In GitHub Actions, `working-directory:` on the step does the same.
 
 </details>
 

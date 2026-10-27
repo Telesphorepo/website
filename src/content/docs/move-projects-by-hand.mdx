@@ -627,6 +627,14 @@ When your admin has [switched over](/move-from-nexus/#switch-over), the copies t
    repo = "maven-releases"
    ```
 
+   If the project sent snapshots to another repository, keep that with a rule. See [Publish by version](/commands-and-settings/#publish-by-version).
+
+   ```toml
+   [[when]]
+   version = "*-SNAPSHOT"
+   repo = "maven-snapshots"
+   ```
+
 2. Check that the CI pipeline lists the real repository.
 
 3. Publish once.

@@ -131,6 +131,15 @@ telesphorepo publish dist/app-1.0-py3-none-any.whl
 
 A Docker repository publishes with `docker push` and the credential helper.
 
+| Flag | What it does |
+|---|---|
+| `--version V` | The version that [the rules](#publish-by-version) of `telesphorepo.toml` match, in place of the one the CLI reads |
+| `--into FOLDER` | Raw: uploads into this folder, in place of `path` |
+| `--if-new` | Raw: uploads only when the path holds no file |
+| `--if-match ETAG` | Raw: uploads one file only over the file of this ETag, from a GET of it. Takes `*` for any file |
+
+When the server holds another file than `--if-new` or `--if-match` says, the CLI stores nothing and exits with code 3. Read the file again, and publish again. See [Use raw files for an updater](https://github.com/Telesphorepo/Telesphorepo/blob/main/docs/updater.md).
+
 ### login
 
 Approves this computer for a server, with no project. Open the link that the CLI prints, sign in and approve the code.
@@ -195,6 +204,36 @@ repo = "releases"
 | `path` | no | The folder in a raw repository |
 | `dist` | no | The distribution of a Debian repository |
 | `component` | no | The component of a Debian repository |
+| `[[when]]` | no | A rule that publishes some versions elsewhere. See [Publish by version](#publish-by-version) |
+
+The file names one repository. To publish to two, such as a library and a Debian package from one git repository, put a `telesphorepo.toml` in each folder and run `telesphorepo publish` in each.
+
+### Publish by version
+
+Each `[[when]]` rule names a `version` pattern and the keys it changes: `repo`, `path`, `dist` or `component`. The first rule that matches decides. A version that no rule matches goes where the keys above say. In a pattern, `*` stands for any text.
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "maven-releases"
+
+[[when]]
+version = "*-SNAPSHOT"
+repo = "maven-snapshots"
+```
+
+The CLI prints the version and the repository before it publishes. It reads the version from the project:
+
+| Project | Version |
+|---|---|
+| Gradle | `version` of the root project |
+| Maven | `project.version` |
+| npm | `version` in `package.json` |
+| Cargo | `version` in `Cargo.toml` |
+| Python | `version` in `pyproject.toml` |
+| Helm | `version` in `Chart.yaml` |
+| Files | the version in each package, such as a `.deb`. Files of different versions can go to different repositories |
+
+Raw files have no version: give one with `--version`. Each ecosystem marks a pre-release its own way, so write the pattern for yours: `*-SNAPSHOT` for Maven, `*-*` for npm pre-releases, `*~*` for a Debian version that sorts before its release.
 
 ### CI variables
 

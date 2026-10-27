@@ -195,6 +195,13 @@ Do this:
       server = "https://repo.example.com"
       repo = "maven-releases-rehearsal"
     If the folder has both Maven and Gradle files, add kind = "maven" or kind = "gradle".
+    If the project sends -SNAPSHOT versions to a second Nexus repository (a
+    <snapshotRepository>, or a Gradle url that picks one by the version), keep that split with a
+    rule; the CLI reads the version and picks the repository, so a release needs no edit:
+      [[when]]
+      version = "*-SNAPSHOT"
+      repo = "maven-snapshots-rehearsal"
+    Ask me for a rehearsal repository and the CI pipeline for the snapshots repository too.
 12. CI. GitHub Actions: the publish job gets permissions: id-token: write (keep contents:
     read), then actions/checkout@v7, actions/setup-java@v6 (distribution: temurin,
     java-version: the project's Java version, such as 21) with no build step, then
