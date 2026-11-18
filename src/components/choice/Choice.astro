@@ -1,32 +1,32 @@
 ---
 /*
- * A question on a page, such as "Which build tool?" or "Which web server?": one line with the
- * question and a dropdown beside it. The dropdown is the same control as the theme switcher of the
- * header (overrides/ThemeSelect.astro): a button with the current answer and a caret, and a
- * listbox panel in the top layer. Arrow keys, Home, End, Enter, Space, Escape and Tab work as in a
- * native select. A Path block (Path.astro) carries data-<key> attributes and shows only when every
- * one of them matches the current answer.
+ * One or more questions on a page, such as "Where does the job run?": a fieldset for each, with
+ * one radio button for each answer, drawn as a card. A Path block (Path.astro) carries data-<key>
+ * attributes and shows only when every question it names has an answer that it lists.
  *
- * A page can hold several Choice blocks, each with its own questions. The answers come from the
- * address (?from=github&tool=maven), then from localStorage, then the first option. A change stores
- * the answer under tr-choice-<key>, so another page with the same question opens on it, and writes
- * the answers to the address, so a copied link opens the same steps.
+ * The page asks first: with no answer in the address and none stored, no option is chosen, the
+ * line "Choose one to see the steps." stands under the question, and every Path that names the
+ * question stays hidden. Answers come from the address (?from=github), then from localStorage
+ * (tr-choice-<key>), then, for a question with detect: 'os', from the browser's platform. A choice
+ * stores the answer and writes it to the address, so a copied link opens the same steps.
  *
- * The script sets data-tr-<key> on <html> before the blocks below it render, and the generated
- * CSS hides the blocks that do not match, so the page does not flash. Without JavaScript, the
- * questions stay hidden and every block shows under its own heading.
+ * The script sets data-tr-<key> on <html> (empty while unanswered) before the blocks below it
+ * render, and the CSS here hides the blocks that do not match, so the page does not flash.
+ * Without JavaScript, the questions stay hidden and every block shows under its own title.
  */
-import { Icon } from '@astrojs/starlight/components';
-
 interface Option {
     value: string;
     label: string;
+    /** One line under the label, shown until the reader answers. */
+    description?: string;
 }
 
 interface Question {
     key: string;
     label: string;
     options: Option[];
+    /** 'os' answers the question from the browser's platform: 'windows' or 'unix'. */
+    detect?: 'os';
 }
 
 interface Props {
@@ -35,10 +35,16 @@ interface Props {
 
 const { questions } = Astro.props;
 
-const data = JSON.stringify(questions.map((q) => ({ key: q.key, values: q.options.map((o) => o.value) })));
+// Radio groups need a name that is unique on the page, also when two blocks ask the same question.
+const locals = Astro.locals as { trChoiceCount?: number };
+const instance = (locals.trChoiceCount = (locals.trChoiceCount ?? 0) + 1);
 
-// One rule per answer: hide each block that names this key but not this value.
+const data = JSON.stringify(questions.map((q) => ({ key: q.key, values: q.options.map((o) => o.value), detect: q.detect })));
+
+// Hide each block that names a question while it has no answer, and each block that does not list
+// the answer.
 const css = [
+    ...questions.map((q) => `html[data-tr-${q.key}=""] [data-${q.key}]{display:none}`),
     ...questions.flatMap((q) => q.options.map((o) =>
         `html[data-tr-${q.key}="${o.value}"] [data-${q.key}]:not([data-${q.key}~="${o.value}"]){display:none}`)),
     'html[data-tr-choice] .tr-path-title{display:none}',
@@ -53,100 +59,48 @@ const script = `(() => {
     const params = new URLSearchParams(location.search);
     const read = (key) => { try { return localStorage.getItem('tr-choice-' + key); } catch (e) { return null; } };
     const write = (key, value) => { try { localStorage.setItem('tr-choice-' + key, value); } catch (e) {} };
+    const platform = () => {
+        const p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || navigator.userAgent;
+        return /win/i.test(p) ? 'windows' : 'unix';
+    };
     const state = {};
     for (const q of questions) {
         const fromUrl = params.get(q.key);
+        const stored = read(q.key);
         if (fromUrl && q.values.includes(fromUrl)) {
             state[q.key] = fromUrl;
             write(q.key, fromUrl);
+        } else if (stored && q.values.includes(stored)) {
+            state[q.key] = stored;
+        } else if (q.detect === 'os' && q.values.includes(platform())) {
+            state[q.key] = platform();
         } else {
-            const stored = read(q.key);
-            state[q.key] = stored && q.values.includes(stored) ? stored : q.values[0];
+            state[q.key] = '';
         }
     }
-    const pickers = [...root.querySelectorAll('.tr-question')].map((el) => ({
-        key: el.dataset.key,
-        trigger: el.querySelector('.tr-choice-trigger'),
-        value: el.querySelector('.tr-choice-value'),
-        panel: el.querySelector('.tr-choice-panel'),
-        options: [...el.querySelectorAll('[role="option"]')],
-    }));
+    const fieldsets = [...root.querySelectorAll('fieldset[data-key]')];
     const apply = () => {
         html.setAttribute('data-tr-choice', '');
         for (const q of questions) html.setAttribute('data-tr-' + q.key, state[q.key]);
-        for (const p of pickers) {
-            for (const o of p.options) {
-                const selected = o.dataset.value === state[p.key];
-                o.setAttribute('aria-selected', String(selected));
-                if (selected) p.value.textContent = o.textContent;
-            }
+        for (const set of fieldsets) {
+            const value = state[set.dataset.key];
+            set.toggleAttribute('data-answered', Boolean(value));
+            for (const input of set.querySelectorAll('input')) input.checked = input.value === value;
         }
         try {
             const url = new URL(location.href);
-            for (const q of questions) url.searchParams.set(q.key, state[q.key]);
+            for (const q of questions) if (state[q.key]) url.searchParams.set(q.key, state[q.key]);
             history.replaceState(history.state, '', url);
         } catch (e) {}
     };
-    const isOpen = (p) => p.panel.matches(':popover-open');
-    const place = (p) => {
-        const gap = 6, edge = 8;
-        const t = p.trigger.getBoundingClientRect();
-        const w = p.panel.offsetWidth, h = p.panel.offsetHeight;
-        const below = t.bottom + gap + h <= innerHeight - edge;
-        p.panel.style.top = (below ? t.bottom + gap : Math.max(edge, t.top - gap - h)) + 'px';
-        p.panel.style.left = Math.min(Math.max(edge, t.left), document.documentElement.clientWidth - w - edge) + 'px';
-        p.panel.style.minWidth = t.width + 'px';
-        p.panel.dataset.side = below ? 'below' : 'above';
-    };
-    const open = (p, focus) => {
-        if (!isOpen(p)) { p.panel.showPopover(); place(p); }
-        const selected = p.options.find((o) => o.getAttribute('aria-selected') === 'true');
-        const target = focus === 'last' ? p.options[p.options.length - 1] : (selected || p.options[0]);
-        if (target) target.focus({ preventScroll: true });
-    };
-    const close = (p, returnFocus) => {
-        if (!isOpen(p)) return;
-        p.panel.hidePopover();
-        if (returnFocus) p.trigger.focus();
-    };
-    const choose = (p, option) => {
-        state[p.key] = option.dataset.value;
-        write(p.key, option.dataset.value);
+    root.addEventListener('change', (e) => {
+        const input = e.target;
+        const set = input.closest('fieldset[data-key]');
+        if (!set || !input.checked) return;
+        state[set.dataset.key] = input.value;
+        write(set.dataset.key, input.value);
         apply();
-        close(p, true);
-    };
-    for (const p of pickers) {
-        p.trigger.addEventListener('click', () => { if (isOpen(p)) close(p, true); else open(p, 'selected'); });
-        p.trigger.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                e.preventDefault();
-                open(p, e.key === 'ArrowUp' ? 'last' : 'selected');
-            }
-        });
-        p.panel.addEventListener('click', (e) => {
-            const option = e.target.closest('[role="option"]');
-            if (option) choose(p, option);
-        });
-        p.panel.addEventListener('toggle', (e) => p.trigger.setAttribute('aria-expanded', String(e.newState === 'open')));
-        p.panel.addEventListener('keydown', (e) => {
-            const i = p.options.indexOf(document.activeElement);
-            const last = p.options.length - 1;
-            let next = -1;
-            switch (e.key) {
-                case 'ArrowDown': next = Math.min(i + 1, last); break;
-                case 'ArrowUp': next = i === -1 ? last : Math.max(i - 1, 0); break;
-                case 'Home': next = 0; break;
-                case 'End': next = last; break;
-                case 'Enter': case ' ': e.preventDefault(); if (i !== -1) choose(p, p.options[i]); return;
-                case 'Escape': case 'Tab': e.preventDefault(); close(p, true); return;
-                default: return;
-            }
-            e.preventDefault();
-            p.options[next].focus({ preventScroll: true });
-        });
-        addEventListener('resize', () => close(p, false));
-        addEventListener('scroll', () => close(p, false), { capture: true, passive: true });
-    }
+    });
     root.hidden = false;
     apply();
 })();`;
@@ -154,32 +108,22 @@ const script = `(() => {
 
 <div class="tr-choice not-content" data-choice={data} hidden>
     {questions.map((q) => (
-        <div class="tr-question" data-key={q.key}>
-            <span class="tr-question-label" id={`tr-choice-${q.key}-label`}>{q.label}</span>
-            <button
-                type="button"
-                class="tr-choice-trigger"
-                aria-haspopup="listbox"
-                aria-expanded="false"
-                aria-controls={`tr-choice-${q.key}-list`}
-                aria-labelledby={`tr-choice-${q.key}-label tr-choice-${q.key}-value`}
-            >
-                <span class="tr-choice-value" id={`tr-choice-${q.key}-value`}>{q.options[0]?.label}</span>
-                <Icon name="down-caret" class="tr-choice-caret" />
-            </button>
-            <ul
-                id={`tr-choice-${q.key}-list`}
-                class="tr-choice-panel"
-                role="listbox"
-                popover="auto"
-                tabindex="-1"
-                aria-labelledby={`tr-choice-${q.key}-label`}
-            >
+        <fieldset class="tr-question" data-key={q.key}>
+            <legend class="tr-question-label">{q.label}</legend>
+            <p class="tr-question-hint">Choose one to see the steps.</p>
+            <div class="tr-options">
                 {q.options.map((o) => (
-                    <li role="option" tabindex="-1" data-value={o.value} aria-selected="false">{o.label}</li>
+                    <label class="tr-option">
+                        <input type="radio" name={`tr-choice-${instance}-${q.key}`} value={o.value} />
+                        <span class="tr-option-mark" aria-hidden="true"></span>
+                        <span class="tr-option-text">
+                            <span class="tr-option-label">{o.label}</span>
+                            {o.description && <span class="tr-option-description">{o.description}</span>}
+                        </span>
+                    </label>
                 ))}
-            </ul>
-        </div>
+            </div>
+        </fieldset>
     ))}
 </div>
 <script is:inline set:html={script}></script>
@@ -189,8 +133,8 @@ const script = `(() => {
     .tr-choice {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
-        margin-block: 1.5rem 2rem;
+        gap: 1.25rem;
+        margin-block: 2rem;
     }
 
     .tr-choice[hidden] {
@@ -198,128 +142,141 @@ const script = `(() => {
     }
 
     .tr-question {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.25rem 0.75rem;
-    }
-
-    /* The question takes the type size of the dropdown, so the two read as one control. */
-    .tr-question-label {
-        color: var(--tr-heading);
-        font-size: var(--sl-text-sm);
-        font-weight: 500;
-    }
-
-    /*
-     * The trigger and the panel take the look of the theme switcher in the header: radius, padding,
-     * caret, type size, hover and the panel. In the text, the trigger keeps a light fill at rest
-     * so that it reads as a control.
-     */
-    .tr-choice-trigger {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.5rem 0.5rem 0.5rem 0.75rem;
-        border: 0;
-        border-radius: 6px;
-        background-color: var(--tr-surface);
-        color: var(--tr-heading);
-        font: inherit;
-        font-size: var(--sl-text-sm);
-        font-weight: 500;
-        line-height: 1;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: background-color 150ms ease;
-    }
-
-    .tr-choice-trigger:hover,
-    .tr-choice-trigger[aria-expanded='true'] {
-        background-color: var(--tr-hover);
-    }
-
-    .tr-choice-trigger :global(.tr-choice-caret) {
-        font-size: 1rem;
-        color: var(--tr-muted);
-        transition: transform 150ms ease;
-    }
-
-    .tr-choice-trigger[aria-expanded='true'] :global(.tr-choice-caret) {
-        transform: rotate(180deg);
-    }
-
-    .tr-choice-panel {
-        position: fixed;
-        inset: auto;
-        min-width: 9rem;
+        min-width: 0;
         margin: 0;
-        padding: 0.25rem;
-        border: 1px solid var(--tr-line);
+        padding: 0;
+        border: 0;
+    }
+
+    .tr-question-label {
+        padding: 0;
+        color: var(--tr-heading);
+        font-size: 1.125rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        line-height: 1.35;
+    }
+
+    .tr-question-hint {
+        margin: 0.25rem 0 0;
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
+    }
+
+    .tr-question[data-answered] .tr-question-hint {
+        display: none;
+    }
+
+    .tr-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 10.5rem), 1fr));
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    /* Before the answer, a phone gives each option a row of its own, so its description has room. */
+    @media (max-width: 49.99rem) {
+        .tr-question:not([data-answered]) .tr-options {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .tr-option {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        min-height: 3rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--tr-control);
         border-radius: 10px;
         background-color: var(--tr-surface);
-        box-shadow: 0 12px 28px -12px rgb(0 0 0 / 0.45);
-        color: var(--tr-body);
-        font-size: var(--sl-text-sm);
-        list-style: none;
-    }
-
-    .tr-choice-panel[popover]:popover-open {
-        animation: tr-choice-panel-in 120ms ease-out;
-    }
-
-    .tr-choice-panel[data-side='above']:popover-open {
-        animation-name: tr-choice-panel-in-above;
-    }
-
-    @keyframes tr-choice-panel-in {
-        from {
-            opacity: 0;
-            transform: translateY(-4px);
-        }
-    }
-
-    @keyframes tr-choice-panel-in-above {
-        from {
-            opacity: 0;
-            transform: translateY(4px);
-        }
-    }
-
-    .tr-choice-panel [role='option'] {
-        margin: 0;
-        padding: 0.5rem 0.75rem;
-        border-radius: 4px;
-        color: var(--tr-muted);
-        white-space: nowrap;
         cursor: pointer;
-        user-select: none;
+        transition: border-color 120ms ease, background-color 120ms ease;
     }
 
-    .tr-choice-panel [role='option']:hover,
-    .tr-choice-panel [role='option']:focus {
-        background-color: var(--tr-hover);
+    .tr-option:hover {
+        border-color: var(--tr-muted);
+    }
+
+    /* The radio stays in the page for the keyboard and screen readers; the card draws it. */
+    .tr-option input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .tr-option:has(input:focus-visible) {
+        outline: 2px solid var(--tr-accent);
+        outline-offset: 2px;
+    }
+
+    .tr-option-mark {
+        flex: none;
+        position: relative;
+        width: 1rem;
+        height: 1rem;
+        /* Centre the mark on the first line of the label: 16 px text at 1.5. */
+        margin-top: 0.25rem;
+        border: 1.5px solid var(--tr-control);
+        border-radius: 50%;
+    }
+
+    .tr-option-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        min-width: 0;
+    }
+
+    .tr-option-label {
         color: var(--tr-heading);
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.5;
     }
 
-    .tr-choice-panel [role='option']:focus-visible {
-        outline-offset: -2px;
+    .tr-option-description {
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
     }
 
-    .tr-choice-panel [role='option'][aria-selected='true'] {
-        background-color: var(--tr-raised);
-        color: var(--tr-heading);
+    .tr-question[data-answered] .tr-option-description {
+        display: none;
+    }
+
+    /* The chosen option: a 2 px gold border drawn inside the 1 px one, so the box keeps its size. */
+    .tr-option:has(input:checked) {
+        border-color: var(--tr-accent);
+        background-color: color-mix(in srgb, var(--tr-accent) 12%, var(--tr-surface));
+        box-shadow: inset 0 0 0 1px var(--tr-accent);
+    }
+
+    .tr-option:has(input:checked) .tr-option-label {
         font-weight: 600;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-        .tr-choice-trigger,
-        .tr-choice-trigger :global(.tr-choice-caret) {
-            transition: none;
-        }
+    .tr-option:has(input:checked) .tr-option-mark {
+        border-color: var(--tr-accent);
+    }
 
-        .tr-choice-panel[popover]:popover-open {
-            animation: none;
+    .tr-option:has(input:checked) .tr-option-mark::after {
+        content: '';
+        position: absolute;
+        inset: 2.5px;
+        border-radius: 50%;
+        background-color: var(--tr-accent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tr-option {
+            transition: none;
         }
     }
 </style>

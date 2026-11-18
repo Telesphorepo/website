@@ -1,14 +1,17 @@
 ---
 /*
- * Two inputs, "Your server's address" and "Repository". As the reader types, the page puts the
- * values in place of https://your-server and your-repo: in the text, in each code line and in each
- * copy button. Empty inputs keep the placeholders.
+ * One line of small text that names the placeholders in the commands below it: "The commands use
+ * https://your-server and your-repo. Use your own". Click Use your own to open two inputs, "Your
+ * server's address" and "Repository". As the reader types, the page puts the values in place of
+ * https://your-server and your-repo: in the text, in each code line and in each copy button. With
+ * values, the line names them and the button reads Change. Empty inputs keep the placeholders.
  *
- * The values come from the address (?server=&repo=), then from localStorage. Each change writes
- * them to both, so an admin can share a link that opens with the real commands. The page makes no
- * request to the server. Without JavaScript, the inputs stay hidden and the placeholders stay.
+ * Put it right above the first command that holds a placeholder. The values come from the address
+ * (?server=&repo=), then from localStorage. Each change writes them to both, so an admin can share
+ * a link that opens with the real commands. The page makes no request to the server. Without
+ * JavaScript, the line stays hidden and the placeholders stay.
  */
-// The code blocks come after the inputs, so the script waits for the whole page.
+// The code blocks come after the line, so the script waits for the whole page.
 const script = `(() => {
     const run = () => {
     const root = document.getElementById('tr-fill');
@@ -17,6 +20,9 @@ const script = `(() => {
     const REPO = 'your-repo';
     const server = root.querySelector('#tr-fill-server');
     const repo = root.querySelector('#tr-fill-repo');
+    const toggle = root.querySelector('.tr-fill-toggle');
+    const fields = root.querySelector('.tr-fill-fields');
+    const shown = { server: root.querySelector('[data-fill-show="server"]'), repo: root.querySelector('[data-fill-show="repo"]') };
     const read = (key) => { try { return localStorage.getItem('tr-fill-' + key) || ''; } catch (e) { return ''; } };
     const write = (key, value) => { try { localStorage.setItem('tr-fill-' + key, value); } catch (e) {} };
     const normalServer = (v) => {
@@ -83,6 +89,9 @@ const script = `(() => {
         const s = normalServer(server.value);
         const r = repo.value.trim();
         fill({ server: s || SERVER, repo: r || REPO });
+        shown.server.textContent = s || SERVER;
+        shown.repo.textContent = r || REPO;
+        toggle.textContent = s || r ? 'Change' : 'Use your own';
         if (!store) return;
         write('server', s);
         write('repo', r);
@@ -98,6 +107,12 @@ const script = `(() => {
     server.value = params.get('server') || read('server');
     repo.value = params.get('repo') || read('repo');
     root.addEventListener('input', () => apply(true));
+    toggle.addEventListener('click', () => {
+        const open = fields.hidden;
+        fields.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        if (open) server.focus();
+    });
     root.hidden = false;
     apply(params.has('server') || params.has('repo'));
     };
@@ -107,7 +122,11 @@ const script = `(() => {
 ---
 
 <div id="tr-fill" class="tr-fill not-content" hidden>
-    <div class="tr-fill-fields">
+    <p class="tr-fill-line">
+        The commands use <code data-fill-show="server">https://your-server</code> and <code data-fill-show="repo">your-repo</code>.{' '}
+        <button type="button" class="tr-fill-toggle" aria-expanded="false" aria-controls="tr-fill-fields">Use your own</button>
+    </p>
+    <div class="tr-fill-fields" id="tr-fill-fields" hidden>
         <label>
             <span>Your server's address</span>
             <input id="tr-fill-server" type="url" inputmode="url" placeholder="https://repo.example.com" autocomplete="off" spellcheck="false" />
@@ -117,7 +136,6 @@ const script = `(() => {
             <input id="tr-fill-repo" type="text" placeholder="releases" autocomplete="off" spellcheck="false" />
         </label>
     </div>
-    <p class="tr-fill-hint">Or open your repository's <strong>Publish to this repository</strong> tab: it shows this command filled in.</p>
 </div>
 <script is:inline set:html={script}></script>
 
@@ -126,11 +144,51 @@ const script = `(() => {
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        margin-block: 1.5rem 0;
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+        line-height: 1.45;
     }
 
-    .tr-fill[hidden] {
+    .tr-fill[hidden],
+    .tr-fill-fields[hidden] {
         display: none;
+    }
+
+    .tr-fill-line {
+        margin: 0;
+        max-width: var(--tr-measure);
+    }
+
+    .tr-fill-line code {
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+        background-color: var(--tr-raised);
+        color: var(--tr-body);
+        font-family: var(--__sl-font-mono);
+        font-size: 0.9em;
+        overflow-wrap: anywhere;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+    }
+
+    .tr-fill-toggle {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--tr-link);
+        font: inherit;
+        font-weight: 600;
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.2em;
+        text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+        cursor: pointer;
+    }
+
+    .tr-fill-toggle:hover {
+        color: var(--tr-heading);
+        text-decoration-color: currentColor;
     }
 
     .tr-fill-fields {
@@ -144,18 +202,18 @@ const script = `(() => {
         flex-direction: column;
         gap: 0.375rem;
         color: var(--tr-heading);
-        font-size: 0.9375rem;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     .tr-fill input {
-        min-height: 2.5rem;
+        min-height: 2.75rem;
         padding: 0.5rem 0.75rem;
-        border: 1px solid var(--tr-line);
+        border: 1px solid var(--tr-control);
         border-radius: 8px;
         background-color: var(--tr-surface);
         color: var(--tr-heading);
         font: inherit;
+        font-size: 1rem;
         font-weight: 400;
     }
 
@@ -166,11 +224,5 @@ const script = `(() => {
     .tr-fill input:focus-visible {
         outline: 2px solid var(--tr-accent);
         outline-offset: 1px;
-    }
-
-    .tr-fill-hint {
-        margin: 0;
-        color: var(--tr-muted);
-        font-size: 0.875rem;
     }
 </style>

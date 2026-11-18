@@ -98,10 +98,24 @@ const toMarkdown = unified()
             }
         };
     })
+    .use(function doneLines() {
+        return (tree: Root) => {
+            // A Done line (src/components/docs/Done.astro) is a paragraph: its sentence, without the check.
+            // A place line (Place.astro) is a <p> already, so it stays one plain line.
+            for (const done of selectAll('.tr-done', tree)) {
+                const body = select('.tr-done-text', done);
+                const parts = body ? body.children.filter((child) => child.type !== 'text' || child.value.trim()) : [];
+                const only = parts.length === 1 && parts[0].type === 'element' && parts[0].tagName === 'p' ? parts[0] : null;
+                done.tagName = 'p';
+                done.properties = {};
+                done.children = only ? only.children : body ? body.children : [];
+            }
+        };
+    })
     .use(function removeDecoration() {
         return (tree: Root) => {
-            // Icons, buttons, scripts, heading links, the choice buttons (every choice is in the copy)
-            // and the address inputs (the copy keeps the placeholders) carry no text for a reader.
+            // Icons, buttons, scripts, heading links, the picker (every path is in the copy, under its
+            // title) and the address line (the copy keeps the placeholders) carry no text for a reader.
             const decoration = new Set<unknown>(selectAll(
                 'svg, button, script, style, link, .sl-anchor-link, .sr-only, .tr-choice, .tr-fill',
                 tree,

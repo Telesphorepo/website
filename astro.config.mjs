@@ -4,66 +4,64 @@ import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import starlightLinksValidator from 'starlight-links-validator'
-import starlightUtils from "@lorenzo_lewis/starlight-utils";
 import starlightLlmsTxt from 'starlight-llms-txt';
 
+// Each group has one reader: the developer who publishes, the admin who runs the server, the
+// people who leave Nexus, and the reference pages for both.
 const sidebar = [
+    {label: 'Quick start', link: '/quick-start'},
     {
-        label: 'Publish your packages',
+        label: 'Publish and use packages',
         items: [
             {label: 'Install the CLI', link: '/install-cli'},
-            {label: 'Publish from a project', link: '/publish-from-a-project'},
+            {label: 'Publish from your computer', link: '/publish-from-a-project'},
             {label: 'Publish from CI', link: '/publish-from-ci'},
+            {label: 'Use packages in your builds', link: '/use-packages'},
         ]
     },
-    {label: 'Use packages in your builds', link: '/use-packages'},
+    {
+        label: 'Run the server',
+        items: [
+            {label: 'Production setup', link: '/run-the-server'},
+            {label: 'Repositories and access', link: '/repositories-and-access'},
+            {label: 'People and sign-in', link: '/people-and-sign-in'},
+            {label: 'File storage', link: '/store-files-in-r2'},
+            {label: 'Back up and restore', link: '/back-up-and-restore'},
+            {label: 'Upgrade', link: '/upgrade'},
+            {label: 'Large Docker images', link: '/push-large-images'},
+        ]
+    },
     {
         label: 'Move from Nexus',
         items: [
             {label: 'Copy your repositories', link: '/move-from-nexus'},
-            {label: 'Move your projects by hand', link: '/move-projects-by-hand'},
-            {label: 'Move your projects with an AI agent', link: '/move-projects-with-an-agent'},
+            {label: 'Move projects by hand', link: '/move-projects-by-hand'},
+            {label: 'Move projects with an AI agent', link: '/move-projects-with-an-agent'},
         ]
     },
     {
-        label: 'Administration',
+        label: 'Reference',
         items: [
-            {label: 'Run the server', link: '/run-the-server'},
-            {label: 'Repositories and access', link: '/repositories-and-access'},
-            {label: 'People and sign-in', link: '/people-and-sign-in'},
-            {label: 'Store files in R2 or S3', link: '/store-files-in-r2'},
-            {label: 'Back up and restore', link: '/back-up-and-restore'},
-            {label: 'Upgrade the server', link: '/upgrade'},
-            {label: 'Push large images', link: '/push-large-images'},
-            {label: 'Commands and settings', link: '/commands-and-settings'},
-        ]
-    },
-    // The header links. starlight-utils takes this group out of the sidebar. Starlight marks only the
-    // first sidebar entry with the current page's path, so this group comes last: the sidebar entry
-    // with the same path is then the one that shows as current.
-    {
-        label: "leadingNavLinks",
-        items: [
-            {label: "Publish", link: "/install-cli"},
-            {label: "Use packages", link: "/use-packages"},
-            {label: "Administration", link: "/run-the-server"},
+            {label: 'CLI and telesphorepo.toml', link: '/cli'},
+            {label: 'Server commands and settings', link: '/server-reference'},
+            {label: 'Repository addresses', link: '/repository-addresses'},
         ]
     },
 ];
-// The docs page ids in sidebar order, after the landing page. The header links are not docs pages.
+// The docs page ids in sidebar order, after the landing page.
 const pageOrder = ['index', ...sidebar
-    .filter((entry) => entry.label !== 'leadingNavLinks')
     .flatMap((entry) => 'items' in entry ? entry.items : [entry])
     .map((entry) => entry.link.slice(1))];
 
 // Pages that moved: the old address answers with a redirect to the new one. A fragment of the old
 // address (such as /production/#back-up) stays on the new one, so the merged pages keep the old
-// heading names.
+// heading names. The MovedAnchors block of the new page sends a fragment that moved again on.
 const moved = {
     '/set-up': '/publish-from-a-project',
     '/publish': '/publish-from-a-project',
     '/production': '/run-the-server',
-    '/reference': '/commands-and-settings',
+    '/reference': '/server-reference',
+    '/commands-and-settings': '/server-reference',
     '/move-projects': '/move-projects-with-an-agent',
     '/download': '/use-packages',
     '/npm': '/use-packages',
@@ -84,7 +82,7 @@ export default defineConfig({
     redirects,
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'A new, lean, self-hosted artifact repository for Maven, Gradle plugins, npm, Python, Cargo and NuGet packages, Docker images, Helm charts, Debian and raw files. One binary with SQLite inside, and short-lived publish sessions for every upload.',
+        description: 'Telesphorepo is a self-hosted artifact repository that stays simple: one small server for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files, with a web UI and one command to publish. Free and open source.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
@@ -92,6 +90,7 @@ export default defineConfig({
         components: {
             Hero: './src/components/landing/Hero.astro',
             SiteTitle: './src/components/overrides/SiteTitle.astro',
+            MarkdownContent: './src/components/overrides/MarkdownContent.astro',
             TableOfContents: './src/components/overrides/TableOfContents.astro',
             MobileTableOfContents: './src/components/overrides/MobileTableOfContents.astro',
             ThemeSelect: './src/components/overrides/ThemeSelect.astro',
@@ -103,28 +102,44 @@ export default defineConfig({
             '@fontsource/geist/700.css',
             '@fontsource/geist-mono/400.css',
             '@fontsource/geist-mono/500.css',
-            './src/styles/custom.css',
+            './src/styles/tokens.css',
+            './src/styles/docs.css',
+            './src/styles/landing.css',
         ],
         expressiveCode: {
             themes: ['github-dark-default', 'github-light'],
+            // Long lines wrap, so no command is cut at the edge of the column.
+            defaultProps: {wrap: true, preserveIndent: true},
             styleOverrides: {
                 codeFontFamily: "'Geist Mono', ui-monospace, monospace",
+                codeFontSize: 'var(--tr-code-size)',
+                codeLineHeight: '1.6',
                 uiFontFamily: "'Geist', system-ui, sans-serif",
+                uiFontSize: '0.8125rem',
+                uiFontWeight: '500',
                 borderRadius: '8px',
                 borderColor: 'var(--tr-line)',
                 codeBackground: 'var(--tr-surface)',
                 frames: {
                     editorBackground: 'var(--tr-surface)',
                     terminalBackground: 'var(--tr-surface)',
-                    editorTabBarBackground: 'var(--tr-page)',
-                    terminalTitlebarBackground: 'var(--tr-page)',
-                    editorActiveTabBackground: 'var(--tr-surface)',
+                    editorTabBarBackground: 'var(--tr-surface)',
+                    editorTabBarBorderBottomColor: 'var(--tr-line)',
+                    terminalTitlebarBackground: 'var(--tr-surface)',
+                    terminalTitlebarBorderBottomColor: 'var(--tr-line)',
+                    terminalTitlebarForeground: 'var(--tr-muted)',
+                    editorActiveTabBackground: 'transparent',
+                    editorActiveTabBorderColor: 'transparent',
+                    editorActiveTabForeground: 'var(--tr-muted)',
+                    editorActiveTabIndicatorTopColor: 'transparent',
+                    editorActiveTabIndicatorBottomColor: 'transparent',
                     shadowColor: 'transparent',
                 },
             },
         },
         sidebar,
-        // "On this page" lists the h2 headings only, so a long page keeps a short list.
+        // "On this page" lists the h2 headings only, so a long page keeps a short list. A reference
+        // page sets maxHeadingLevel 3 in its frontmatter.
         tableOfContents: {minHeadingLevel: 2, maxHeadingLevel: 2},
         lastUpdated: true,
         routeMiddleware: './src/components/qol/route-data.ts',
@@ -147,21 +162,17 @@ export default defineConfig({
                 content: "try{if(localStorage.getItem('starlight-theme')===null){localStorage.setItem('starlight-theme','dark');document.documentElement.dataset.theme='dark'}}catch(e){}",
             },
         ],
-        plugins: [starlightUtils({
-            navLinks: {
-                leading: {useSidebarLabelled: "leadingNavLinks"}
-            }
-        }), starlightLinksValidator(), starlightLlmsTxt({
+        plugins: [starlightLinksValidator(), starlightLlmsTxt({
             projectName: 'Telesphorepo',
-            description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, npm packages, Python packages, Rust crates, NuGet packages, Docker images and Helm charts, Debian packages and raw files. Each format has hosted repositories, and most also have proxies and groups. It runs as one Go binary with SQLite and stores files on local disk or in an S3-compatible bucket.',
-            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish-from-a-project.md`. The Publish from a project, Publish from CI, Install the CLI, Move your projects and Run the server pages hold the steps for every choice, each under its own heading. Each repository in the server shows the setup of its format on its Use this repository and Publish to this repository tabs.',
+            description: 'Telesphorepo is a self-hosted repository for Maven and Gradle artifacts, npm packages, Python packages, Rust crates, NuGet packages, Docker images and Helm charts, Debian, Arch Linux and RPM packages, and raw files. Repositories are hosted, proxies or groups. It runs as one Go binary with SQLite and a web UI, and stores files on local disk or in an S3-compatible bucket.',
+            details: 'Every page has a Markdown copy at its URL with `.md` added, for example `/publish-from-a-project.md`. The Install the CLI, Publish from your computer, Publish from CI, Set up a production server and Move your projects pages hold the steps for every choice, each under its own heading. Three reference pages hold the lookups: CLI and telesphorepo.toml, Server commands and settings, and Repository addresses. Each repository in the server shows the setup of its format on its Use this repository and Publish to this repository tabs.',
             promote: pageOrder,
             exclude: ['404'],
             customSets: [
                 {
                     label: 'Publishing',
-                    paths: ['install-cli', 'publish-from-a-project', 'publish-from-ci', 'use-packages'],
-                    description: 'The Telesphorepo CLI (install, setup, publish and the Docker credential helper), the project file, CI for GitHub Actions and Jenkins, and downloads with a read token',
+                    paths: ['quick-start', 'install-cli', 'publish-from-a-project', 'publish-from-ci', 'use-packages', 'cli'],
+                    description: 'A first run from docker run to a published package, the Telesphorepo CLI (install, setup, publish and the Docker credential helper), the project file telesphorepo.toml, CI for GitHub Actions and Jenkins, and downloads with a read token',
                 },
                 {
                     label: 'Moving from Nexus',
@@ -170,8 +181,8 @@ export default defineConfig({
                 },
                 {
                     label: 'Administration',
-                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'store-files-in-r2', 'back-up-and-restore', 'upgrade', 'push-large-images', 'commands-and-settings'],
-                    description: 'HTTPS, storage, backups, upgrades, repositories, proxies and groups, access, CI pipelines, network rules, people, two-step verification, single sign-on, commands, environment variables and settings',
+                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'store-files-in-r2', 'back-up-and-restore', 'upgrade', 'push-large-images', 'server-reference', 'repository-addresses'],
+                    description: 'HTTPS, storage, backups, upgrades, repositories, proxies and groups, access, CI pipelines, network rules, people, two-step verification, single sign-on, server commands, environment variables, settings and the address of each format',
                 },
             ],
         })],

@@ -17,15 +17,29 @@ bun run preview  # serve the production build
 
 The pages are in `src/content/docs/<page>.mdx`. The sidebar, the redirects of moved pages and the
 `llms.txt` sets are in `astro.config.mjs`. The site title leads to the landing page.
-The sidebar holds Publish your packages, Use packages in your builds (one page: each repository in the server shows the
-setup of its format), Move from Nexus and Administration.
-The theme is in `src/styles/custom.css`. The fonts are Geist, and Geist Mono for code, from
-`@fontsource/geist` and `@fontsource/geist-mono`. The landing page components are in
-`src/components/landing/`. The questions on a page, such as "Where does the job run?" and
-"Which web server?" (`Choice.astro`, a select for each question), and the step blocks that they show (`Path.astro`) are in
-`src/components/choice/`. The diagrams are in `src/components/diagrams/`, and any docs page can
-import them. Every page also has a Markdown copy at its URL with `.md` added, and the build writes
-`llms.txt`. A diagram's Markdown copy is its summary.
+The sidebar has one group for each reader: Quick start, Publish and use packages (the developer),
+Run the server (the admin), Move from Nexus, and Reference (CLI and telesphorepo.toml, Server
+commands and settings, Repository addresses).
+
+The theme is in three files in `src/styles/`: `tokens.css` (the colours of both themes, type and
+layout sizes, the base), `docs.css` (the docs pages and their chrome) and `landing.css` (the
+landing page). The fonts are Geist, and Geist Mono for code, from `@fontsource/geist` and
+`@fontsource/geist-mono`. The landing page components are in `src/components/landing/`.
+
+The components that a page imports:
+
+- `src/components/choice/Choice.astro`: the picker. A question, such as "Where does the job run?",
+  with one card for each answer. The page shows no answer's steps until the reader picks one.
+- `src/components/choice/Path.astro`: a block, headings included, that shows for some answers.
+- `src/components/choice/Fill.astro`: the line that puts the reader's server and repository into
+  the commands under it.
+- `src/components/docs/Place.astro`: the line above a block of steps that says where they happen
+  and whose they are.
+- `src/components/docs/Done.astro`: the line that ends a procedure.
+- `src/components/diagrams/`: the diagrams.
+
+Every page also has a Markdown copy at its URL with `.md` added, and the build writes `llms.txt`.
+A diagram's Markdown copy is its summary.
 
 ## Brand files
 

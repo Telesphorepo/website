@@ -1,8 +1,9 @@
 ---
 /*
- * The Telesphorepo lockup (the flat ticket mark and the wordmark, from src/assets/brand) and the header links from
- * starlight-utils. This replaces the starlight-utils SiteTitle override, so it also renders the
- * leading nav links that the starlight-utils route middleware puts in Astro.locals.starlightUtils.navLinks.
+ * The Telesphorepo lockup (the flat ticket mark and the wordmark, from src/assets/brand). A page
+ * with no sidebar (the landing page) also shows four links to the places to start; a docs page has
+ * the sidebar for that.
+ *
  * Each brand file has fixed colors, so the header holds the dark and the light version and the theme
  * shows one. Both draw at scale 0.75 (30 px tall), so on a 2x screen every edge of the mark falls
  * on a whole device pixel. The lockup is 254.34 x 40 units, 190.76 x 30 px. Below 30rem the header
@@ -13,8 +14,13 @@ import LockupOnDark from '../../assets/brand/lockup-horizontal-on-dark.svg';
 import Mark from '../../assets/brand/logo-mark.svg';
 import MarkOnLight from '../../assets/brand/logo-mark-on-light.svg';
 
-const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute;
-const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
+const { siteTitle, siteTitleHref, hasSidebar } = Astro.locals.starlightRoute;
+const navLinks = hasSidebar ? [] : [
+    { label: 'Quick start', href: '/quick-start/' },
+    { label: 'Publish', href: '/install-cli/' },
+    { label: 'Run the server', href: '/run-the-server/' },
+    { label: 'Move from Nexus', href: '/move-from-nexus/' },
+];
 ---
 
 <div class="tr-title-bar">
@@ -27,11 +33,7 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
     {navLinks.length > 0 && (
         <ul class="tr-nav-links">
             {navLinks.map((entry) => (
-                <li>
-                    <a href={entry.href} {...entry.attrs} aria-current={entry.isCurrent ? 'page' : undefined}>
-                        {entry.label}
-                    </a>
-                </li>
+                <li><a href={entry.href}>{entry.label}</a></li>
             ))}
         </ul>
     )}
@@ -82,7 +84,7 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
     .tr-nav-links a {
         display: block;
         padding: 0.375rem 0.75rem;
-        border-radius: 999px;
+        border-radius: 6px;
         font-size: 0.875rem;
         font-weight: 500;
         color: var(--tr-muted);
@@ -95,13 +97,8 @@ const navLinks = Astro.locals.starlightUtils?.navLinks ?? [];
         color: var(--tr-heading);
     }
 
-    .tr-nav-links a[aria-current='page'] {
-        background-color: var(--tr-raised);
-        color: var(--tr-heading);
-    }
-
-    /* The three header links need the width of a tablet. The sidebar menu holds the same pages. */
-    @media (max-width: 50rem) {
+    /* The links need the width of a tablet. A phone reaches the same pages from the landing page. */
+    @media (max-width: 56rem) {
         .tr-nav-links {
             display: none;
         }

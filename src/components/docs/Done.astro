@@ -1,0 +1,41 @@
+---
+/*
+ * The Done line at the end of a procedure: a green check in the gutter of the step numbers, then
+ * one sentence in the body colour that names what the reader sees, and where.
+ *
+ * <Done>Done when the build's **Console Output** ends with `Finished: SUCCESS`.</Done>
+ */
+---
+
+<div class="tr-done">
+    <svg class="tr-done-check" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <div class="tr-done-text"><slot /></div>
+</div>
+
+<style>
+    .tr-done {
+        position: relative;
+        max-width: calc(var(--tr-measure) + var(--tr-step-gutter));
+        padding-inline-start: var(--tr-step-gutter);
+    }
+
+    /* The check takes the size and the first line of the step numbers. */
+    .tr-done-check {
+        position: absolute;
+        top: calc((1lh - 1.125rem) / 2);
+        inset-inline-start: 0;
+        width: 1.125rem;
+        height: 1.125rem;
+        color: var(--tr-ok);
+    }
+
+    .tr-done-text > :global(*) {
+        margin: 0;
+    }
+
+    .tr-done-text > :global(* + *) {
+        margin-top: 0.5rem;
+    }
+</style>

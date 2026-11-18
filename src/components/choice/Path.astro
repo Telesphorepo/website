@@ -1,13 +1,18 @@
 ---
 /*
- * One block of steps for one answer to the questions of Choice.astro. Every other prop becomes a
- * data-<key> attribute: <Path title="..." from="github" tool="maven"> shows only when the answer
- * to "from" is github and the answer to "tool" is maven. A value can list several answers,
- * separated by spaces. The title shows only without JavaScript, when every block is on the page.
+ * One block for one answer to the questions of Choice.astro. Every prop but title and level becomes
+ * a data-<key> attribute: <Path title="..." from="github"> shows only when the answer to "from" is
+ * github. A value can list several answers, separated by spaces. The title is a heading of the given
+ * level (2 or 3) that shows only without JavaScript, when every block is on the page.
+ *
+ * A Path may hold headings, h2 included. "On this page" hides the entries of those headings while
+ * the block is hidden: the CSS below names the headings' ids and asks the same questions of the
+ * answers on <html> as Choice.astro does of the block. A prop that names no question on the page
+ * (no data-tr-<key> on <html>) hides nothing.
  */
 interface Props {
     title: string;
-    level?: 2 | 3 | 4;
+    level?: 2 | 3;
     [key: string]: string | number | undefined;
 }
 
@@ -20,10 +25,19 @@ const taken: Set<string> = ((Astro.locals as { trPathIds?: Set<string> }).trPath
 let id = base;
 for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
 taken.add(id);
-const Heading = `h${level}` as 'h2' | 'h3' | 'h4';
+const Heading = `h${level}` as 'h2' | 'h3';
+
+const content = await Astro.slots.render('default');
+const headingIds = [...content.matchAll(/<h[23][^>]*\sid="([^"]+)"/g)].map((m) => m[1]);
+const toc = ':is(starlight-toc, .tr-mobile-toc)';
+const css = headingIds.flatMap((heading) => Object.entries(when).map(([key, value]) => {
+    const answers = String(value).split(/\s+/).filter(Boolean).map((v) => `:not([data-tr-${key}="${v}"])`).join('');
+    return `html[data-tr-${key}]${answers} ${toc} li:has(> a[href="#${heading}"]){display:none}`;
+})).join('\n');
 ---
 
 <section class="tr-path" {...attrs}>
     <Heading class="tr-path-title" id={id}>{title}</Heading>
-    <slot />
+    <Fragment set:html={content} />
 </section>
+{css && <style is:inline set:html={css}></style>}

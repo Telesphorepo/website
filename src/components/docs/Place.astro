@@ -1,0 +1,31 @@
+---
+/*
+ * The place line: one muted line that says where a procedure happens and whose it is, such as
+ * "In Jenkins · For a Jenkins admin · Once for each Jenkins". It sits under an h2 or h3, or right
+ * above a <Steps> block. Every <Steps> block has one.
+ *
+ * where: the application and the page ("In a terminal, in the project folder").
+ * who: only when the steps are not the reader's ("For a server admin").
+ * once: how often ("Once for each Jenkins").
+ */
+interface Props {
+    where: string;
+    who?: string;
+    once?: string;
+}
+
+const { where, who, once } = Astro.props;
+const line = [where, who, once].filter(Boolean).join(' · ');
+---
+
+<p class="tr-place">{line}</p>
+
+<style>
+    .tr-place {
+        max-width: var(--tr-measure);
+        color: var(--tr-muted);
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1.45;
+    }
+</style>

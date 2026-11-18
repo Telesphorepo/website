@@ -1,0 +1,689 @@
+/*
+ * The docs pages: layout and measure, type, space, the components in the text, and the chrome
+ * around it (header, sidebar, "On this page", page links). The tokens are in tokens.css.
+ *
+ * Three ranks the eye can tell apart: a section (h2), a step (a gold number), a detail (body
+ * text). Prose stops at --tr-measure; code blocks, tables, callouts and the picker span the
+ * whole column. Hover and the current item fill the whole element; nothing uses a side border.
+ */
+
+/* Layout: from 72rem the column starts 4rem right of the sidebar on every page. */
+
+@media (min-width: 72rem) {
+    [data-has-toc] .right-sidebar-container {
+        width: var(--tr-toc-width);
+    }
+
+    [data-has-sidebar][data-has-toc] .main-pane {
+        --sl-content-margin-inline: calc(4rem - var(--sl-content-pad-x)) auto;
+        width: calc(100% - var(--tr-toc-width));
+    }
+}
+
+/* The title panel and the content panel read as one column. */
+.content-panel + .content-panel {
+    border-top: 0;
+    padding-top: 0;
+}
+
+.content-panel:has(> .sl-container > #_top) {
+    padding-bottom: 0.75rem;
+}
+
+/* Header: the page color with one rule under it. */
+
+.header {
+    border-bottom-color: var(--tr-line);
+}
+
+/* Type */
+
+.sl-markdown-content {
+    font-size: var(--sl-text-body);
+    line-height: var(--sl-line-height);
+}
+
+#_top {
+    font-size: var(--sl-text-h1);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    color: var(--tr-heading);
+    overflow-wrap: break-word;
+    text-wrap: balance;
+}
+
+:root:not([data-has-hero]) #_top {
+    max-width: var(--tr-measure);
+    margin-top: 1.5rem;
+}
+
+.sl-markdown-content :is(h2, h3):not(:where(.not-content *)) {
+    color: var(--tr-heading);
+    font-weight: 600;
+}
+
+.sl-markdown-content h2:not(:where(.not-content *)) {
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    text-wrap: balance;
+}
+
+.sl-markdown-content h3:not(:where(.not-content *)) {
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h2 {
+    line-height: 1.25;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h3 {
+    line-height: 1.35;
+}
+
+.sl-markdown-content p:not(:where(.not-content *)) {
+    text-wrap: pretty;
+}
+
+/* The first paragraph of a page is the lede. */
+.sl-markdown-content > :is(p:first-child, script:first-child + p) {
+    font-size: var(--tr-lede-size);
+    line-height: 1.5;
+}
+
+/* Bold marks a label from a screen: the weight changes, the colour stays the body colour. */
+.sl-markdown-content strong:not(:where(.not-content *)) {
+    color: inherit;
+    font-weight: 600;
+}
+
+/* Measure: prose stops at about 78 characters. */
+.sl-markdown-content :is(p, h1, h2, h3, .sl-heading-wrapper, summary, dt, dd):not(:where(.not-content *)),
+.sl-markdown-content :is(ul, ol):not(.sl-steps) > li:not(:has(> :is(.expressive-code, table))):not(:where(.not-content *)) {
+    max-width: var(--tr-measure);
+}
+
+/*
+ * Space (DESIGN 2.3). A heading sits closer to what it names than to what came before it, and a
+ * step closer to its own block than to the next step.
+ */
+
+.sl-markdown-content > :is(p:first-child, script:first-child + p) + *,
+.sl-markdown-content > .tr-mobile-toc + * {
+    margin-top: 2rem;
+}
+
+.sl-markdown-content .tr-fill + * {
+    margin-top: 0.75rem;
+}
+
+/*
+ * A Path block: with JavaScript its title is hidden, so the block takes the space of its first
+ * heading.
+ */
+html[data-tr-choice] .sl-markdown-content .tr-path > .tr-path-title + * {
+    margin-top: 0;
+}
+
+html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-heading-wrapper.level-h2) {
+    margin-top: 3.5rem;
+}
+
+html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-heading-wrapper.level-h3) {
+    margin-top: 2.25rem;
+}
+
+.sl-markdown-content .tr-path-title {
+    max-width: var(--tr-measure);
+}
+
+.sl-markdown-content .tr-path > h2.tr-path-title {
+    margin-top: 3.5rem;
+}
+
+.sl-markdown-content .tr-path > h3.tr-path-title {
+    margin-top: 2.25rem;
+}
+
+.sl-markdown-content p + :is(.expressive-code, table, .sl-steps):not(:where(.not-content *)) {
+    margin-top: 0.75rem;
+}
+
+.sl-markdown-content :is(.expressive-code, table, .starlight-aside) + :not(:where(.not-content *)) {
+    margin-top: 1.25rem;
+}
+
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h2 {
+    margin-top: 3.5rem;
+}
+
+/* A page that opens with a heading keeps 2rem under the title. */
+.sl-markdown-content > .sl-heading-wrapper:first-child,
+.sl-markdown-content > :is(script, .tr-mobile-toc):first-child + .sl-heading-wrapper,
+.sl-markdown-content > script:first-child + .tr-mobile-toc + .sl-heading-wrapper,
+.sl-markdown-content > .tr-mobile-toc + .sl-heading-wrapper {
+    margin-top: 2rem;
+}
+
+.sl-markdown-content :not(h1, h2, h3, h4, h5, h6, .sl-heading-wrapper) + .sl-heading-wrapper.level-h3 {
+    margin-top: 2.25rem;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h2 + * {
+    margin-top: 0.75rem;
+}
+
+.sl-markdown-content .sl-heading-wrapper.level-h3 + * {
+    margin-top: 0.5rem;
+}
+
+/* Heading links show on hover or focus of the heading, and not at all on a touch screen. */
+
+.sl-markdown-content .sl-anchor-link {
+    color: var(--tr-muted);
+}
+
+.sl-markdown-content .sl-anchor-link:hover {
+    color: var(--tr-link);
+}
+
+@media (hover: none) {
+    .sl-markdown-content .sl-anchor-link {
+        display: none;
+    }
+}
+
+/* Links keep an underline: their color alone is too close to the body text. */
+
+.sl-markdown-content a:not(:where(.not-content *)) {
+    color: var(--tr-link);
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.sl-markdown-content a:hover:not(:where(.not-content *)) {
+    color: var(--tr-heading);
+    text-decoration-color: currentColor;
+}
+
+/* Inline code: a chip in the body colour that keeps its ends when it wraps. */
+
+.sl-markdown-content code:not(:where(.not-content *)) {
+    margin-block: 0;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+    background-color: var(--tr-raised);
+    color: inherit;
+    font-size: 0.9em;
+    overflow-wrap: anywhere;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.sl-markdown-content :is(h2, h3) code:not(:where(.not-content *)) {
+    font-size: 0.9em;
+}
+
+/* Code blocks: the surface, one rule, a muted title, and no title bar on a terminal with no title. */
+
+.sl-markdown-content .expressive-code .frame {
+    box-shadow: none;
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal:not(.has-title) .header {
+    display: none;
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal:not(.has-title) pre {
+    border-top: var(--ec-brdWd) solid var(--ec-brdCol);
+    border-radius: var(--ec-brdRad);
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal:not(.has-title) {
+    --button-spacing: 0.4rem;
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal.has-title .header::before {
+    display: none;
+}
+
+.sl-markdown-content .expressive-code .frame.is-terminal.has-title .header {
+    justify-content: flex-start;
+    padding-inline: var(--ec-codePadInl);
+}
+
+/*
+ * The copy button: 32 px to see, 44 px to tap, at the top right. A desktop shows it on hover or
+ * focus (Expressive Code). A touch screen always shows it, so the lines keep 3rem clear under it.
+ * On a one-line block it sits on the middle of the line.
+ */
+.sl-markdown-content .expressive-code .copy {
+    margin-block-start: -0.4rem;
+    inset-inline-end: calc(var(--ec-brdWd) + 0.125rem);
+}
+
+.sl-markdown-content .expressive-code .copy button {
+    width: 2.75rem;
+    height: 2.75rem;
+    background: transparent;
+}
+
+.sl-markdown-content .expressive-code .copy button div,
+.sl-markdown-content .expressive-code .copy button::before {
+    inset: 0.375rem;
+}
+
+.sl-markdown-content .expressive-code .copy button::after {
+    margin: 0.8125rem;
+}
+
+@media (hover: none) {
+    .sl-markdown-content .expressive-code .frame:has(.copy) .ec-line .code {
+        padding-inline-end: 3rem;
+    }
+}
+
+/* Tables: a muted header over one strong rule, light rules between rows, no fill. */
+
+.sl-markdown-content table:not(:where(.not-content *)) {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.sl-markdown-content :is(th, td):not(:where(.not-content *)),
+.sl-markdown-content :is(th, td):is(:first-child, :last-child):not(:where(.not-content *)) {
+    padding: 0.5rem 1rem 0.5rem 0;
+    border: 0;
+    border-bottom: 1px solid var(--tr-line);
+    vertical-align: top;
+}
+
+.sl-markdown-content :is(th, td):last-child:not(:where(.not-content *)) {
+    padding-inline-end: 0;
+}
+
+.sl-markdown-content th:not(:where(.not-content *)) {
+    border-bottom-color: var(--tr-line-strong);
+    background: none;
+    color: var(--tr-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.sl-markdown-content td:not(:where(.not-content *)) {
+    color: var(--tr-body);
+}
+
+.sl-markdown-content tr:last-child > td:not(:where(.not-content *)) {
+    border-bottom: 0;
+}
+
+/* The perforation rule. */
+
+.sl-markdown-content hr:not(:where(.not-content *)) {
+    height: 4px;
+    margin-block: 2.5rem;
+    border: 0;
+    background-color: var(--tr-line-strong);
+    mask: var(--tr-perforation) left center / 12px 4px repeat-x;
+}
+
+/* Quotes: a filled block, no side rule. */
+
+.sl-markdown-content blockquote:not(:where(.not-content *)) {
+    border: 0;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    background-color: var(--tr-surface);
+    color: var(--tr-muted);
+}
+
+/*
+ * Troubleshooting: a run of details, one problem in each, titled with what the reader sees. A
+ * hairline between the entries and a chevron that turns when the entry opens.
+ */
+
+.sl-markdown-content details:not(:where(.not-content *)) {
+    border: 0;
+    border-top: 1px solid var(--tr-line);
+    border-radius: 0;
+    padding: 0;
+    background: none;
+}
+
+.sl-markdown-content details:not(:has(+ details)):not(:where(.not-content *)) {
+    border-bottom: 1px solid var(--tr-line);
+}
+
+.sl-markdown-content details + details:not(:where(.not-content *)) {
+    margin-top: 0;
+}
+
+.sl-markdown-content details > summary:not(:where(.not-content *)) {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    margin: 0;
+    padding: 0.75rem 0;
+    color: var(--tr-body);
+    font-weight: 500;
+    text-wrap: pretty;
+    list-style: none;
+    cursor: pointer;
+    transition: color 120ms ease;
+}
+
+.sl-markdown-content details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.sl-markdown-content details > summary:not(:where(.not-content *))::before {
+    content: '';
+    flex: none;
+    align-self: center;
+    width: 0.75rem;
+    height: 0.75rem;
+    margin: 0;
+    background-color: var(--tr-muted);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+    transform: none;
+    transition: rotate 150ms ease;
+}
+
+.sl-markdown-content details[open] > summary:not(:where(.not-content *))::before {
+    rotate: 90deg;
+}
+
+.sl-markdown-content details > summary:hover:not(:where(.not-content *)) {
+    color: var(--tr-link);
+}
+
+.sl-markdown-content details[open]:not(:where(.not-content *)) {
+    padding-bottom: 1rem;
+}
+
+.sl-markdown-content details > :not(summary):not(:where(.not-content *)) {
+    margin-inline-start: 1.375rem;
+}
+
+.sl-markdown-content details > summary + :not(:where(.not-content *)) {
+    margin-top: 0;
+}
+
+/*
+ * Callouts: a Note is a quiet box with a small muted title; a Warning is the same box with a gold
+ * border and a gold title. The page uses no other kind.
+ */
+
+.starlight-aside {
+    border: 1px solid var(--tr-line);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    background-color: var(--tr-surface);
+    color: var(--tr-body);
+}
+
+.starlight-aside--note {
+    --sl-color-asides-text-accent: var(--tr-muted);
+}
+
+.starlight-aside--caution {
+    --sl-color-asides-text-accent: var(--tr-link);
+    border-color: var(--tr-accent);
+}
+
+.starlight-aside__title {
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.starlight-aside__title svg {
+    display: none;
+}
+
+.starlight-aside__content > * {
+    max-width: var(--tr-measure);
+}
+
+/* File trees: nested folders indent with no side rule. */
+
+starlight-file-tree ul {
+    border: 0;
+}
+
+/*
+ * Steps: the number hangs in a gutter, gold, with no period, circle or line. The text of a step
+ * wraps under itself, and a block in a step runs from the text's left edge to the column's right
+ * edge.
+ */
+
+.sl-steps > li {
+    min-height: 0;
+    padding-bottom: 0;
+    padding-inline-start: var(--tr-step-gutter);
+}
+
+.sl-steps > li + li {
+    margin-top: 1.25rem;
+}
+
+.sl-steps > li::before {
+    top: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    color: var(--tr-link);
+    font-size: var(--sl-text-body);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: var(--sl-line-height);
+    text-align: start;
+}
+
+.sl-steps > li::after {
+    display: none;
+}
+
+.sl-steps > li > :first-child {
+    transform: none;
+    margin-bottom: 0;
+}
+
+.sl-steps > li > * + * {
+    margin-top: 0.75rem;
+}
+
+.sl-steps > li > p + p {
+    margin-top: 0.5rem;
+}
+
+.sl-markdown-content .sl-steps > li > :last-child {
+    margin-bottom: 0;
+}
+
+/* A place line sits right above its steps; steps sit close to the Done line after them. */
+
+.sl-markdown-content .tr-place + * {
+    margin-top: 0.5rem;
+}
+
+.sl-markdown-content .sl-steps + .tr-done {
+    margin-top: 1.25rem;
+}
+
+/*
+ * Sidebar: a plain list. A group label is a small muted line that does not fold. The current page
+ * takes the surface fill and the heading colour.
+ */
+
+#starlight__sidebar .top-level > li + li {
+    margin-top: 1.5rem;
+}
+
+#starlight__sidebar .top-level > li:has(> a) + li:has(> a) {
+    margin-top: 0.125rem;
+}
+
+#starlight__sidebar ul ul li {
+    border: 0;
+    margin-inline-start: 0;
+    padding-inline-start: 0;
+}
+
+#starlight__sidebar summary {
+    padding: 0 0.75rem 0.375rem;
+    cursor: default;
+    pointer-events: none;
+}
+
+#starlight__sidebar summary .caret {
+    display: none;
+}
+
+#starlight__sidebar summary .large {
+    color: var(--tr-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+#starlight__sidebar a,
+#starlight__sidebar a.large {
+    margin-block: 1px;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    color: var(--tr-body);
+    font-size: 0.9375rem;
+    font-weight: 400;
+    line-height: 1.4;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+#starlight__sidebar a:hover,
+#starlight__sidebar a:focus-visible {
+    background-color: var(--tr-surface);
+    color: var(--tr-heading);
+}
+
+#starlight__sidebar a[aria-current='page'],
+#starlight__sidebar a[aria-current='page']:hover,
+#starlight__sidebar a[aria-current='page']:focus {
+    background-color: var(--tr-surface);
+    box-shadow: none;
+    color: var(--tr-heading);
+    font-weight: 600;
+}
+
+/* Phone: the menu button is a 44 px icon with no fill, and the menu rows are 44 px tall. */
+
+:root {
+    --sl-menu-button-size: 2.75rem;
+}
+
+.sl-menu-button,
+:root[data-theme='light'] .sl-menu-button,
+.sl-menu-button:has(~ :popover-open),
+:root[data-theme='light'] .sl-menu-button:has(~ :popover-open) {
+    padding: 0.625rem;
+    background: none;
+    box-shadow: none;
+    color: var(--tr-heading);
+}
+
+.sl-menu-button svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+@media (max-width: 49.99rem) {
+    #starlight__sidebar a,
+    #starlight__sidebar a.large {
+        display: flex;
+        align-items: center;
+        min-height: 2.75rem;
+        font-size: 1rem;
+    }
+}
+
+/* "On this page": the h2 headings in small muted text; the current one takes the heading colour. */
+
+.right-sidebar {
+    border-inline-start: 0;
+}
+
+starlight-toc h2 {
+    color: var(--tr-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+starlight-toc a {
+    --pad-inline: 0.625rem;
+    margin-inline-end: 0.75rem;
+    border-radius: 6px;
+    color: var(--tr-muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    transition: background-color 120ms ease, color 120ms ease;
+}
+
+starlight-toc a:hover {
+    color: var(--tr-heading);
+}
+
+starlight-toc a[aria-current='true'],
+starlight-toc a[aria-current='true']:hover {
+    background: none;
+    box-shadow: none;
+    color: var(--tr-heading);
+    font-weight: 500;
+}
+
+/* Previous and next links: the whole box fills on hover. */
+
+.pagination-links {
+    margin-top: 3.5rem;
+}
+
+.pagination-links a {
+    border: 0;
+    border-radius: 8px;
+    background-color: var(--tr-surface);
+    box-shadow: none;
+    color: var(--tr-muted);
+    transition: background-color 150ms ease;
+}
+
+.pagination-links a:hover {
+    background-color: var(--tr-hover);
+}
+
+.pagination-links .link-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--tr-heading);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pagination-links a,
+    #starlight__sidebar a,
+    starlight-toc a,
+    .sl-markdown-content details > summary,
+    .sl-markdown-content details > summary::before {
+        transition: none;
+    }
+}

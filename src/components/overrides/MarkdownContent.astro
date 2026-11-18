@@ -1,0 +1,21 @@
+---
+/*
+ * Starlight's MarkdownContent, with "On this page" for narrow screens (MobileTableOfContents.astro)
+ * in the flow right under the lede, the first paragraph of the page. On a page that opens with
+ * anything else, the list comes first.
+ */
+import Default from '@astrojs/starlight/components/MarkdownContent.astro';
+import MobileTableOfContents from './MobileTableOfContents.astro';
+
+const html = await Astro.slots.render('default');
+const hasToc = Boolean(Astro.locals.starlightRoute.toc?.items.length);
+// The leading scripts (MovedAnchors.astro), then the lede when the page opens with a <p>.
+const head = hasToc ? html.match(/^\s*(?:<script\b[\s\S]*?<\/script>\s*)*(?:<p\b[\s\S]*?<\/p>)?/)![0] : '';
+const rest = html.slice(head.length);
+---
+
+<Default>
+    <Fragment set:html={head} />
+    {hasToc && <MobileTableOfContents inFlow />}
+    <Fragment set:html={rest} />
+</Default>

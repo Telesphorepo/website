@@ -1,0 +1,206 @@
+/*
+ * Telesphorepo theme: the tokens of both themes, the base and the scrollbars. The --tr-* tokens
+ * hold the palette. The --sl-* tokens map it onto Starlight, so Starlight's own components follow
+ * both themes. Starlight's styles sit in cascade layers, so these unlayered rules win without
+ * extra specificity. docs.css styles the docs pages, landing.css the landing page.
+ *
+ * The idea: a gold admission ticket on carbon blue. The brand files are in src/assets/brand
+ * (copies of the Telesphorepo repo's branding/ folder). The landing page leans tactile; the docs
+ * pages stay flat.
+ *
+ * Each colour has one job:
+ * - heading (Paper): h1, h2, h3, the question of a choice and the label of an option.
+ * - body: text, bold text, inline code, table cells.
+ * - muted: place lines, captions, table headers, sidebar group labels, "On this page".
+ * - accent (Gold): links, step numbers, the chosen option, the primary button, the focus ring.
+ *   On paper, --tr-accent (Gold Deep #A8760F) marks graphics and --tr-link (#7E5500) sets text.
+ * - ok (green): the check of a Done line. stamp (coral): the void stamp of the 404 page.
+ * - control: the border of a control in the text (an option of a choice, an input), 3:1 or more
+ *   on the page. line: rules between things that are not controls.
+ */
+
+:root {
+    --tr-page: #131838;
+    --tr-surface: #1a2046;
+    --tr-raised: #222956;
+    --tr-hover: #2b3366;
+    --tr-line: #2a3163;
+    --tr-line-strong: #3c4682;
+    --tr-control: #5b66a8;
+    --tr-muted: #a0a8d4;
+    --tr-body: #d4d8f0;
+    --tr-heading: #f5f1e6;
+    --tr-accent-low: #3a3428;
+    --tr-accent: #e9b546;
+    --tr-accent-high: #f6d88a;
+    --tr-link: #e9b546;
+    --tr-stamp: #ff7461;
+    --tr-ok: #7ee0b6;
+
+    /* Gold: the same foil with Carbon ink in both themes (9.18:1). */
+    --tr-gold: #e9b546;
+    --tr-gold-light: #f6d88a;
+    --tr-gold-dark: #cf972e;
+    --tr-gold-ink: #131838;
+    --tr-gold-faint: #5c3f08;
+
+    /*
+     * Paper: a fine grain over the card color, and a lift. Only the landing page and the diagram
+     * frames use it.
+     */
+    --tr-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --tr-paper-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06), 0 1px 0 rgb(5 7 26 / 0.5), 0 10px 24px -14px rgb(5 7 26 / 0.8);
+
+    /*
+     * The perforation: a row of the mark's slots, turned on their side. One tile is 12 x 4 px and
+     * holds one slot of 8 x 2 px with round ends at (2, 1), so the gap is 4 px, as in the mark
+     * (slot 4, gap 2, at half the scale). The rule and the diagram frames use it.
+     */
+    --tr-perforation: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='4'%3E%3Crect x='2' y='1' width='8' height='2' rx='1'/%3E%3C/svg%3E");
+
+    --sl-color-accent-low: var(--tr-accent-low);
+    --sl-color-accent: var(--tr-accent);
+    --sl-color-accent-high: var(--tr-accent-high);
+
+    --sl-color-white: var(--tr-heading);
+    --sl-color-gray-1: #e6e8f7;
+    --sl-color-gray-2: var(--tr-body);
+    --sl-color-gray-3: var(--tr-muted);
+    --sl-color-gray-4: #5b6499;
+    --sl-color-gray-5: var(--tr-line-strong);
+    --sl-color-gray-6: var(--tr-surface);
+    --sl-color-black: var(--tr-page);
+
+    --sl-color-text: var(--tr-body);
+    --sl-color-text-accent: var(--tr-link);
+    --sl-color-text-invert: var(--tr-gold-ink);
+    --sl-color-bg: var(--tr-page);
+    --sl-color-bg-nav: var(--tr-page);
+    --sl-color-bg-sidebar: var(--tr-page);
+    --sl-color-bg-inline-code: var(--tr-raised);
+    --sl-color-hairline-light: var(--tr-line);
+    --sl-color-hairline: var(--tr-line);
+    --sl-color-hairline-shade: var(--tr-line);
+
+    --sl-font: 'Geist', system-ui, sans-serif;
+    --sl-font-mono: 'Geist Mono', ui-monospace, monospace;
+
+    /* Type (DESIGN 2.2): 36, 24, 18, 17, 14 on a desktop. */
+    --sl-text-h1: 1.875rem;
+    --sl-text-h2: 1.375rem;
+    --sl-text-h3: 1.125rem;
+    --sl-text-body: 1rem;
+    --sl-text-code: 0.8125rem;
+    --tr-lede-size: 1.125rem;
+    --tr-code-size: 0.8125rem;
+    --sl-line-height: 1.6;
+    --sl-line-height-headings: 1.25;
+
+    /*
+     * Layout (DESIGN 2.1): code and tables span the 44rem column, prose stops at the 36rem
+     * measure. The mobile "On this page" sits in the flow, so it takes no height at the top.
+     */
+    --sl-content-width: 44rem;
+    --tr-measure: 36rem;
+    --sl-sidebar-width: 16rem;
+    --tr-toc-width: 14rem;
+    --sl-nav-height: 3.5rem;
+    --sl-mobile-toc-height: 0rem;
+    --tr-step-gutter: 1.75rem;
+
+    color-scheme: dark;
+}
+
+@media (min-width: 50rem) {
+    :root {
+        --sl-text-h1: 2.25rem;
+        --sl-text-h2: 1.5rem;
+        --sl-text-body: 1.0625rem;
+        --sl-text-code: 0.875rem;
+        --tr-lede-size: 1.1875rem;
+        --tr-code-size: 0.875rem;
+        --tr-step-gutter: 2.25rem;
+    }
+}
+
+:root[data-theme='light'] {
+    --tr-page: #f7f4ec;
+    --tr-surface: #efebe0;
+    --tr-raised: #e6e1d3;
+    --tr-hover: #ded8c8;
+    --tr-line: #ddd7c7;
+    --tr-line-strong: #c4bca6;
+    --tr-control: #8a8168;
+    --tr-muted: #545a7e;
+    --tr-body: #2a3060;
+    --tr-heading: #131838;
+    --tr-accent-low: #f3e4bc;
+    --tr-accent: #a8760f;
+    --tr-accent-high: #7e5500;
+    --tr-link: #7e5500;
+    --tr-stamp: #b3261e;
+    --tr-ok: #0f7048;
+
+    --tr-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .3 0 0 0 0 .24 0 0 0 0 .12 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    --tr-paper-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7), 0 1px 0 rgb(110 90 40 / 0.18), 0 10px 22px -14px rgb(60 45 10 / 0.35);
+
+    --sl-color-gray-1: #131838;
+    --sl-color-gray-4: #8d8a7c;
+    --sl-color-gray-7: var(--tr-surface);
+
+    color-scheme: light;
+}
+
+/* Keep the layout still between short and long pages. */
+html {
+    scrollbar-gutter: stable;
+}
+
+/*
+ * Scrollbars, the same on every box that scrolls: no rail and no arrows, a thin rounded thumb.
+ * Chromium and Safari draw them from ::-webkit-scrollbar. Only a browser without it (Firefox)
+ * gets the standard properties.
+ */
+::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border: 4px solid transparent;
+    border-radius: 999px;
+    background-color: var(--tr-line-strong);
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--tr-muted);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-color: var(--tr-line-strong) transparent;
+    }
+}
+
+body {
+    background-color: var(--tr-page);
+    color: var(--tr-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+    background-color: var(--tr-gold);
+    color: var(--tr-gold-ink);
+}
+
+:focus-visible {
+    outline: 2px solid var(--tr-accent);
+    outline-offset: 2px;
+}

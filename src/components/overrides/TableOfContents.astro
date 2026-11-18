@@ -1,14 +1,17 @@
 ---
 /*
- * Starlight's table of contents, with the page actions under the headings.
+ * Starlight's table of contents, with the page actions under the headings. A page with no section
+ * shows only the page actions.
  */
 import Default from '@astrojs/starlight/components/TableOfContents.astro';
 import PageActions from '../qol/PageActions.astro';
+
+const { toc } = Astro.locals.starlightRoute;
 ---
 
-{Astro.locals.starlightRoute.toc && (
+{toc && (
     <>
-        <Default/>
+        {toc.items.length > 0 && <Default/>}
         <PageActions/>
     </>
 )}
