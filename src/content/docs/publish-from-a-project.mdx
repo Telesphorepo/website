@@ -18,15 +18,15 @@ If the project folder holds `telesphorepo.toml` already, someone set it up: pull
 
 <Steps>
 
-1. In Telesphorepo, open your repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows the setup line: one command that installs the CLI and sets up the project.
+1. In Telesphorepo, open your repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second step. The page shows the setup line: one command that installs the CLI and sets up the project.
 
 2. Copy the setup line from the page. Open a terminal in the project folder, paste the line, and press Enter. The page shows the line for the system of your browser, with a switch for the other. The line works once, for 10 minutes.
 
-3. The CLI approves this computer, writes `telesphorepo.toml` and asks `Add a CI file that publishes to your-repo?`. Press Enter to take `1) No CI file`. The CLI asks before it changes a file that you have.
+3. The CLI approves this computer, writes `telesphorepo.toml` and asks "Add a CI file that publishes to your-repo?". Press Enter to take "1) No CI file".
 
 </Steps>
 
-<Done>Done when the CLI prints `Wrote` and the path of `telesphorepo.toml`.</Done>
+<Done>Done when the CLI prints "Wrote" and the path of `telesphorepo.toml`.</Done>
 
 ## Commit the files
 
@@ -50,7 +50,7 @@ git push
    telesphorepo publish
    ```
 
-2. On a computer that a teammate set up the project from, the CLI prints `This computer has no device of` and the address of your server, then a link and a code. Open the link, check that the page shows the same code, and click **Approve device**.
+2. If you got `telesphorepo.toml` from a teammate's commit and never ran the setup line on this computer, the CLI prints "This computer has no device of" and your server's address, then a link and a code. Open the link, check that the page shows the same code, and click **Approve device**.
 
 </Steps>
 
@@ -93,7 +93,8 @@ A Docker repository needs no `telesphorepo.toml`: Docker gets a token from the c
 
 1. [Set up the project](#set-up-the-project) on the Docker repository, as above.
 
-2. When the CLI asks `Add the credential helper to` your Docker config file, type `y` and press Enter.
+2. When the CLI asks "Add the credential helper to" and the path of your Docker config file, type `y` and press Enter.
+
 
 3. Tag the image with the host name of your server and the name of the repository, then push it.
 

@@ -35,7 +35,7 @@ The program `telesphorepo-server` runs the server and changes its data. In the c
 | [`dev`](#dev) | Runs a local server with demo data |
 | [`user add`](#user-add) | Creates a user |
 | [`user passwd`](#user-passwd) | Sets a new password |
-| [`user reset-2fa`](#user-reset-2fa) | Removes every second factor of a user |
+| [`user reset-2fa`](#user-reset-2fa) | Removes every second step of a user |
 | [`backup`](#backup) | Writes one backup |
 | [`restore`](#restore) | Restores a backup into an empty data folder |
 | [`version`, `help`](#version-and-help) | Prints the version, or the help of a command |
@@ -79,7 +79,8 @@ telesphorepo-server user passwd alice
 
 ### user reset-2fa
 
-Removes every authenticator app, passkey and recovery code of a user. The user signs in with the password and adds a new second factor, and approved computers stay approved.
+Removes every authenticator app, passkey and recovery code of a user. The user signs in with the password and adds a new second step, and
+ approved computers stay approved.
 
 ```sh
 telesphorepo-server user reset-2fa alice

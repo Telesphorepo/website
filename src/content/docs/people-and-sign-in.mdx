@@ -65,7 +65,7 @@ A person needs a second step to sign in when they hold any permission other than
 
 <Steps>
 
-1. Open the menu of your account in the top bar, click **Your account**, then click **Sign-in and security**.
+1. Open the account menu at the top right, click **Your account**, then **Sign-in and security**.
 
 2. Under **Two-step verification**, click **Add** on the **Authenticator app** row or the **Passkey** row, and follow the page.
 
@@ -138,22 +138,23 @@ On the **Sign-in options** page, under **How people sign in**, set **Password si
 ## Troubleshooting
 
 <details>
-<summary>Someone lost every second factor</summary>
+<summary>Someone can no longer do their second step</summary>
 
-On the machine of the server:
+On the host of the server:
 
 ```sh
 docker exec -it telesphorepo /telesphorepo-server user reset-2fa alice
 ```
 
-The person sets up a new factor at the next sign-in.
+The person adds a new second step at the next sign-in.
 
 </details>
 
 <details>
 <summary>Someone forgot the password</summary>
 
-On the page of the person, click **Reset password**. Or on the machine of the server:
+On the page of the person, click **Reset password**. Or on the host of the server:
+
 
 ```sh
 docker exec -it telesphorepo /telesphorepo-server user passwd alice
