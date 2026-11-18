@@ -26,15 +26,15 @@ A job in GitHub Actions or Jenkins publishes with `telesphorepo publish`, the co
 
 <Path title="GitHub Actions" from="github" level={3}>
 
-- You can publish to the repository: in Telesphorepo, the repository shows you a **Publish to this repository** tab.
-- The project is in a repository on GitHub, and you can push to its `main` branch.
+- You can publish to the Telesphorepo repository: it shows you a **Publish to this repository** tab.
+- The project is in a GitHub repository, and you can push to its `main` branch.
 - You can reach your server admin, the person who runs your Telesphorepo. One part of this page is a message to them.
 
 </Path>
 
 <Path title="Jenkins" from="jenkins-pipeline jenkins-freestyle" level={3}>
 
-- You can publish to the repository: in Telesphorepo, the repository shows you a **Publish to this repository** tab.
+- You can publish to the Telesphorepo repository: it shows you a **Publish to this repository** tab.
 - Jenkins can clone the git repository of the project.
 - You can reach your server admin, the person who runs your Telesphorepo. One part of this page is a message to them.
 - You can reach a Jenkins admin, or you are one. One part of this page is for them.
@@ -45,19 +45,19 @@ A job in GitHub Actions or Jenkins publishes with `telesphorepo publish`, the co
 
 ## Get the workflow file
 
-The CLI writes the workflow file `.github/workflows/publish.yml` for you, when you run the setup line of the repository: the command that the **Set up a project** button shows.
+The CLI writes the workflow file `.github/workflows/publish.yml` for you, when you run the setup line of the repository: the command that the **Publish to this repository** tab shows after you click **Set up a project**.
 
 <Place where="In Telesphorepo, then in a terminal in the project folder" />
 
 <Steps>
 
-1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows the setup line.
+1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second step. The page shows the setup line.
 
 2. Copy the setup line. Open a terminal in the project folder, paste the line, and press Enter. The line works on a project that is set up already.
 
-3. The CLI asks `Add a CI file that publishes to your-repo?` and numbers four answers. Type `2` for `GitHub Actions`, and press Enter.
+3. The CLI asks "Add a CI file that publishes to your-repo?" and numbers four answers. Type `2` for "GitHub Actions", and press Enter.
 
-4. The CLI shows the workflow file, writes it to `.github/workflows/publish.yml` in the top folder of the git repository, and prints `Wrote` with its path. If a file of that name is there already, the CLI asks before it replaces it.
+4. The CLI shows the workflow file, writes it to `.github/workflows/publish.yml` in the top folder of the git repository, and prints "Wrote" with its path. If a file of that name is there already, the CLI asks before it replaces it.
 
 </Steps>
 
@@ -69,19 +69,19 @@ The CLI writes the workflow file `.github/workflows/publish.yml` for you, when y
 
 ## Get the Jenkinsfile
 
-The CLI writes the `Jenkinsfile` for you, when you run the setup line of the repository: the command that the **Set up a project** button shows.
+The CLI writes the `Jenkinsfile` for you, when you run the setup line of the repository: the command that the **Publish to this repository** tab shows after you click **Set up a project**.
 
 <Place where="In Telesphorepo, then in a terminal in the project folder" />
 
 <Steps>
 
-1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows the setup line.
+1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second step. The page shows the setup line.
 
 2. Copy the setup line. Open a terminal in the project folder, paste the line, and press Enter. The line works on a project that is set up already.
 
-3. The CLI asks `Add a CI file that publishes to your-repo?` and numbers four answers. Type `3` for `Jenkinsfile`, and press Enter.
+3. The CLI asks "Add a CI file that publishes to your-repo?" and numbers four answers. Type `3` for "Jenkinsfile", and press Enter.
 
-4. The CLI shows the Jenkinsfile, writes it to the top folder of the git repository, and prints `Wrote` with its path. If you have a `Jenkinsfile` already, the CLI asks before it replaces it. To keep yours, answer `n` and add the stage from [Write the CI file by hand](#write-the-ci-file-by-hand).
+4. The CLI shows the Jenkinsfile, writes it to the top folder of the git repository, and prints "Wrote" with its path. If you have a `Jenkinsfile` already, the CLI asks before it replaces it. To keep yours, answer `n` and add the stage from [Write the CI file by hand](#write-the-ci-file-by-hand).
 
 </Steps>
 
@@ -93,19 +93,19 @@ The CLI writes the `Jenkinsfile` for you, when you run the setup line of the rep
 
 ## Get the build commands
 
-A freestyle job runs shell commands that you paste into its page in Jenkins. The CLI prints them for you, when you run the setup line of the repository: the command that the **Set up a project** button shows.
+A freestyle job runs shell commands that you paste into its page in Jenkins. The CLI prints them for you, when you run the setup line of the repository: the command that the **Publish to this repository** tab shows after you click **Set up a project**.
 
 <Place where="In Telesphorepo, then in a terminal in the project folder" />
 
 <Steps>
 
-1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows the setup line.
+1. In Telesphorepo, open the repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second step. The page shows the setup line.
 
 2. Copy the setup line. Open a terminal in the project folder, paste the line, and press Enter. The line works on a project that is set up already.
 
-3. The CLI asks `Add a CI file that publishes to your-repo?` and numbers four answers. Type `4` for `Jenkins freestyle job`, and press Enter.
+3. The CLI asks "Add a CI file that publishes to your-repo?" and numbers four answers. Type `4` for "Jenkins freestyle job", and press Enter.
 
-4. The CLI prints `Paste this into the shell build step of the job:` and some lines of shell under it. These are the build commands. Copy them into a note: you paste them into Jenkins in the last part of this page.
+4. The CLI prints "Paste this into the shell build step of the job:" and some lines of shell under it. These are the build commands. Copy them into a note: you paste them into Jenkins in the last part of this page.
 
    ```sh title="Example: the build commands end like this"
    curl -fsSL https://your-server/install.sh | sh
@@ -113,7 +113,7 @@ A freestyle job runs shell commands that you paste into its page in Jenkins. The
    telesphorepo publish
    ```
 
-5. Commit `telesphorepo.toml` and push it, so that the job finds it. A Docker project has no `telesphorepo.toml`, and needs no commit.
+5. Commit `telesphorepo.toml` and push it, so that the job finds it. A Docker project has no such file, and needs no commit.
 
    ```sh
    git add telesphorepo.toml
@@ -138,11 +138,11 @@ A CI pipeline is a rule on the server that says which job may publish to which r
 Put your GitHub repository, as owner and name, in place of `your-org/your-app`.
 
 ```text title="Send this to your server admin"
-Where the job runs   GitHub Actions
-GitHub repository    your-org/your-app
-Workflow file        publish.yml
-Branches             main
-Repositories         your-repo
+Where the job runs: GitHub Actions
+GitHub repository: your-org/your-app
+Workflow file: publish.yml
+Branches: main
+Repositories: your-repo
 ```
 
 If you added the publish steps to a workflow you had, send its file name, such as `build.yml`. The server checks the repository, the workflow file and the branch, so a GitHub environment on the job changes nothing. List every repository the job publishes to.
@@ -154,10 +154,10 @@ If you added the publish steps to a workflow you had, send its file name, such a
 Put in the address you open Jenkins at, and the full name of the job with its folders, such as `team/app`. If the job does not exist yet, choose its name now: you make it under that name later on this page.
 
 ```text title="Send this to your server admin"
-Where the job runs   Jenkins
-Jenkins address      https://jenkins.example.com
-Jobs                 team/app
-Repositories         your-repo
+Where the job runs: Jenkins
+Jenkins address: https://jenkins.example.com
+Jobs: team/app
+Repositories: your-repo
 ```
 
 </Path>
@@ -180,15 +180,15 @@ Jenkins needs a plugin and one credential before a job can show the server who i
 
 2. Type `OpenID Connect Provider` in the search box. Tick the plugin in the list, and click **Install** at the top right.
 
-3. Open **Manage Jenkins** › **Credentials**, and click **Add Credentials**. If a list opens under the button, choose **Global**.
+3. Open **Manage Jenkins** › **Credentials**, and click **Add Credentials**.
 
-4. A dialog asks you to select a type of credential. Choose **OpenID Connect id token**, then click **Next**.
+4. If a list opens under the button, choose **Global**. A dialog asks you to select a type of credential: choose **OpenID Connect id token**, then click **Next**.
 
 5. Fill in two fields, and leave the others as they are.
 
    | Field | Value |
    |---|---|
-   | **Audience** | The address of your Telesphorepo, such as `https://repo.example.com`. It is the `server` line of `telesphorepo.toml` |
+   | **Audience** | The address of your Telesphorepo, such as `https://repo.example.com`: the address in the setup line |
    | **ID** | `telesphorepo-id-token` |
 
 6. Click **Create**.
@@ -211,7 +211,7 @@ An older Jenkins shows pages instead of a dialog. Under **Stores scoped to Jenki
 
 <Steps>
 
-1. Commit `.github/workflows/publish.yml` and `telesphorepo.toml`, and push to `main`. GitHub runs the workflow on each push to `main`. A Docker project has no `telesphorepo.toml`: leave it out.
+1. Commit `.github/workflows/publish.yml` and `telesphorepo.toml` (a Docker project has none), and push to `main`. GitHub runs the workflow on each push to `main`.
 
    ```sh
    git add .github/workflows/publish.yml telesphorepo.toml
@@ -237,7 +237,7 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
 
 <Steps>
 
-1. Commit the `Jenkinsfile` and `telesphorepo.toml`, and push them. A Docker project has no `telesphorepo.toml`: leave it out.
+1. Commit the `Jenkinsfile` and `telesphorepo.toml` (a Docker project has none), and push them.
 
    ```sh
    git add Jenkinsfile telesphorepo.toml
@@ -251,7 +251,7 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
 
 <Steps>
 
-2. Click **New Item** on the left. In **Enter an item name**, type the job name that you sent to your server admin. For a job in a folder, such as `team/app`, open the folder `team` first, and type `app`.
+2. For a job in a folder, such as `team/app`, click the folder `team` first. Click **New Item** on the left. In **Enter an item name**, type the job name without its folders, such as `app`.
 
 3. Click **Pipeline** in the list of item types, then **OK** at the bottom. The **Configure** page of the new job opens.
 
@@ -261,9 +261,9 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
 
 <Steps>
 
-4. Scroll to the **Pipeline** section. In **Definition**, choose **Pipeline script from SCM**. An **SCM** list appears under it.
+4. Scroll to the **Pipeline** section. In **Definition**, choose **Pipeline script from SCM**.
 
-5. In **SCM**, choose **Git**. More fields appear. Fill in these, and leave the others as they are.
+5. In the **SCM** list that appears under it, choose **Git**. More fields appear. Fill in these, and leave the others as they are.
 
    | Field | Value |
    |---|---|
@@ -278,7 +278,7 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
 
 </Steps>
 
-<Done>Done when the **Console Output** of the build ends with `Finished: SUCCESS`, and the **Files** tab of the repository in Telesphorepo shows the new version.</Done>
+<Done>Done when the **Console Output** of the build ends with "Finished: SUCCESS", and the **Files** tab of the repository in Telesphorepo shows the new version.</Done>
 
 </Path>
 
@@ -292,7 +292,7 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
 
 1. If the job that you named to your server admin is on the Dashboard, click its name, then **Configure** on the left, and go on to step 5.
 
-2. To make the job, click **New Item** on the left. In **Enter an item name**, type the job name that you sent to your server admin. For a job in a folder, such as `team/app`, open the folder `team` first, and type `app`.
+2. For a job in a folder, such as `team/app`, click the folder `team` first. Click **New Item** on the left. In **Enter an item name**, type the job name without its folders, such as `app`.
 
 3. Click **Freestyle project** in the list of item types, then **OK** at the bottom. The **Configure** page of the new job opens.
 
@@ -319,17 +319,20 @@ A Pipeline job reads the `Jenkinsfile` from the git repository, so the file goes
    | **Variable** | `OIDC_TOKEN` |
    | **Credentials** | `telesphorepo-id-token`, the credential from [Set up Jenkins](#set-up-jenkins) |
 
-7. Scroll to **Build Steps**. Click **Add build step**, then **Execute shell**. A **Command** box opens.
+7. Scroll to **Build Steps**, and click **Add build step**.
 
-8. Paste the build commands into the **Command** box. They are the lines that the CLI printed under `Paste this into the shell build step of the job:` when you chose `Jenkins freestyle job`. To get them again, click **Set up a project** on the repository's **Publish to this repository** tab and run the new setup line.
+8. Click **Execute shell**. A **Command** box opens.
 
-9. Click **Save**. On the page of the job, click **Build Now** on the left.
+9. Paste the build commands into the **Command** box. They are the lines that the CLI printed under "Paste this into the shell build step of the job:" when you chose "Jenkins freestyle job". To get them again, click **Set up a project** on the repository's **Publish to this repository** tab and run the new setup line.
 
-10. When the new build shows in the list of builds, click it, then **Console Output**.
+10. Click **Save**. On the page of the job, click **Build Now** on the left.
+
+11. When the new build shows in the list of builds, click it, then **Console Output**.
+
 
 </Steps>
 
-<Done>Done when the **Console Output** of the build ends with `Finished: SUCCESS`, and the **Files** tab of the repository in Telesphorepo shows the new version.</Done>
+<Done>Done when the **Console Output** of the build ends with "Finished: SUCCESS", and the **Files** tab of the repository in Telesphorepo shows the new version.</Done>
 
 </Path>
 
@@ -341,19 +344,32 @@ The identity token can only publish. When the build also downloads from a privat
 
 <Steps>
 
-1. Open **Your account** › **Tokens**, click **New read token**, type a name, then click **Create token**. Copy the token that the page shows.
+1. Open the account menu at the top right, click **Your account**, then **Tokens**.
+
+2. Click **New read token**, type a name, then click **Create token**. Copy the token that the page shows.
 
 </Steps>
 
 <Path title="GitHub Actions" from="github" level={3}>
 
-<Place where="On GitHub, in the settings of the repository" />
+<Place where="On GitHub, then in the workflow file" />
 
 <Steps>
 
-2. Open the repository's **Settings** › **Secrets and variables** › **Actions**, and click **New repository secret**. Paste the token, and give the secret a name.
+3. On GitHub, open the repository's **Settings** › **Secrets and variables** › **Actions**.
 
-3. On the **Use this repository** tab in Telesphorepo, find the variables that your build tool reads. Set them from the secret in the `env:` of the build step, such as `${{ secrets.TELESPHOREPO_TOKEN }}`.
+4. Click **New repository secret**, name it `TELESPHOREPO_READ_TOKEN`, paste the token in **Secret**, and click **Add secret**.
+
+5. Add a second secret the same way: `TELESPHOREPO_READ_USER`, with your Telesphorepo username as its value.
+
+6. Copy the setup for your build tool from the **Use this repository** tab in Telesphorepo. The note under it names the variables that CI sets where the setup says `YOUR_USERNAME` and `YOUR_READ_TOKEN`. Set them from the two secrets in the `env:` of the build step.
+
+   ```yaml title="Example: a Gradle build step that reads the repository releases"
+   - run: ./gradlew build
+     env:
+       ORG_GRADLE_PROJECT_releasesUsername: ${{ secrets.TELESPHOREPO_READ_USER }}
+       ORG_GRADLE_PROJECT_releasesPassword: ${{ secrets.TELESPHOREPO_READ_TOKEN }}
+   ```
 
 </Steps>
 
@@ -365,11 +381,14 @@ The identity token can only publish. When the build also downloads from a privat
 
 <Steps>
 
-2. Add a credential of the type **Secret text** with the token, as in [Set up Jenkins](#set-up-jenkins).
+3. Add a credential as in [Set up Jenkins](#set-up-jenkins). Choose the type **Secret text**, paste the token in **Secret**, and type `telesphorepo-read-token` in **ID**.
 
-3. On the **Use this repository** tab in Telesphorepo, find the variables that your build tool reads. Bind the credential to them the way the job binds `OIDC_TOKEN`.
+4. Copy the setup for your build tool from the **Use this repository** tab in Telesphorepo. The note under it names the variables that CI sets where the setup says `YOUR_USERNAME` and `YOUR_READ_TOKEN`.
+
+5. In the job, bind `telesphorepo-read-token` to the token variable the way the job binds `OIDC_TOKEN`, and set the user variable to your Telesphorepo username.
 
 </Steps>
+
 
 </Path>
 
