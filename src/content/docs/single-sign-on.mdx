@@ -1,0 +1,391 @@
+---
+title: Set up single sign-on
+description: Connect Telesphorepo to Okta, Microsoft Entra ID, Keycloak or another OpenID Connect provider, and let its groups set server permissions.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
+
+People sign in to Telesphorepo with the account they have at your identity provider. You add Telesphorepo as an app at the provider, copy the app's details into **Settings** › **Sign-in options**, and choose whether the provider's groups set each person's server permissions.
+
+<Choice questions={[
+    {key: 'provider', label: 'Which provider?', options: [
+        {value: 'okta', label: 'Okta'},
+        {value: 'entra', label: 'Microsoft Entra ID'},
+        {value: 'keycloak', label: 'Keycloak'},
+        {value: 'google', label: 'Google'},
+        {value: 'other', label: 'Another OpenID Connect provider'},
+    ]},
+]} />
+
+<Path title="The steps" provider="okta entra keycloak other" level={2}>
+
+## Before you start
+
+- The public address of the server is set: the **Public base URL** on **Settings** › **General**, as in [Set the public address](/run-the-server/#set-the-public-address). The return address of single sign-on starts with it.
+- You hold the server permission **Manage sign-in options**.
+- You can add apps at your provider.
+
+<Path title="Another OpenID Connect provider" provider="other" level={3}>
+
+- The provider publishes its details at its issuer address with `/.well-known/openid-configuration` added.
+- The provider can give the app a secret, and sends a `preferred_username` in the ID token or from its UserInfo address.
+
+</Path>
+
+## Add the app at your provider
+
+The provider sends people back to Telesphorepo at the return address: the public address of the server with `/api/auth/oidc/callback` added, such as `https://repo.example.com/api/auth/oidc/callback`.
+
+<Place where="In Telesphorepo" />
+
+<Steps>
+
+1. Open **Settings** › **Sign-in options**. Under **Connect your provider**, copy the **Return address**.
+
+</Steps>
+
+<Path title="Okta" provider="okta" level={3}>
+
+<Place where="In the Okta Admin Console" />
+
+<Steps>
+
+2. Open **Applications and Resources** › **Applications**, click **Create App Integration**, and choose **Classic experience**.
+
+3. For **Sign-in method**, choose **OIDC - OpenID Connect**. For the application type, choose **Web Application**, then click **Next**.
+
+4. Fill in three fields under **General Settings**.
+
+   | Field | Value |
+   |---|---|
+   | **App integration name** | `Telesphorepo` |
+   | **Grant type** | **Authorization code** ticked |
+   | **Sign-in redirect URIs** | The return address |
+
+5. Under **Assignments**, choose who may use the app: everyone in your organization, or **Limit access to selected groups**. Only these people can sign in to Telesphorepo.
+
+6. Click **Save**. The page of the app opens. Under **Client Credentials**, copy the **Client ID** and the **Client secret**.
+
+</Steps>
+
+<Done>Done when you have the client ID and the client secret.</Done>
+
+</Path>
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+<Place where="In the Microsoft Entra admin center" />
+
+<Steps>
+
+2. Browse to **Entra ID** › **App registrations**, and select **New registration**.
+
+3. Type `Telesphorepo` in **Name**. Under **Supported account types**, choose **Single tenant only**, then select **Register**. The **Overview** page of the app opens.
+
+4. Copy the **Application (client) ID** and the **Directory (tenant) ID**.
+
+5. Under **Manage**, select **Authentication**. On the **Redirect URI configuration** tab, select **Add Redirect URI**, then the **Web** tile. Paste the return address in **Redirect URI**, and select **Configure**.
+
+6. Select **Certificates & secrets** › **Client secrets** › **New client secret**. Type a description, choose when it expires, and select **Add**. Copy the **Value** of the new secret: Entra ID never shows it again.
+
+7. Select **Token configuration**, then **Add optional claim**. Choose the **ID** token type, tick `auth_time`, and select **Add**. Telesphorepo needs it when a person approves a computer for the CLI.
+
+</Steps>
+
+<Done>Done when you have the application ID, the tenant ID and the secret value.</Done>
+
+</Path>
+
+<Path title="Keycloak" provider="keycloak" level={3}>
+
+<Place where="In the Keycloak Admin Console, in your realm" />
+
+<Steps>
+
+2. Click **Clients**, then **Create client**.
+
+3. Leave **Client type** at **OpenID Connect**. Type `telesphorepo` in **Client ID**, and click **Next**.
+
+4. Turn on **Client authentication**, keep **Standard flow** on, and click **Next**.
+
+5. Under **Login settings**, paste the return address in **Valid redirect URIs**, and click **Save**.
+
+6. Open the **Credentials** tab of the client, and copy the **Client Secret**.
+
+</Steps>
+
+<Done>Done when you have the client ID and the client secret.</Done>
+
+</Path>
+
+<Path title="Another OpenID Connect provider" provider="other" level={3}>
+
+<Place where="At your provider" />
+
+<Steps>
+
+2. Add an OpenID Connect app for a web app that runs on a server: a confidential client, which has a secret, and signs in with the authorization code flow.
+
+3. Add the return address to the redirect addresses of the app, exactly as Telesphorepo shows it.
+
+4. Copy the client ID and the client secret of the app.
+
+</Steps>
+
+<Done>Done when you have the client ID and the client secret.</Done>
+
+To approve a computer for the CLI, a person signs in at the provider again. For that, the provider must sign the person in again when Telesphorepo asks for it (`prompt=login`), and put the time of the sign-in in the ID token (`auth_time`).
+
+</Path>
+
+## Connect Telesphorepo
+
+<Place where="In Telesphorepo, on Settings › Sign-in options" />
+
+<Steps>
+
+1. Under **Connect your provider**, fill in the fields.
+
+   | Field | Value |
+   |---|---|
+   | **Provider address** | The issuer address of the provider, as below |
+   | **App ID** | The client ID of the app |
+   | **App secret** | The client secret of the app |
+   | **Requested details** | `openid profile email`, as it is |
+
+   <Path title="Okta" provider="okta" level={3}>
+
+   The provider address is your Okta domain, such as `https://your-org.okta.com`, with no path.
+
+   </Path>
+
+   <Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+   The provider address is `https://login.microsoftonline.com/your-tenant-id/v2.0`, with the directory (tenant) ID in place of `your-tenant-id`. Use the tenant ID, not the domain name of the tenant: Entra ID names its issuer with the ID, and Telesphorepo checks that the two match. The **App ID** is the application (client) ID, and the **App secret** is the secret value.
+
+   </Path>
+
+   <Path title="Keycloak" provider="keycloak" level={3}>
+
+   The provider address is the address of Keycloak, `/realms/` and the name of the realm, such as `https://keycloak.example.com/realms/your-realm`.
+
+   </Path>
+
+   <Path title="Another OpenID Connect provider" provider="other" level={3}>
+
+   The provider address is the `issuer` in the provider's `/.well-known/openid-configuration` document, character for character, including a slash at the end when it has one.
+
+   </Path>
+
+2. Click **Test your edits**. A line says **Connected to** and the address of the provider when Telesphorepo reaches it.
+
+3. Click **Save** in the bar at the bottom.
+
+</Steps>
+
+<Done>Done when the sign-in page shows a **Continue with single sign-on** button.</Done>
+
+The first sign-in of a person makes their account, with no server permissions. Its username is the `preferred_username` that the provider sends, in lowercase, with every character other than letters, digits, `.`, `_` and `-` changed to `-`. The account keeps that username when the name changes at the provider later.
+
+<Path title="Okta" provider="okta" level={3}>
+
+Okta sends the Okta username of the person, which is often an email address: `alice@example.com` becomes `alice-example.com`.
+
+</Path>
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+Entra ID sends the sign-in name of the person, which is often an email address: `alice@contoso.com` becomes `alice-contoso.com`.
+
+</Path>
+
+<Path title="Keycloak" provider="keycloak" level={3}>
+
+Keycloak sends the username of the person in the realm.
+
+</Path>
+
+Server permissions are set on this server unless you choose otherwise below: you give them on the **People** page, as in [Give server permissions](/people-and-sign-in/#give-server-permissions). Repository access is always given on the **Access** tab of each repository.
+
+## Let groups set server permissions
+
+With **From groups at your provider**, each sign-in sets the person's server permissions from their groups at the provider: the permissions of every listed group they are in. A person in no listed group has no server permissions, and nobody can change them on the **People** page.
+
+<Path title="Okta" provider="okta" level={3}>
+
+<Place where="In the Okta Admin Console, on the page of the app" />
+
+<Steps>
+
+1. Open the **Sign On** tab, and click **Edit** in the **OpenID Connect ID Token** section.
+
+2. Under **Group claim type**, choose **Filter**. Keep the name `groups`, choose **Matches regex**, and type `.*`.
+
+3. Click **Save**.
+
+</Steps>
+
+Okta puts the groups in the ID token only when Telesphorepo asks for them. In the steps in Telesphorepo below, add `groups` to **Requested details**, so it reads `openid profile email groups`. Type `groups` in **Group field**. Each group is named as in Okta.
+
+</Path>
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+<Place where="In the Microsoft Entra admin center, on the page of the app" />
+
+<Steps>
+
+1. Select **Token configuration**, then **Add groups claim**.
+
+2. Choose **Security groups**, or **Groups assigned to the application**, and select **Save**.
+
+</Steps>
+
+Type `groups` in **Group field**. Entra ID names each group by its object ID, such as `11111111-2222-3333-4444-555555555555`, so the groups you list in Telesphorepo are object IDs too. A person in more than 200 groups gets no groups in the token, and so no server permissions. For such people, choose **Groups assigned to the application**, and assign the groups to the app.
+
+</Path>
+
+<Path title="Keycloak" provider="keycloak" level={3}>
+
+For the groups of the realm, add a mapper to the client.
+
+<Place where="In the Keycloak Admin Console, on the page of the client" />
+
+<Steps>
+
+1. Open the **Client scopes** tab, and click `telesphorepo-dedicated`.
+
+2. Click **Configure a new mapper**, or **Add mapper** › **By configuration** when the scope has mappers already. Choose **Group Membership**.
+
+3. Fill in the form, and click **Save**.
+
+   | Field | Value |
+   |---|---|
+   | **Name** | `groups` |
+   | **Token Claim Name** | `groups` |
+   | **Full group path** | Off, so the value is `repo-admins` and not `/repo-admins` |
+   | **Add to ID token** | On |
+
+</Steps>
+
+Type `groups` in **Group field**.
+
+For realm roles in place of groups, Keycloak puts the roles in the access token only, so turn on the ID token for them: click **Client scopes** in the menu, then `roles`, its **Mappers** tab and `realm roles`. Turn on **Add to ID token**, and click **Save**. Type `realm_access.roles` in **Group field**.
+
+</Path>
+
+<Path title="Another OpenID Connect provider" provider="other" level={3}>
+
+Ask the provider to put the person's groups in a field of the ID token, or of its UserInfo answer, as a list of names or as one name. Type the name of that field in **Group field**. For a field inside another field, join the names with dots, such as `realm_access.roles`.
+
+</Path>
+
+<Place where="In Telesphorepo, on Settings › Sign-in options" />
+
+<Steps>
+
+1. Under **Server permissions**, choose **From groups at your provider**.
+
+2. Type the field of the groups in **Group field**.
+
+3. Under **Permissions of each group**, click **Add a group**. A dialog opens.
+
+4. Type the **Group** as the provider sends it, choose its server permissions, and click **Add group**. Add the other groups the same way.
+
+5. Click **Save** in the bar at the bottom, then **Save changes** in the dialog.
+
+</Steps>
+
+<Done>Done when the groups are listed under **Permissions of each group**. Each person gets the permissions at their next sign-in, and the **People** page shows them read-only.</Done>
+
+To make people who manage the server sign in with single sign-on, see [Make managers use single sign-on](/people-and-sign-in/#make-managers-use-single-sign-on).
+
+## Troubleshooting
+
+<details>
+<summary>The provider did not answer. Check the provider address.</summary>
+
+Telesphorepo reads the provider's details at the provider address with `/.well-known/openid-configuration` added, and the `issuer` in them must be the provider address exactly. Open that address in a browser, and copy its `issuer` into **Provider address**.
+
+</details>
+
+<details>
+<summary>Your single sign-on account has a username that is not valid here.</summary>
+
+The provider sent no `preferred_username`, or one with no letter or digit. Keep `profile` in **Requested details**, and check that the person has a username at the provider.
+
+</details>
+
+<details>
+<summary>A local account has the same username, so this single sign-on account cannot sign in.</summary>
+
+An account with a password has the username that the provider sends, and Telesphorepo never joins two accounts by name. Change the person's username at the provider to one that is free on the server.
+
+</details>
+
+<details>
+<summary>Single sign-on failed. Try again.</summary>
+
+The provider refused the sign-in or the app secret. Check that the **App secret** is the current secret of the app, and the server log names the step that failed.
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+A client secret of Entra ID expires. Add a new one as in step 6 of [Add the app at your provider](#add-the-app-at-your-provider), and save it in **App secret**.
+
+</Path>
+
+</details>
+
+<details>
+<summary>Your identity provider did not say when you signed in</summary>
+
+This shows when a person approves a computer for the CLI. The ID token has no `auth_time`.
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+Add the optional claim `auth_time` to the ID token, as in step 7 of [Add the app at your provider](#add-the-app-at-your-provider).
+
+</Path>
+
+<Path title="Keycloak, Okta or another provider" provider="okta keycloak other" level={3}>
+
+Ask the provider to put `auth_time` in the ID token of the app.
+
+</Path>
+
+</details>
+
+<details>
+<summary>A person has no server permissions from their groups</summary>
+
+The ID token has no groups in the **Group field**, or holds them in another form than the groups you listed. Permissions change only at the next sign-in, so the person signs out and in again after each change.
+
+<Path title="Microsoft Entra ID" provider="entra" level={3}>
+
+List each group by its object ID, not its name. A person in more than 200 groups gets none in the token.
+
+</Path>
+
+<Path title="Keycloak" provider="keycloak" level={3}>
+
+With **Full group path** on, Keycloak sends `/repo-admins`. Turn it off, or list the group with the slash.
+
+</Path>
+
+</details>
+
+</Path>
+
+<Path title="Google" provider="google" level={2}>
+
+## Sign in with Google accounts
+
+Google sends no `preferred_username` in its ID token, so Telesphorepo cannot name the account, and the first sign-in stops with "Your single sign-on account has a username that is not valid here." Google sends no groups either.
+
+To let people sign in with their Google accounts, connect Telesphorepo to a provider that signs people in with Google and sends a username, such as Keycloak with Google added as an identity provider. Then follow the steps of that provider on this page.
+
+</Path>

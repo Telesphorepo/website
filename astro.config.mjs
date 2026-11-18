@@ -27,6 +27,7 @@ const sidebar = [
             {label: 'Production setup', link: '/run-the-server'},
             {label: 'Repositories and access', link: '/repositories-and-access'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
+            {label: 'Single sign-on', link: '/single-sign-on'},
             {label: 'File storage', link: '/store-files-in-r2'},
             {label: 'Backups', link: '/back-up-and-restore'},
             {label: 'Upgrades', link: '/upgrade'},
@@ -244,7 +245,7 @@ export default defineConfig({
                 },
                 {
                     label: 'Administration',
-                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'store-files-in-r2', 'back-up-and-restore', 'upgrade', 'push-large-images', 'server-reference', 'repository-addresses'],
+                    paths: ['run-the-server', 'repositories-and-access', 'people-and-sign-in', 'single-sign-on', 'store-files-in-r2', 'back-up-and-restore', 'upgrade', 'push-large-images', 'server-reference', 'repository-addresses'],
                     description: 'HTTPS, storage, backups, upgrades, repositories, proxies and groups, access, CI pipelines, network rules, people, two-step verification, single sign-on, server commands, environment variables, settings and the address of each format',
                 },
             ],
