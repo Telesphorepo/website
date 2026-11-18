@@ -3,7 +3,11 @@ title: Repository addresses
 description: The address of each repository format, for a client that you set up by hand.
 ---
 
-The examples use the server `https://repo.example.com` and a repository named `REPO`.
+Each repository has one address for its format, under the address of your server. The **Use this repository** tab of a repository shows the setup for each client with the real address filled in, so use this page for a client that you configure by hand.
+
+The examples use the server `https://repo.example.com` and a repository named `REPO`. `IMAGE` and `TAG` stand for the name and the tag of a Docker image.
+
+## Build tools and languages
 
 | Format | Kinds | Address |
 |---|---|---|
@@ -12,8 +16,39 @@ The examples use the server `https://repo.example.com` and a repository named `R
 | Python (PyPI) | hosted, proxy, group | `https://repo.example.com/pypi/REPO/simple/` to install, `https://repo.example.com/pypi/REPO/` to upload |
 | Cargo (Rust) | hosted, proxy, group | `sparse+https://repo.example.com/cargo/REPO/index/` |
 | NuGet | hosted, proxy, group | `https://repo.example.com/nuget/REPO/index.json` |
-| Docker | hosted, proxy, group | `repo.example.com/REPO/IMAGE:TAG`, at the root of the host |
+
+## Containers
+
+| Format | Kinds | Address |
+|---|---|---|
+| Docker | hosted, proxy, group | `repo.example.com/REPO/IMAGE:TAG` |
+
+A Docker repository answers at the root of a host, so its address has no path. Helm charts and other OCI files use the same address. For layers over 100 MB behind Cloudflare, see [Push large Docker images](/push-large-images/).
+
+## Linux packages
+
+| Format | Kinds | Address |
+|---|---|---|
 | Debian (apt) | hosted, proxy | `https://repo.example.com/debian/REPO` |
+| Arch Linux (pacman) | hosted, proxy | `https://repo.example.com/arch/REPO/$arch` |
+| RPM (dnf) | hosted, proxy | `https://repo.example.com/rpm/REPO/` |
+
+### Arch Linux
+
+pacman reads the address from the `Server` line under `[REPO]` in `/etc/pacman.conf` and fills in `$arch` itself, so type `$arch` as it is. The repository serves one signed index for each architecture, and pacman needs the key of the repository to check them.
+
+### RPM
+
+dnf reads the address as the `baseurl` of a `.repo` file. One address serves every architecture and dnf picks the packages for its own computer, so the address has no `$basearch`. The packages and the index are signed with the key of the repository.
+
+For both formats, the **Use this repository** tab shows the key and the configuration to copy.
+
+## Raw files
+
+| Format | Kinds | Address |
+|---|---|---|
 | Raw files | hosted | `https://repo.example.com/raw/REPO` |
 
-A proxy and a group take no uploads. See [Add public packages](/repositories-and-access/#add-public-packages).
+## Proxies and groups
+
+A proxy and a group take no uploads. The **Kinds** column says which formats take each kind. To make one, see [Add public packages](/repositories-and-access/#add-public-packages).

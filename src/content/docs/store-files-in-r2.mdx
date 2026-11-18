@@ -4,12 +4,14 @@ description: Move the files of the server from its local disk to a Cloudflare R2
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-The server keeps files on its local disk. Move them to a bucket when the disk is not enough.
-
-Cloudflare R2 charges nothing for downloads.
+The server keeps files on its local disk. Move them to a bucket when the disk is not enough: Cloudflare R2 charges nothing for downloads, and AWS S3 and SeaweedFS work too.
 
 ## Store files in Cloudflare R2
+
+<Place where="In Cloudflare, then in Telesphorepo" />
 
 <Steps>
 
@@ -17,26 +19,34 @@ Cloudflare R2 charges nothing for downloads.
 
 2. Create an R2 API token with **Object Read & Write** on the bucket. Copy its two keys: Cloudflare shows them once.
 
-3. In the server, open **Settings** › **Storage**.
+</Steps>
+
+<Place where="In Telesphorepo" />
+
+<Steps>
+
+3. Open **Settings** › **Storage**.
 
 4. Under **Storage type**, choose **A Cloudflare R2 bucket, or another S3-compatible bucket**.
 
-5. Fill in the bucket:
+5. Fill in the bucket.
 
-   - **Address:** the **S3 API** address from the bucket's **Settings** page, such as `https://<account id>.r2.cloudflarestorage.com`.
-   - **Region:** empty.
-   - **Bucket:** the bucket's name.
-   - **Access key ID** and **Secret access key:** from the token.
+   | Field | Value |
+   |---|---|
+   | **Address** | The **S3 API** address from the bucket's **Settings** page in Cloudflare, such as `https://<account id>.r2.cloudflarestorage.com` |
+   | **Region** | Empty |
+   | **Bucket** | The name of the bucket |
+   | **Access key ID** and **Secret access key** | The two keys of the token |
 
-6. Click **Test connection**.
+6. Click **Test connection**. A line tells you whether the server reached the bucket.
 
-7. Click **Save**, and confirm.
+7. Click **Save** in the bar at the bottom, then confirm with **Start the move**.
 
 </Steps>
 
-The server copies the files to the bucket in the background. Everything keeps working meanwhile.
+<Done>Done when the move on **Settings** › **Storage** has finished and the page names your bucket.</Done>
 
-The old files stay on the disk. Delete them when the bucket works.
+The server copies the files to the bucket in the background, and everything keeps working meanwhile. The old files stay on the disk, so delete them when the bucket works.
 
 ## Who sends the bytes
 
@@ -48,13 +58,13 @@ The old files stay on the disk. Delete them when the bucket works.
 
 ## Use AWS S3 or SeaweedFS
 
-Follow the same steps, with these values:
+Follow the same steps, with these values in the form.
 
-| Setting | AWS S3 | SeaweedFS |
+| Field | AWS S3 | SeaweedFS |
 |---|---|---|
-| **Address** | empty | `http://seaweedfs:8333` |
-| **Region** | the bucket's region, such as `us-east-1` | any name, such as `us-east-1` |
-| **Path-style addresses** | off | on |
+| **Address** | Empty | `http://seaweedfs:8333` |
+| **Region** | The bucket's region, such as `us-east-1` | Any name, such as `us-east-1` |
+| **Path-style addresses** | Off | On |
 
 ## Troubleshooting
 
