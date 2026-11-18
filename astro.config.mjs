@@ -75,6 +75,65 @@ const moved = {
     '/docker': '/use-packages',
     '/debian-and-raw': '/use-packages',
 };
+// The text of a hast node and its children.
+const textOf = (node) => node.type === 'text' ? node.value : (node.children ?? []).map(textOf).join('');
+
+// Each element under node, with its parent, in document order.
+function* elements(node, parent = null) {
+    if (node.type === 'element') yield [node, parent];
+    for (const child of node.children ?? []) yield* elements(child, node);
+}
+
+const withClass = (node, name) => {
+    const cls = node.properties?.className ?? [];
+    return [...(Array.isArray(cls) ? cls : [cls]), name];
+};
+
+/*
+ * A hast plugin of the Sätteri pipeline, for every Markdown and MDX page:
+ * - Inline code of 24 characters or fewer gets the class tr-short, and docs.css keeps it on one line;
+ *   code of 14 or fewer also gets tr-tiny, which stays whole in a table cell on a phone.
+ * - Tables on one page with the same header row form a series, and every table of a series gets the
+ *   same column widths. Each column but the last fits the longest word of its cells in the series
+ *   (a cell of 12 characters or fewer counts whole), up to 28 characters; the last column takes the
+ *   rest. docs.css applies the widths from 50rem.
+ */
+const textLayoutPlugin = () => ({
+    name: 'telesphorepo-text-layout',
+    after(root, ctx) {
+        const series = new Map();
+        for (const [node, parent] of elements(root)) {
+            const length = node.tagName === 'code' && parent?.tagName !== 'pre' ? textOf(node).length : Infinity;
+            if (length <= 24) {
+                ctx.setProperty(node, 'className', length <= 14 ? [...withClass(node, 'tr-short'), 'tr-tiny'] : withClass(node, 'tr-short'));
+            }
+            if (node.tagName !== 'table') continue;
+            const rows = [...elements(node)].filter(([el]) => el.tagName === 'tr').map(([el]) =>
+                el.children.filter((c) => c.type === 'element' && (c.tagName === 'th' || c.tagName === 'td')).map(textOf));
+            if (rows.length === 0) continue;
+            const key = rows[0].join('|');
+            if (!series.has(key)) series.set(key, []);
+            series.get(key).push({node, rows});
+        }
+        for (const tables of series.values()) {
+            if (tables.length < 2) continue;
+            const columns = tables[0].rows[0].length;
+            const measure = (text) => Math.max(Math.min(text.length, 12), ...text.split(/\s+/).map((word) => word.length));
+            const widths = Array.from({length: columns - 1}, (_, i) =>
+                Math.min(28, Math.max(...tables.flatMap(({rows}) => rows.map((r) => measure((r[i] ?? '').trim()))))) + 2);
+            for (const {node} of tables) {
+                ctx.setProperty(node, 'className', withClass(node, 'tr-series'));
+                ctx.prependChild(node, {
+                    type: 'element', tagName: 'colgroup', properties: {}, children: [
+                        ...widths.map((w) => ({type: 'element', tagName: 'col', properties: {style: `--tr-col: ${w}ch`}, children: []})),
+                        {type: 'element', tagName: 'col', properties: {}, children: []},
+                    ],
+                });
+            }
+        }
+    },
+});
+
 const redirects = Object.fromEntries(Object.entries(moved).flatMap(([from, to]) => [
     [`${from}/`, `${to}/`],
     [`${from}.md`, `${to}.md`],
@@ -190,7 +249,14 @@ export default defineConfig({
                 },
             ],
         })],
-    }), sitemap()],
+    }), sitemap(), {
+        name: 'telesphorepo-markdown',
+        hooks: {
+            'astro:config:setup': ({config}) => {
+                config.markdown.processor.options.hastPlugins.push(textLayoutPlugin);
+            },
+        },
+    }],
     vite: {
         plugins: [{
             // The worker bundle pulls in Starlight's Tabs, Steps and FileTree through the content collection,

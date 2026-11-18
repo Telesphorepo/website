@@ -98,6 +98,11 @@
     font-weight: 600;
 }
 
+/* Light text on a dark page looks heavier, so bold in the dark theme is one step lighter. */
+:root:not([data-theme='light']) .sl-markdown-content strong:not(:where(.not-content *)) {
+    font-weight: 500;
+}
+
 /* Measure: prose stops at about 78 characters. */
 .sl-markdown-content :is(p, h1, h2, h3, .sl-heading-wrapper, summary, dt, dd):not(:where(.not-content *)),
 .sl-markdown-content :is(ul, ol):not(.sl-steps) > li:not(:has(> :is(.expressive-code, table))):not(:where(.not-content *)) {
@@ -209,18 +214,40 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
     text-decoration-color: currentColor;
 }
 
-/* Inline code: a chip in the body colour that keeps its ends when it wraps. */
+/*
+ * Inline code: a quiet chip in the body colour, a step smaller than the text, that keeps its ends
+ * when it wraps. A chip of 24 characters or fewer (tr-short, from the rehype step in
+ * astro.config.mjs) stays on one line. On a surface (a callout) the chip takes the raised fill.
+ */
 
 .sl-markdown-content code:not(:where(.not-content *)) {
     margin-block: 0;
-    padding: 0.1em 0.35em;
+    padding: 0.05em 0.3em;
     border-radius: 4px;
-    background-color: var(--tr-raised);
+    background-color: var(--tr-surface);
     color: inherit;
-    font-size: 0.9em;
+    font-size: 0.85em;
     overflow-wrap: anywhere;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
+}
+
+.sl-markdown-content code.tr-short:not(:where(.not-content *)) {
+    white-space: nowrap;
+}
+
+/*
+ * A phone table has little room for each column, so code in its cells breaks where it must. Code
+ * of 14 characters or fewer (tr-tiny) still stays whole.
+ */
+@media (max-width: 49.99rem) {
+    .sl-markdown-content :is(th, td) code.tr-short:not(.tr-tiny):not(:where(.not-content *)) {
+        white-space: normal;
+    }
+}
+
+.sl-markdown-content .starlight-aside code:not(:where(.not-content *)) {
+    background-color: var(--tr-raised);
 }
 
 .sl-markdown-content :is(h2, h3) code:not(:where(.not-content *)) {
@@ -281,8 +308,15 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
 }
 
 @media (hover: none) {
-    .sl-markdown-content .expressive-code .frame:has(.copy) .ec-line .code {
+    .sl-markdown-content .expressive-code .frame:has(.copy) .ec-line:first-child .code {
         padding-inline-end: 3rem;
+    }
+}
+
+/* On a phone a code block in a step runs under the step number, so its lines have more room. */
+@media (max-width: 49.99rem) {
+    .sl-markdown-content .sl-steps > li > .expressive-code {
+        margin-inline-start: calc(-1 * var(--tr-step-gutter));
     }
 }
 
@@ -296,19 +330,39 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
     line-height: 1.5;
 }
 
+/* Tables with the same header row share their column widths (rehypeTableSeries in astro.config.mjs). */
+@media (min-width: 50rem) {
+    .sl-markdown-content table.tr-series col[style] {
+        width: var(--tr-col);
+    }
+}
+
+/* A cell breaks a word only when the word alone is wider than the column. */
 .sl-markdown-content :is(th, td):not(:where(.not-content *)),
 .sl-markdown-content :is(th, td):is(:first-child, :last-child):not(:where(.not-content *)) {
     padding: 0.5rem 1rem 0.5rem 0;
     border: 0;
     border-bottom: 1px solid var(--tr-line);
     vertical-align: top;
+    overflow-wrap: break-word;
+}
+
+/* In a cell, short code stays whole and long code breaks anywhere, so a narrow table still fits. */
+.sl-markdown-content :is(th, td) code:not(:where(.not-content *)) {
+    font-size: 0.9em;
 }
 
 .sl-markdown-content :is(th, td):last-child:not(:where(.not-content *)) {
     padding-inline-end: 0;
 }
 
-.sl-markdown-content th:not(:where(.not-content *)) {
+.sl-markdown-content th:first-child:not(:where(.not-content *)) {
+    white-space: nowrap;
+}
+
+/* :is(:first-child, *) matches the specificity of the cell rule above, so every header cell gets
+   the strong rule. */
+.sl-markdown-content th:is(:first-child, *):not(:where(.not-content *)) {
     border-bottom-color: var(--tr-line-strong);
     background: none;
     color: var(--tr-muted);
@@ -365,12 +419,12 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
     margin-top: 0;
 }
 
+/* The summary is one line box, so code and bold in the title flow with its text. */
 .sl-markdown-content details > summary:not(:where(.not-content *)) {
-    display: flex;
-    align-items: baseline;
-    gap: 0.625rem;
+    position: relative;
+    display: block;
     margin: 0;
-    padding: 0.75rem 0;
+    padding: 0.75rem 0 0.75rem 1.375rem;
     color: var(--tr-body);
     font-weight: 500;
     text-wrap: pretty;
@@ -385,8 +439,10 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
 
 .sl-markdown-content details > summary:not(:where(.not-content *))::before {
     content: '';
-    flex: none;
-    align-self: center;
+    position: absolute;
+    /* Centred on the first line: 0.75rem padding plus half of one line, less half the chevron. */
+    top: calc(0.75rem + 0.5lh - 0.375rem);
+    left: 0;
     width: 0.75rem;
     height: 0.75rem;
     margin: 0;
@@ -414,6 +470,23 @@ html[data-tr-choice] .sl-markdown-content .tr-path:has(> .tr-path-title + .sl-he
 
 .sl-markdown-content details > summary + :not(:where(.not-content *)) {
     margin-top: 0;
+}
+
+/*
+ * A Path of entries right after other entries continues the run: its first rule lies on the last
+ * rule before it. While the Path is hidden, the run before it keeps its own last rule. The margins
+ * collapse, so after a heading and a hidden Path the entries keep the heading's space.
+ */
+html[data-tr-choice] .sl-markdown-content :is(details, .tr-path:has(> details:last-child)) + .tr-path:has(> .tr-path-title + details) {
+    margin-top: -1px;
+}
+
+html[data-tr-choice] .sl-markdown-content .sl-heading-wrapper.level-h2:has(+ .tr-path) {
+    margin-bottom: 0.75rem;
+}
+
+html[data-tr-choice] .sl-markdown-content .sl-heading-wrapper.level-h3:has(+ .tr-path) {
+    margin-bottom: 0.5rem;
 }
 
 /*
