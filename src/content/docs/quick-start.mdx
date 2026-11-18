@@ -34,7 +34,7 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Print the log of the server. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line in it. Copy that password: the server shows it only once.
+2. Print the log of the server. On its first start, the server writes a box titled "First start: created admin user" with a "password:" line in it. Copy that password: the server shows it only once.
 
    ```sh
    docker logs telesphorepo
@@ -58,7 +58,7 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Print the log of the server. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line in it. Copy that password: the server shows it only once.
+2. Print the log of the server. On its first start, the server writes a box titled "First start: created admin user" with a "password:" line in it. Copy that password: the server shows it only once.
 
    ```powershell
    docker logs telesphorepo
@@ -78,7 +78,9 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
 
 1. Open `http://localhost:8080`, and sign in as `admin` with the password from the log.
 
-2. The page asks for a second step before you go on. Under **Authenticator app**, click **Add**, scan the code with the app on your phone, and type the 6-digit code that the app shows.
+2. The page asks for a second step before you go on. Under **Authenticator app**, click **Add**. Type a name, such as `Phone`, and click **Continue**.
+
+3. Scan the code with the app on your phone, type the 6-digit code in **Code from the app**, and click **Add app**.
 
 </Steps>
 
@@ -112,7 +114,7 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
 
 <Steps>
 
-1. Click the **Publish to this repository** tab, then **Set up a project**. Type the code from your authenticator app to confirm. The page shows a setup line: one command that installs the Telesphorepo CLI and sets up the project. It shows the line for the system of your browser, and a switch for the other.
+1. Click the **Publish to this repository** tab, then **Set up a project**, and confirm with your second step. The page shows a setup line: one command that installs the Telesphorepo CLI and sets up the project. It shows the line for the system of your browser, and a switch for the other.
 
 </Steps>
 
@@ -124,9 +126,10 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
 
 2. Copy the setup line, paste it into the terminal, and press Enter. The line installs the CLI, approves this computer, and writes `telesphorepo.toml` into the folder. If it asks to add `~/.local/bin` to your PATH, press Enter.
 
-3. The CLI asks `Add a CI file that publishes to releases?` and numbers four answers. Press Enter to take `1) No CI file`. [Publish from CI](/publish-from-ci/) adds one later.
+3. The CLI asks "Add a CI file that publishes to releases?" and numbers four answers. Press Enter to take "1) No CI file". [Publish from CI](/publish-from-ci/) adds one later.
 
-4. Publish the project. The CLI runs the publish command of your build tool, such as `mvn deploy` or `npm publish`. If the terminal answers `telesphorepo: command not found`, open a new terminal in the project folder and run it there.
+4. Publish the project. The CLI runs the publish command of your build tool, such as `mvn deploy` or `npm publish`. If the terminal answers "telesphorepo: command not found", open
+ a new terminal in the project folder and run it there.
 
    ```sh
    telesphorepo publish
@@ -144,7 +147,7 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
 
 2. Copy the setup line, paste it into PowerShell, and press Enter. The line installs the CLI, approves this computer, and writes `telesphorepo.toml` into the folder.
 
-3. The CLI asks `Add a CI file that publishes to releases?` and numbers four answers. Press Enter to take `1) No CI file`. [Publish from CI](/publish-from-ci/) adds one later.
+3. The CLI asks "Add a CI file that publishes to releases?" and numbers four answers. Press Enter to take "1) No CI file". [Publish from CI](/publish-from-ci/) adds one later.
 
 4. Publish the project in the same window. The CLI runs the publish command of your build tool, such as `mvn deploy` or `npm publish`.
 

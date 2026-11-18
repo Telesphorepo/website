@@ -43,76 +43,76 @@ Each build step that downloads from Nexus changes to download from Telesphorepo.
 
 1. Search every file of the project, hidden folders too, for the Nexus host name. Then search for `/repository/`, which every Nexus address holds.
 
-2. Open the files listed below for your tool. They are the usual homes of an address.
+2. Open the files where your tool keeps its addresses.
+
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+
+   - `pom.xml`, `.mvn/maven.config` and every `settings.xml`
+   - `build.gradle(.kts)`, `settings.gradle(.kts)`, `gradle.properties`, `gradle/*.gradle(.kts)`
+   - `buildSrc/`, `build-logic/` and init scripts
+   - `gradle/wrapper/gradle-wrapper.properties`
+   - On your computer: `~/.m2/settings.xml`, `~/.gradle/gradle.properties` and `~/.gradle/init.d/`
+
+   </Path>
+
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+
+   - `.npmrc`, in the project and in `~/.npmrc`
+   - `.yarnrc.yml`, `.yarnrc` and `bunfig.toml`
+   - `package.json` and the lockfiles
+   - `registry-url` of `actions/setup-node` in CI
+
+   </Path>
+
+   <Path title="Python" ecosystem="python" level={3}>
+
+   - `pip.conf` or `pip.ini`, in the project, `~/.config/pip/` and `/etc/`
+   - `requirements*.txt` and constraints files
+   - `pyproject.toml`, `uv.toml`, `poetry.toml`, `setup.cfg`, `tox.ini`, `noxfile.py`
+   - `PIP_INDEX_URL`, `PIP_EXTRA_INDEX_URL`, `UV_INDEX_URL` and `UV_DEFAULT_INDEX` in Dockerfiles and CI
+   - `.pypirc`, for publishing
+
+   </Path>
+
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+
+   - `.cargo/config.toml`, in the project and in `~/.cargo/`
+   - `Cargo.toml` and `Cargo.lock`
+
+   </Path>
+
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+
+   - `nuget.config`, in the solution folder, its parents and your user folder
+   - `Directory.Build.props` and `.targets`
+   - `*.csproj` and `*.fsproj`
+   - `dotnet nuget add source`, `--source` and `source-url` of `actions/setup-dotnet` in CI
+
+   </Path>
+
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
+
+   Also search for each Nexus Docker host and port, such as `nexus.example.com:8082`.
+
+   - `Dockerfile*` and compose files
+   - Kubernetes manifests and Kustomize
+   - `Chart.yaml`, `Chart.lock` and `values*.yaml`
+   - helmfile, skaffold, Tiltfile and devcontainer files
+   - `docker login`, `docker pull`, `helm registry login` and `helm repo add` in CI
+
+   </Path>
+
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
+
+   - apt sources, and the Dockerfiles, Ansible, cloud-init files and scripts that write them
+   - keyrings
+   - `curl` and `wget` of Nexus files
+
+   </Path>
 
 3. Search the CI files, Dockerfiles, compose files, scripts and READMEs as well.
 
 </Steps>
-
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
-
-- `pom.xml`, `.mvn/maven.config` and every `settings.xml`
-- `build.gradle(.kts)`, `settings.gradle(.kts)`, `gradle.properties`, `gradle/*.gradle(.kts)`
-- `buildSrc/`, `build-logic/` and init scripts
-- `gradle/wrapper/gradle-wrapper.properties`
-- On your computer: `~/.m2/settings.xml`, `~/.gradle/gradle.properties` and `~/.gradle/init.d/`
-
-</Path>
-
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
-
-- `.npmrc`, in the project and in `~/.npmrc`
-- `.yarnrc.yml`, `.yarnrc` and `bunfig.toml`
-- `package.json` and the lockfiles
-- `registry-url` of `actions/setup-node` in CI
-
-</Path>
-
-<Path title="Python" ecosystem="python" level={3}>
-
-- `pip.conf` or `pip.ini`, in the project, `~/.config/pip/` and `/etc/`
-- `requirements*.txt` and constraints files
-- `pyproject.toml`, `uv.toml`, `poetry.toml`, `setup.cfg`, `tox.ini`, `noxfile.py`
-- `PIP_INDEX_URL`, `PIP_EXTRA_INDEX_URL`, `UV_INDEX_URL` and `UV_DEFAULT_INDEX` in Dockerfiles and CI
-- `.pypirc`, for publishing
-
-</Path>
-
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
-
-- `.cargo/config.toml`, in the project and in `~/.cargo/`
-- `Cargo.toml` and `Cargo.lock`
-
-</Path>
-
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
-
-- `nuget.config`, in the solution folder, its parents and your user folder
-- `Directory.Build.props` and `.targets`
-- `*.csproj` and `*.fsproj`
-- `dotnet nuget add source`, `--source` and `source-url` of `actions/setup-dotnet` in CI
-
-</Path>
-
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
-
-Also search for each Nexus Docker host and port, such as `nexus.example.com:8082`.
-
-- `Dockerfile*` and compose files
-- Kubernetes manifests and Kustomize
-- `Chart.yaml`, `Chart.lock` and `values*.yaml`
-- helmfile, skaffold, Tiltfile and devcontainer files
-- `docker login`, `docker pull`, `helm registry login` and `helm repo add` in CI
-
-</Path>
-
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
-
-- apt sources, and the Dockerfiles, Ansible, cloud-init files and scripts that write them
-- keyrings
-- `curl` and `wget` of Nexus files
-
-</Path>
 
 <Done>Done when you have a list of every file that names Nexus.</Done>
 
@@ -122,133 +122,133 @@ Also search for each Nexus Docker host and port, such as `nexus.example.com:8082
 
 <Steps>
 
-1. In each file, change the Nexus download address to the Telesphorepo address, as below. Leave the publish addresses and publish steps on Nexus for now.
+1. In each file, change the Nexus download address to the Telesphorepo address. Leave the publish addresses and publish steps on Nexus for now.
+
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+
+   `https://nexus.example.com/repository/<nexus name>/` becomes:
+
+   ```text
+   https://repo.example.com/maven/<name>
+   ```
+
+   - Only the prefix changes. The files keep their paths.
+   - Point a `<mirror>` with `<mirrorOf>*</mirrorOf>` at a Telesphorepo group.
+   - A `distributionUrl` on a Nexus raw repository becomes `https://repo.example.com/raw/<name>/<path>`. Keep `distributionSha256Sum`.
+   - Lockfiles and `gradle/verification-metadata.xml` hold no address. Keep them.
+
+   </Path>
+
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+
+   `https://nexus.example.com/repository/<nexus name>/` becomes:
+
+   ```text
+   https://repo.example.com/npm/<name>/
+   ```
+
+   - Keep the slash at the end.
+   - Change scoped registries (`@acme:registry=`) the same way.
+   - Remove the Nexus `_auth`, `always-auth` and `email` lines.
+   - Yarn 2 and later: change `npmRegistryServer` and `npmScopes.<scope>.npmRegistryServer`.
+   - Bun reads `.npmrc`.
+
+   Then fix the lockfiles. In `package-lock.json`, `pnpm-lock.yaml`, `bun.lock` and a Yarn 1 `yarn.lock`, replace the Nexus prefix with the new one, and keep every `integrity`. Run the frozen install of your tool:
+
+   ```sh
+   npm ci                            # or:
+   pnpm install --frozen-lockfile
+   yarn install --immutable
+   bun install --frozen-lockfile
+   ```
+
+   </Path>
+
+   <Path title="Python" ecosystem="python" level={3}>
+
+   `https://nexus.example.com/repository/<nexus name>/simple/` becomes:
+
+   ```text
+   https://repo.example.com/pypi/<name>/simple/
+   ```
+
+   Renew the lockfiles with the lock command of your tool, and do not edit them by hand. In requirements files with `--hash`, change only the index lines.
+
+   ```sh
+   uv lock        # or:
+   poetry lock    # Poetry 1: poetry lock --no-update
+   ```
+
+   </Path>
+
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+
+   The index becomes:
+
+   ```text
+   sparse+https://repo.example.com/cargo/<name>/index/
+   ```
+
+   - Keep the registry names. Change only `index` in `[registries.<name>]`.
+   - For a proxy or a group of crates.io, also add this:
+
+     ```toml title=".cargo/config.toml"
+     [source.crates-io]
+     replace-with = "<name>"
+     ```
+
+   - In `Cargo.lock`, change each `source =` to the new index, exactly as in the config. Keep every `checksum`.
+
+   Then run `cargo fetch --locked`.
+
+   </Path>
+
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+
+   `https://nexus.example.com/repository/<nexus name>/index.json` becomes:
+
+   ```text
+   https://repo.example.com/nuget/<name>/index.json
+   ```
+
+   - Keep the source keys, so `packageSourceMapping` and the credentials still match.
+   - `packages.lock.json` holds no address. Keep it.
+
+   </Path>
+
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
+
+   The repository name is the first part of the image name:
+
+   ```text
+   nexus.example.com:8082/team/app:1.0   →   repo.example.com/<name>/team/app:1.0
+   ```
+
+   - Through a proxy of Docker Hub, `nginx:1.27` is `repo.example.com/<proxy name>/nginx:1.27`.
+   - Every `@sha256:` digest stays the same.
+
+   Helm charts live in Docker repositories. A chart dependency on Nexus becomes `oci://repo.example.com/<name>`, and its `helm repo add` line goes away. Ask your admin which Docker repository holds the charts, then run `helm dependency update` to renew `Chart.lock`.
+
+   </Path>
+
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
+
+   An apt source changes like this:
+
+   ```text
+   deb https://nexus.example.com/repository/<nexus name>/ <dist> main
+   deb [signed-by=/etc/apt/keyrings/<name>.asc] https://repo.example.com/debian/<name> <dist> main
+   ```
+
+   Every package is in the component `main`. Ask your admin which signing key the repository has. With the Nexus key, the machines trust it already. With another key, install `https://repo.example.com/debian/<name>/key.asc` into `/etc/apt/keyrings/<name>.asc`.
+
+   A raw address `https://nexus.example.com/repository/<nexus name>/<path>` becomes `https://repo.example.com/raw/<name>/<path>`.
+
+   </Path>
 
 2. Run `git diff`. The versions and hashes stay the same, and only addresses change.
 
 </Steps>
-
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
-
-`https://nexus.example.com/repository/<nexus name>/` becomes:
-
-```text
-https://repo.example.com/maven/<name>
-```
-
-- Only the prefix changes. The files keep their paths.
-- Point a `<mirror>` with `<mirrorOf>*</mirrorOf>` at a Telesphorepo group.
-- A `distributionUrl` on a Nexus raw repository becomes `https://repo.example.com/raw/<name>/<path>`. Keep `distributionSha256Sum`.
-- Lockfiles and `gradle/verification-metadata.xml` hold no address. Keep them.
-
-</Path>
-
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
-
-`https://nexus.example.com/repository/<nexus name>/` becomes:
-
-```text
-https://repo.example.com/npm/<name>/
-```
-
-- Keep the slash at the end.
-- Change scoped registries (`@acme:registry=`) the same way.
-- Remove the Nexus `_auth`, `always-auth` and `email` lines.
-- Yarn 2 and later: change `npmRegistryServer` and `npmScopes.<scope>.npmRegistryServer`.
-- Bun reads `.npmrc`.
-
-Then fix the lockfiles. In `package-lock.json`, `pnpm-lock.yaml`, `bun.lock` and a Yarn 1 `yarn.lock`, replace the Nexus prefix with the new one, and keep every `integrity`. Run the frozen install of your tool:
-
-```sh
-npm ci                            # or:
-pnpm install --frozen-lockfile
-yarn install --immutable
-bun install --frozen-lockfile
-```
-
-</Path>
-
-<Path title="Python" ecosystem="python" level={3}>
-
-`https://nexus.example.com/repository/<nexus name>/simple/` becomes:
-
-```text
-https://repo.example.com/pypi/<name>/simple/
-```
-
-Renew the lockfiles with the lock command of your tool, and do not edit them by hand. In requirements files with `--hash`, change only the index lines.
-
-```sh
-uv lock        # or:
-poetry lock    # Poetry 1: poetry lock --no-update
-```
-
-</Path>
-
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
-
-The index becomes:
-
-```text
-sparse+https://repo.example.com/cargo/<name>/index/
-```
-
-- Keep the registry names. Change only `index` in `[registries.<name>]`.
-- For a proxy or a group of crates.io, also add this:
-
-  ```toml title=".cargo/config.toml"
-  [source.crates-io]
-  replace-with = "<name>"
-  ```
-
-- In `Cargo.lock`, change each `source =` to the new index, exactly as in the config. Keep every `checksum`.
-
-Then run `cargo fetch --locked`.
-
-</Path>
-
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
-
-`https://nexus.example.com/repository/<nexus name>/index.json` becomes:
-
-```text
-https://repo.example.com/nuget/<name>/index.json
-```
-
-- Keep the source keys, so `packageSourceMapping` and the credentials still match.
-- `packages.lock.json` holds no address. Keep it.
-
-</Path>
-
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
-
-The repository name is the first part of the image name:
-
-```text
-nexus.example.com:8082/team/app:1.0   →   repo.example.com/<name>/team/app:1.0
-```
-
-- Through a proxy of Docker Hub, `nginx:1.27` is `repo.example.com/<proxy name>/nginx:1.27`.
-- Every `@sha256:` digest stays the same.
-
-Helm charts live in Docker repositories. A chart dependency on Nexus becomes `oci://repo.example.com/<name>`, and its `helm repo add` line goes away. Ask your admin which Docker repository holds the charts, then run `helm dependency update` to renew `Chart.lock`.
-
-</Path>
-
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
-
-An apt source changes like this:
-
-```text
-deb https://nexus.example.com/repository/<nexus name>/ <dist> main
-deb [signed-by=/etc/apt/keyrings/<name>.asc] https://repo.example.com/debian/<name> <dist> main
-```
-
-Every package is in the component `main`. Ask your admin which signing key the repository has. With the Nexus key, the machines trust it already. With another key, install `https://repo.example.com/debian/<name>/key.asc` into `/etc/apt/keyrings/<name>.asc`.
-
-A raw address `https://nexus.example.com/repository/<nexus name>/<path>` becomes `https://repo.example.com/raw/<name>/<path>`.
-
-</Path>
 
 <Done>Done when `git diff` shows only addresses changed, and no download address names Nexus.</Done>
 
@@ -260,127 +260,127 @@ This part is for private repositories, the ones with a lock after their name on 
 
 <Steps>
 
-1. Open **Settings** › **Tokens**, and click **New read token**.
+1. Open the account menu at the top right, click **Your account**, then **Tokens**.
 
-2. Type a name, such as `my-app builds`, and click **Create token**.
+2. Click **New read token**. Type a name, such as `my-app builds`, and click **Create token**.
 
 3. Copy the token. It shows only once.
 
 4. Put your username and the token in the variables `TELESPHOREPO_READ_USER` and `TELESPHOREPO_READ_TOKEN`. Set them on your computer and as CI secrets. Never name the token `TELESPHOREPO_TOKEN`: the CLI uses that name when it publishes.
 
-5. Make your tool read the variables, as below.
+5. Make your tool read the variables.
+
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+
+   In Gradle, set a name and the credentials in the `maven { }` block. Gradle then reads `ORG_GRADLE_PROJECT_myLibsUsername` and `ORG_GRADLE_PROJECT_myLibsPassword`, so set those two variables as well. The name is the repository name as a Gradle identifier: `my-libs` is `myLibs`. In Groovy, write `credentials(PasswordCredentials)`.
+
+   ```kotlin title="build.gradle.kts"
+   name = "myLibs"
+   credentials(PasswordCredentials::class)
+   ```
+
+   In Maven, add a `<server>` whose `<id>` is the `<id>` of the repository or mirror. Put it in `~/.m2/settings.xml`, and in a settings file that CI passes with `-s`.
+
+   ```xml title="settings.xml"
+   <server>
+     <id>maven-public</id>
+     <username>${env.TELESPHOREPO_READ_USER}</username>
+     <password>${env.TELESPHOREPO_READ_TOKEN}</password>
+   </server>
+   ```
+
+   </Path>
+
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+
+   Set `NPM_TOKEN` to the read token, and add this line. In Yarn 2 and later, set `npmAlwaysAuth: true` and `npmAuthToken: "${NPM_TOKEN}"` instead.
+
+   ```ini title=".npmrc"
+   //repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}
+   ```
+
+   </Path>
+
+   <Path title="Python" ecosystem="python" level={3}>
+
+   Each tool reads the credentials its own way:
+
+   - pip reads them from the address. Put the whole address in the environment, and keep the plain address in the files.
+   - uv reads `UV_INDEX_<NAME>_USERNAME` and `UV_INDEX_<NAME>_PASSWORD`. `<NAME>` is the index name in capitals, with `_` for every other character.
+   - Poetry reads `POETRY_HTTP_BASIC_<SOURCE>_USERNAME` and `POETRY_HTTP_BASIC_<SOURCE>_PASSWORD`.
+
+   ```sh
+   export PIP_INDEX_URL="https://$TELESPHOREPO_READ_USER:$TELESPHOREPO_READ_TOKEN@repo.example.com/pypi/<name>/simple/"
+   ```
+
+   </Path>
+
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+
+   Add `credential-provider = "cargo:token"` to the registry. Cargo then reads the token from `CARGO_REGISTRIES_<NAME>_TOKEN`: the registry name in capitals, with `_` for `-`. This needs Cargo 1.74 or later.
+
+   </Path>
+
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+
+   Add credentials under the source key, here `dotnet`:
+
+   ```xml title="nuget.config"
+   <packageSourceCredentials>
+     <dotnet>
+       <add key="Username" value="%NUGET_USERNAME%" />
+       <add key="ClearTextPassword" value="%NUGET_TOKEN%" />
+     </dotnet>
+   </packageSourceCredentials>
+   ```
+
+   </Path>
+
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
+
+   On your computer, use the credential helper of the CLI instead of a token.
+
+   1. [Install the CLI](/install-cli/), and run `telesphorepo login https://repo.example.com`.
+   2. Add the helper to `~/.docker/config.json`, and keep the other keys:
+
+      ```json title="~/.docker/config.json"
+      {
+        "credHelpers": {
+          "repo.example.com": "telesphorepo"
+        }
+      }
+      ```
+
+   Docker, Podman, Helm and ORAS then pull with no `docker login`. In CI and on servers, log in with the read token. In Kubernetes, make a pull secret with `kubectl create secret docker-registry`.
+
+   ```sh
+   printf '%s' "$TELESPHOREPO_READ_TOKEN" | docker login repo.example.com -u "$TELESPHOREPO_READ_USER" --password-stdin
+   ```
+
+   </Path>
+
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
+
+   apt reads credentials only from `/etc/apt/auth.conf.d/`. Run these lines. They ask for the token without showing it:
+
+   ```sh
+   printf 'Read token: '; read -rs READ_TOKEN; echo
+   sudo install -m 600 /dev/null /etc/apt/auth.conf.d/<name>.conf
+   printf 'machine %s login <user> password %s\n' https://repo.example.com/debian/<name> "$READ_TOKEN" \
+     | sudo tee -a /etc/apt/auth.conf.d/<name>.conf > /dev/null
+   ```
+
+   For a raw file, pass the credentials to curl on stdin, never as an argument:
+
+   ```sh
+   printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" | curl -fsSL -K - -o <file> <address>
+   ```
+
+   </Path>
 
 </Steps>
 
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
-
-In Gradle, set a name and the credentials in the `maven { }` block. Gradle then reads `ORG_GRADLE_PROJECT_myLibsUsername` and `ORG_GRADLE_PROJECT_myLibsPassword`, so set those two variables as well. The name is the repository name as a Gradle identifier: `my-libs` is `myLibs`. In Groovy, write `credentials(PasswordCredentials)`.
-
-```kotlin title="build.gradle.kts"
-name = "myLibs"
-credentials(PasswordCredentials::class)
-```
-
-In Maven, add a `<server>` whose `<id>` is the `<id>` of the repository or mirror. Put it in `~/.m2/settings.xml`, and in a settings file that CI passes with `-s`.
-
-```xml title="settings.xml"
-<server>
-  <id>maven-public</id>
-  <username>${env.TELESPHOREPO_READ_USER}</username>
-  <password>${env.TELESPHOREPO_READ_TOKEN}</password>
-</server>
-```
-
-</Path>
-
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
-
-Set `NPM_TOKEN` to the read token, and add this line. In Yarn 2 and later, set `npmAlwaysAuth: true` and `npmAuthToken: "${NPM_TOKEN}"` instead.
-
-```ini title=".npmrc"
-//repo.example.com/npm/<name>/:_authToken=${NPM_TOKEN}
-```
-
-</Path>
-
-<Path title="Python" ecosystem="python" level={3}>
-
-Each tool reads the credentials its own way:
-
-- pip reads them from the address. Put the whole address in the environment, and keep the plain address in the files.
-- uv reads `UV_INDEX_<NAME>_USERNAME` and `UV_INDEX_<NAME>_PASSWORD`. `<NAME>` is the index name in capitals, with `_` for every other character.
-- Poetry reads `POETRY_HTTP_BASIC_<SOURCE>_USERNAME` and `POETRY_HTTP_BASIC_<SOURCE>_PASSWORD`.
-
-```sh
-export PIP_INDEX_URL="https://$TELESPHOREPO_READ_USER:$TELESPHOREPO_READ_TOKEN@repo.example.com/pypi/<name>/simple/"
-```
-
-</Path>
-
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
-
-Add `credential-provider = "cargo:token"` to the registry. Cargo then reads the token from `CARGO_REGISTRIES_<NAME>_TOKEN`: the registry name in capitals, with `_` for `-`. This needs Cargo 1.74 or later.
-
-</Path>
-
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
-
-Add credentials under the source key, here `dotnet`:
-
-```xml title="nuget.config"
-<packageSourceCredentials>
-  <dotnet>
-    <add key="Username" value="%NUGET_USERNAME%" />
-    <add key="ClearTextPassword" value="%NUGET_TOKEN%" />
-  </dotnet>
-</packageSourceCredentials>
-```
-
-</Path>
-
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
-
-On your computer, use the credential helper of the CLI instead of a token.
-
-1. [Install the CLI](/install-cli/), and run `telesphorepo login https://repo.example.com`.
-2. Add the helper to `~/.docker/config.json`, and keep the other keys:
-
-   ```json title="~/.docker/config.json"
-   {
-     "credHelpers": {
-       "repo.example.com": "telesphorepo"
-     }
-   }
-   ```
-
-Docker, Podman, Helm and ORAS then pull with no `docker login`. In CI and on servers, log in with the read token. In Kubernetes, make a pull secret with `kubectl create secret docker-registry`.
-
-```sh
-printf '%s' "$TELESPHOREPO_READ_TOKEN" | docker login repo.example.com -u "$TELESPHOREPO_READ_USER" --password-stdin
-```
-
-</Path>
-
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
-
-apt reads credentials only from `/etc/apt/auth.conf.d/`. Run these lines. They ask for the token without showing it:
-
-```sh
-printf 'Read token: '; read -rs READ_TOKEN; echo
-sudo install -m 600 /dev/null /etc/apt/auth.conf.d/<name>.conf
-printf 'machine %s login <user> password %s\n' https://repo.example.com/debian/<name> "$READ_TOKEN" \
-  | sudo tee -a /etc/apt/auth.conf.d/<name>.conf > /dev/null
-```
-
-For a raw file, pass the credentials to curl on stdin, never as an argument:
-
-```sh
-printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" | curl -fsSL -K - -o <file> <address>
-```
-
-</Path>
-
-<Done>Done when **Settings** › **Tokens** lists the token, and your tool reads the variables you set.</Done>
+<Done>Done when the **Tokens** page lists the token, and your tool reads the variables you set.</Done>
 
 ### Check the build
 
@@ -390,72 +390,72 @@ printf 'user = "%s:%s"\n' "$TELESPHOREPO_READ_USER" "$TELESPHOREPO_READ_TOKEN" |
 
 1. Search again for the Nexus host and `/repository/`. Find out why each hit is still there.
 
-2. Build with an empty cache, as below.
+2. Build with an empty cache.
+
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+
+   ```sh
+   ./gradlew build --refresh-dependencies
+   mvn -U -Dmaven.repo.local=/tmp/empty-m2 verify
+   ```
+
+   </Path>
+
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+
+   Remove `node_modules`, then run the frozen install, such as `npm ci`.
+
+   </Path>
+
+   <Path title="Python" ecosystem="python" level={3}>
+
+   In a new virtual environment:
+
+   ```sh
+   pip install --no-cache-dir -r requirements.txt   # or: uv sync, poetry install
+   ```
+
+   </Path>
+
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+
+   ```sh
+   cargo fetch --locked
+   cargo build
+   ```
+
+   </Path>
+
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+
+   ```sh
+   dotnet nuget locals all --clear
+   dotnet restore
+   ```
+
+   </Path>
+
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
+
+   Build with no cache, then pull each image of the compose files and manifests.
+
+   ```sh
+   docker build --no-cache --pull .
+   ```
+
+   </Path>
+
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
+
+   Run `sudo apt update`, then install a package. Download each raw file with `curl`, and compare its SHA-256.
+
+   </Path>
 
 3. Check in the output that every download comes from `repo.example.com`.
 
 4. Commit the changes.
 
 </Steps>
-
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
-
-```sh
-./gradlew build --refresh-dependencies
-mvn -U -Dmaven.repo.local=/tmp/empty-m2 verify
-```
-
-</Path>
-
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
-
-Remove `node_modules`, then run the frozen install, such as `npm ci`.
-
-</Path>
-
-<Path title="Python" ecosystem="python" level={3}>
-
-In a new virtual environment:
-
-```sh
-pip install --no-cache-dir -r requirements.txt   # or: uv sync, poetry install
-```
-
-</Path>
-
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
-
-```sh
-cargo fetch --locked
-cargo build
-```
-
-</Path>
-
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
-
-```sh
-dotnet nuget locals all --clear
-dotnet restore
-```
-
-</Path>
-
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
-
-Build with no cache, then pull each image of the compose files and manifests.
-
-```sh
-docker build --no-cache --pull .
-```
-
-</Path>
-
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
-
-Run `sudo apt update`, then install a package. Download each raw file with `curl`, and compare its SHA-256.
-
-</Path>
 
 <Done>Done when the build output shows every download coming from `repo.example.com`. If you move only the downloads, you are finished.</Done>
 
@@ -467,16 +467,22 @@ The copies refuse uploads until the switch-over. So the project first publishes 
 
 <Place where="In a message to your server admin" />
 
-Send the message below, with your repository name in place of `<repository>`. The second item is for a project that publishes from CI: a CI pipeline is a rule on the server that says which job may publish to which repository. [Ask for a CI pipeline](/publish-from-ci/#ask-for-a-ci-pipeline) shows the values that the rule needs.
+Send the message below, with your repository name in place of `<repository>`. The second item is for a project that publishes from CI: a CI pipeline is a rule on the server that says which job may publish to which repository. Keep the values of the system that runs the job, with your own GitHub repository or Jenkins job, and delete the other set. [Ask for a CI pipeline](/publish-from-ci/#ask-for-a-ci-pipeline) explains each value.
 
 ```text title="Message to your server admin"
 Please make a rehearsal repository for <repository>, so that I can try publishing before the switch-over.
 
-1. In Telesphorepo, open Settings > Nexus migration, then the Nexus server. In the row of
-   <repository>, open the actions menu and click Rehearse publishing. This makes
-   <repository>-rehearsal, where everyone who can publish to <repository> can publish.
-2. Only if CI publishes the project: open Settings > CI pipelines and add a CI pipeline for it.
-   Under the repositories it can publish to, choose <repository>-rehearsal and <repository>.
+1. In Telesphorepo, open Settings › Nexus migration, then the Nexus server. In the row of <repository>, open the actions menu and click Rehearse publishing. This makes <repository>-rehearsal, where everyone who can publish to <repository> can publish.
+2. Only if CI publishes the project: open Settings › CI pipelines and add a CI pipeline with these values. Under Repositories it can publish to, tick <repository>-rehearsal and <repository>.
+
+   Where the job runs: GitHub Actions
+   GitHub repository: your-org/your-app
+   Workflow file: publish.yml
+   Branches: main
+
+   Where the job runs: Jenkins
+   Jenkins address: https://jenkins.example.com
+   Jobs: team/app
 ```
 
 <Done>Done when the repository `<repository>-rehearsal` is in the **Repositories** list.</Done>
@@ -487,77 +493,73 @@ Please make a rehearsal repository for <repository>, so that I can try publishin
 
 <Steps>
 
-1. Remove the Nexus publishing from the project and its CI, as listed below. Keep the steps that build the artifacts.
+1. Remove the Nexus publishing from the project and its CI. Keep the steps that build the artifacts.
 
-</Steps>
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
 
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+   - The Nexus `<distributionManagement>` entries and `<server>` credentials
+   - Nexus staging plugins, such as `nexus-staging-maven-plugin` and `io.github.gradle-nexus.publish-plugin`
+   - The Nexus repository in `publishing { repositories { } }`
 
-- The Nexus `<distributionManagement>` entries and `<server>` credentials
-- Nexus staging plugins, such as `nexus-staging-maven-plugin` and `io.github.gradle-nexus.publish-plugin`
-- The Nexus repository in `publishing { repositories { } }`
+   Keep `maven-publish`, the publications, `group` and `version`. `telesphorepo publish` runs `mvn deploy` or `gradle publish` with the repository as the target.
 
-Keep `maven-publish`, the publications, `group` and `version`. `telesphorepo publish` runs `mvn deploy` or `gradle publish` with the repository as the target.
+   </Path>
 
-</Path>
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
 
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+   - `publishConfig.registry`
+   - The Nexus publish auth lines
+   - The `npm publish` steps of CI and their secrets
 
-- `publishConfig.registry`
-- The Nexus publish auth lines
-- The `npm publish` steps of CI and their secrets
+   `telesphorepo publish` picks the tool by the lockfile. In a workspace, put a `telesphorepo.toml` in the folder of each package that publishes.
 
-`telesphorepo publish` picks the tool by the lockfile. In a workspace, put a `telesphorepo.toml` in the folder of each package that publishes.
+   </Path>
 
-</Path>
+   <Path title="Python" ecosystem="python" level={3}>
 
-<Path title="Python" ecosystem="python" level={3}>
+   - `.pypirc` and `twine upload`
+   - `uv publish` and `publish-url`
+   - `poetry publish -r` and the Poetry repository for Nexus
 
-- `.pypirc` and `twine upload`
-- `uv publish` and `publish-url`
-- `poetry publish -r` and the Poetry repository for Nexus
+   `telesphorepo publish` builds with Poetry, uv or `python -m build`, then uploads every wheel and sdist.
 
-`telesphorepo publish` builds with Poetry, uv or `python -m build`, then uploads every wheel and sdist.
+   </Path>
 
-</Path>
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
 
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+   - The `cargo publish --registry <nexus>` steps and the Nexus tokens
 
-- The `cargo publish --registry <nexus>` steps and the Nexus tokens
+   Where `Cargo.toml` names Nexus in `publish =`, set `publish = ["telesphorepo"]`. Keep the key: without it, a plain `cargo publish` goes to crates.io.
 
-Where `Cargo.toml` names Nexus in `publish =`, set `publish = ["telesphorepo"]`. Keep the key: without it, a plain `cargo publish` goes to crates.io.
+   </Path>
 
-</Path>
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
 
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+   - The `dotnet nuget push` or `nuget push` steps to Nexus
+   - `<apikeys>` and the API key secrets
 
-- The `dotnet nuget push` or `nuget push` steps to Nexus
-- `<apikeys>` and the API key secrets
+   `telesphorepo publish` runs `dotnet pack -c Release` and pushes each package.
 
-`telesphorepo publish` runs `dotnet pack -c Release` and pushes each package.
+   </Path>
 
-</Path>
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
 
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
+   - `docker login` to Nexus and the Nexus push credentials
+   - `helm push` and `curl` uploads to Nexus
 
-- `docker login` to Nexus and the Nexus push credentials
-- `helm push` and `curl` uploads to Nexus
+   Images push with `docker push repo.example.com/<repo>/<image>:<tag>` through the credential helper. They need no `telesphorepo.toml`. A chart folder gets one, and `telesphorepo publish` packages and pushes the chart.
 
-Images push with `docker push repo.example.com/<repo>/<image>:<tag>` through the credential helper. They need no `telesphorepo.toml`. A chart folder gets one, and `telesphorepo publish` packages and pushes the chart.
+   </Path>
 
-</Path>
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
 
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
+   - The `curl -u` uploads to Nexus and their passwords
 
-- The `curl -u` uploads to Nexus and their passwords
+   `telesphorepo publish <file>` uploads the files.
 
-`telesphorepo publish <file>` uploads the files.
+   </Path>
 
-</Path>
-
-<Steps>
-
-2. In Telesphorepo, open the rehearsal repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows a setup line.
+2. In Telesphorepo, open the rehearsal repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second step. The page shows a setup line.
 
 3. Copy the setup line, paste it in a terminal in the project folder, and press Enter. The CLI writes `telesphorepo.toml` with `repo` set to the rehearsal repository, and asks if you want a CI file. [Publish from your computer](/publish-from-a-project/) walks through the questions.
 
@@ -581,63 +583,65 @@ Images push with `docker push repo.example.com/<repo>/<image>:<tag>` through the
    telesphorepo publish
    ```
 
-3. In a new empty folder outside the project, install what you published, as below. Then remove the folder.
+3. In a new empty folder outside the project, install what you published.
 
-4. To rehearse CI too, push to a branch that the CI pipeline lists, and check the run.
+   <Path title="Gradle or Maven" ecosystem="gradle" level={3}>
+
+   Write a small build that depends on the `group:artifact:version` you published, from `https://repo.example.com/maven/<rehearsal repository>`. Build it with an empty cache.
+
+   </Path>
+
+   <Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
+
+   Run `npm init -y`, and write an `.npmrc` with the rehearsal registry. Then run `npm install <package>@<version>`.
+
+   </Path>
+
+   <Path title="Python" ecosystem="python" level={3}>
+
+   In a new virtual environment:
+
+   ```sh
+   pip install --index-url https://repo.example.com/pypi/<rehearsal repository>/simple/ \
+     --extra-index-url https://pypi.org/simple/ <package>==<version>
+   ```
+
+   </Path>
+
+   <Path title="Rust and Cargo" ecosystem="cargo" level={3}>
+
+   Run `cargo new verify`, and write a `.cargo/config.toml` with the rehearsal registry. Then run `cargo add <crate>@<version> --registry <name>` and `cargo build`.
+
+   </Path>
+
+   <Path title=".NET and NuGet" ecosystem="nuget" level={3}>
+
+   Run `dotnet new console`, and write a `nuget.config` with the rehearsal source. Then run `dotnet add package <id> --version <version>`.
+
+   </Path>
+
+   <Path title="Docker and Helm" ecosystem="docker" level={3}>
+
+   Remove the local image, then pull it:
+
+   ```sh
+   docker pull repo.example.com/<rehearsal repository>/<image>:<tag>
+   helm pull oci://repo.example.com/<rehearsal repository>/<chart> --version <version>
+   ```
+
+   </Path>
+
+   <Path title="Debian or raw files" ecosystem="debian" level={3}>
+
+   For raw files, download the file with `curl`, and compare its SHA-256. For Debian, add the rehearsal source and its key in a throwaway `debian` container. Then run `apt-get update` and `apt-get install <package>`.
+
+   </Path>
+
+4. Remove the folder.
+
+5. To rehearse CI too, push to a branch that the CI pipeline lists, and check the run.
 
 </Steps>
-
-<Path title="Gradle or Maven" ecosystem="gradle" level={3}>
-
-Write a small build that depends on the `group:artifact:version` you published, from `https://repo.example.com/maven/<rehearsal repository>`. Build it with an empty cache.
-
-</Path>
-
-<Path title="npm, pnpm, Yarn or Bun" ecosystem="npm" level={3}>
-
-Run `npm init -y`, and write an `.npmrc` with the rehearsal registry. Then run `npm install <package>@<version>`.
-
-</Path>
-
-<Path title="Python" ecosystem="python" level={3}>
-
-In a new virtual environment:
-
-```sh
-pip install --index-url https://repo.example.com/pypi/<rehearsal repository>/simple/ \
-  --extra-index-url https://pypi.org/simple/ <package>==<version>
-```
-
-</Path>
-
-<Path title="Rust and Cargo" ecosystem="cargo" level={3}>
-
-Run `cargo new verify`, and write a `.cargo/config.toml` with the rehearsal registry. Then run `cargo add <crate>@<version> --registry <name>` and `cargo build`.
-
-</Path>
-
-<Path title=".NET and NuGet" ecosystem="nuget" level={3}>
-
-Run `dotnet new console`, and write a `nuget.config` with the rehearsal source. Then run `dotnet add package <id> --version <version>`.
-
-</Path>
-
-<Path title="Docker and Helm" ecosystem="docker" level={3}>
-
-Remove the local image, then pull it:
-
-```sh
-docker pull repo.example.com/<rehearsal repository>/<image>:<tag>
-helm pull oci://repo.example.com/<rehearsal repository>/<chart> --version <version>
-```
-
-</Path>
-
-<Path title="Debian or raw files" ecosystem="debian" level={3}>
-
-For raw files, download the file with `curl`, and compare its SHA-256. For Debian, add the rehearsal source and its key in a throwaway `debian` container. Then run `apt-get update` and `apt-get install <package>`.
-
-</Path>
 
 <Done>Done when the package installs from the rehearsal repository in the empty folder. To publish the same version again, ask your server admin to choose **Empty it** in the repository's actions menu on the Nexus server page.</Done>
 
