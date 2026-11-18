@@ -18,15 +18,18 @@ const { entry } = Astro.locals.starlightRoute;
 const { data } = entry;
 const { title = data.title, tagline, actions = [] } = data.hero || {};
 const notFound = entry.id === '404';
+// One option on each line, so a phone breaks no line of the command.
 const command = [
-    'docker run -d --name telesphorepo -p 8080:8080 \\',
-    '  -v telesphorepo-data:/data -v telesphorepo-backups:/backups \\',
+    'docker run -d --name telesphorepo \\',
+    '  -p 8080:8080 \\',
+    '  -v telesphorepo-data:/data \\',
+    '  -v telesphorepo-backups:/backups \\',
     '  ghcr.io/telesphorepo/telesphorepo:latest',
 ].join('\n');
 const facts = [
-    ['One binary.', 'Go, with SQLite and the web UI inside. No database server and no JVM.'],
-    ['Nothing to configure first.', 'No environment variable is required. Change settings in the web UI, and they apply at once.'],
-    ['Your disk or your bucket.', 'Files go on local disk, or in Cloudflare R2, AWS S3 or SeaweedFS.'],
+    ['One program', 'Go, with SQLite and the web UI inside. No database server and no JVM.'],
+    ['Settings in the web UI', 'You set no environment variable. A change in the web UI applies at once.'],
+    ['Local disk or a bucket', 'Files go on local disk, or in Cloudflare R2, AWS S3 or SeaweedFS.'],
 ];
 
 const file = { width: 720, height: 480 };
@@ -56,7 +59,7 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         <div class="run tr-paper">
             <p class="run-title">Run it</p>
             <div class="run-line">
-                <pre><code>{command.split('\n').map((line) => <span class="line" set:html={line.replace(/\//g, '/<wbr>')}/>)}</code></pre>
+                <pre><code>{command.split('\n').map((line) => <span class="line" set:html={line.trimStart().replace(/\//g, '/<wbr>')}/>)}</code></pre>
                 <button type="button" class="copy-button" data-copy-command={command}>
                     <span data-copy-label aria-live="polite">Copy</span>
                 </button>
@@ -99,7 +102,10 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
 </script>
 
 <style>
-    /* The copy and the ticket side by side from 56rem, the run slip across both under them. */
+    /*
+     * From 56rem the copy and the run slip stack on the left, the ticket spans both rows on the
+     * right, and the facts run across both columns under them.
+     */
     .tr-hero {
         display: grid;
         grid-template-columns: minmax(0, 1fr);
@@ -110,13 +116,25 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
 
     @media (min-width: 56rem) {
         .tr-hero {
-            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+            grid-template-areas: 'copy ticket' 'run ticket' 'facts facts';
             column-gap: 3rem;
         }
 
-        .run,
+        .copy {
+            grid-area: copy;
+        }
+
+        .ticket {
+            grid-area: ticket;
+        }
+
+        .run {
+            grid-area: run;
+        }
+
         .facts {
-            grid-column: 1 / -1;
+            grid-area: facts;
         }
     }
 
@@ -127,13 +145,29 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
     }
 
     .tr-hero #_top {
-        max-width: 18ch;
         margin: 0;
         font-size: clamp(2.5rem, 1.5rem + 3.6vw, 3.75rem);
         font-weight: 700;
         line-height: 1.04;
         letter-spacing: -0.035em;
         text-wrap: balance;
+    }
+
+    /* A phone wraps the title where it fits; from 56rem the <br> in it ends the first half. */
+    .tr-hero #_top :global(br) {
+        display: none;
+    }
+
+    /* From 56rem the title's size follows the column, so each half fits on one line. */
+    @media (min-width: 56rem) {
+        .tr-hero #_top {
+            font-size: clamp(1.75rem, 3.6vw - 0.125rem, 2.9rem);
+            text-wrap: wrap;
+        }
+
+        .tr-hero #_top :global(br) {
+            display: inline;
+        }
     }
 
     .tagline {
@@ -192,7 +226,6 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         display: flex;
         flex-direction: column;
         gap: 0.875rem;
-        max-width: 46rem;
         padding: 1.25rem;
         border-radius: 14px;
     }
@@ -240,9 +273,19 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         }
     }
 
+    /*
+     * Each line after the first is indented 2ch. A line too long for a phone wraps 2ch further in,
+     * so the wrap reads as one line.
+     */
     .run-line .line {
         display: block;
+        padding-inline-start: 2ch;
+        text-indent: -2ch;
         white-space: pre-wrap;
+    }
+
+    .run-line .line + .line {
+        padding-inline-start: 4ch;
     }
 
     .run-line code {

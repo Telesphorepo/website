@@ -242,6 +242,16 @@
     text-wrap: pretty;
 }
 
+.tr-features code {
+    padding: 0.05em 0.3em;
+    border-radius: 4px;
+    background-color: var(--tr-raised);
+    color: var(--tr-body);
+    font-family: var(--sl-font-mono);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
 .tr-features a:hover strong {
     color: var(--tr-link);
 }
@@ -252,9 +262,11 @@
     border-radius: 4px;
 }
 
-/* Free: one short paragraph on a paper band. */
+/* Free: one short paragraph on a paper card as wide as its text. */
 
 .tr-free {
+    width: fit-content;
+    max-width: 100%;
     margin-top: var(--tr-section-gap);
     padding: clamp(1.75rem, 1rem + 3vw, 3.5rem);
     border-radius: 16px;
