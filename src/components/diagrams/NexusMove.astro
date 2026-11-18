@@ -3,6 +3,9 @@
  * The move off Nexus: before, during and after. Each stage draws the same picture: your builds
  * above the server they publish to, Nexus on the left and Telesphorepo on the right. The builds
  * move from Nexus to Telesphorepo, and during the move Telesphorepo copies from Nexus.
+ *
+ * Gold marks the one thing to look at in each stage: the server the builds publish to. The other
+ * server is muted when it is not in play.
  */
 import Arrow from './Arrow.astro';
 import Figure from './Figure.astro';
@@ -11,7 +14,7 @@ type Server = 'nexus' | 'telesphorepo';
 
 const stages: { name: string; text: string; target: Server; copy: boolean }[] = [
     { name: 'Before', text: 'Builds publish to Nexus.', target: 'nexus', copy: false },
-    { name: 'During', text: 'Telesphorepo copies new uploads. Builds still use Nexus.', target: 'nexus', copy: true },
+    { name: 'During', text: 'Telesphorepo copies new uploads. Builds still publish to Nexus.', target: 'nexus', copy: true },
     { name: 'After', text: 'Builds publish to Telesphorepo.', target: 'telesphorepo', copy: false },
 ];
 ---
@@ -27,9 +30,9 @@ const stages: { name: string; text: string; target: Server; copy: boolean }[] = 
                 <div class:list={['scene', `to-${stage.target}`]} aria-hidden="true">
                     <span class="node builds">Your builds</span>
                     <span class="down"><Arrow/></span>
-                    <span class:list={['node', 'nexus', { idle: stage.target !== 'nexus' && !stage.copy }]}>Nexus</span>
+                    <span class:list={['node', 'nexus', { target: stage.target === 'nexus', idle: stage.target !== 'nexus' && !stage.copy }]}>Nexus</span>
                     <span class="across">{stage.copy && <Arrow/>}</span>
-                    <span class:list={['node', 'telesphorepo', { idle: stage.target !== 'telesphorepo' && !stage.copy, live: stage.target === 'telesphorepo' }]}>Telesphorepo</span>
+                    <span class:list={['node', 'telesphorepo', { target: stage.target === 'telesphorepo', idle: stage.target !== 'telesphorepo' && !stage.copy }]}>Telesphorepo</span>
                 </div>
                 <p class="text">{stage.text}</p>
             </li>
@@ -55,7 +58,7 @@ const stages: { name: string; text: string; target: Server; copy: boolean }[] = 
         min-width: 0;
         margin: 0;
         padding: 1rem;
-        border-radius: 10px;
+        border-radius: 8px;
         background-color: var(--tr-page);
     }
 
@@ -84,9 +87,10 @@ const stages: { name: string; text: string; target: Server; copy: boolean }[] = 
 
     .node {
         padding: 0.5rem 0.25rem;
+        border: 2px solid transparent;
         border-radius: 8px;
         background-color: var(--tr-raised);
-        color: var(--tr-heading);
+        color: var(--tr-body);
         font-weight: 500;
         text-align: center;
         white-space: nowrap;
@@ -131,19 +135,19 @@ const stages: { name: string; text: string; target: Server; copy: boolean }[] = 
         grid-column: 3;
     }
 
-    .live {
-        background-color: var(--tr-gold);
-        color: var(--tr-gold-ink);
+    .target {
+        border-color: var(--tr-accent);
         font-weight: 600;
     }
 
     .idle {
-        background-color: color-mix(in srgb, var(--tr-raised) 35%, transparent);
+        background-color: transparent;
+        border-color: var(--tr-line);
         color: var(--tr-muted);
         font-weight: 400;
     }
 
-    @container (max-width: 40rem) {
+    @container (max-width: 50rem) {
         .stages {
             grid-template-columns: minmax(0, 1fr);
         }

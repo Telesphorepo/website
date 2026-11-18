@@ -1,15 +1,12 @@
 ---
 /*
- * The frame every diagram shares: a paper panel, a perforation, and a caption. The summary is the
+ * The frame of a diagram: a flat panel on the surface color, with a caption under it. The docs
+ * pages are flat, so the frame has no paper, no perforation and no shadow. The summary is the
  * figure's description for screen readers, and the Markdown copy of a page writes the summary in
  * place of the figure (see src/pages/[...slug].md.ts).
  *
- * It also holds the shared pieces, so the diagrams look alike:
- *   .dg-node    a step or a thing, on the page color
- *   .dg-ticket  a publish session, drawn as a gold ticket with its two notches
- *   .dg-stamp   a state, in stamp ink: .dg-stamp-ok, .dg-stamp-bad, .dg-stamp-muted
- *   .dg-note    a short note in the muted color
- *   .dg-arrow   the arrow from Arrow.astro
+ * Colors follow the roles of the docs: heading color for names, body color for text, muted for
+ * captions and for what is not in play, gold only for the one thing the reader should look at.
  */
 interface Props {
     caption: string;
@@ -19,51 +16,46 @@ interface Props {
 const { caption, summary } = Astro.props;
 ---
 
-<figure class="tr-figure tr-paper not-content">
+<figure class="tr-figure not-content">
     <p class="tr-figure-summary sr-only">{summary}</p>
     <div class="stage">
         <slot />
     </div>
-    <div class="perforation" aria-hidden="true"></div>
     <figcaption>{caption}</figcaption>
 </figure>
 
 <style>
     .tr-figure {
-        margin-block: 2rem;
-        border-radius: 14px;
+        margin-block: 2rem 1.25rem;
+        border: 1px solid var(--tr-line);
+        border-radius: 8px;
+        background-color: var(--tr-surface);
     }
 
     /* Each diagram adapts to the width of its own panel, not the window. */
     .stage {
         container-type: inline-size;
-        padding: 1.5rem 1.25rem 1.25rem;
+        padding: 1.25rem 1.25rem 1rem;
         color: var(--tr-body);
-        font-size: var(--sl-text-sm);
+        font-size: 0.875rem;
         line-height: 1.45;
     }
 
-    /* The tear line between the diagram and its caption: the shared perforation (custom.css). */
-    .perforation {
-        height: 4px;
-        margin-inline: 0.75rem;
-        background-color: var(--tr-line-strong);
-        mask: var(--tr-perforation) left center / 12px 4px repeat-x;
-    }
-
     figcaption {
-        padding: 0.625rem 1.25rem 0.75rem;
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid var(--tr-line);
         color: var(--tr-muted);
-        font-size: var(--sl-text-sm);
+        font-size: 0.875rem;
+        line-height: 1.45;
     }
 
     @media (max-width: 30rem) {
         .stage {
-            padding: 1.25rem 0.875rem 1rem;
+            padding: 1rem 0.75rem 0.75rem;
         }
 
         figcaption {
-            padding-inline: 0.875rem;
+            padding-inline: 0.75rem;
         }
     }
 
@@ -71,76 +63,9 @@ const { caption, summary } = Astro.props;
         margin: 0;
     }
 
-    .tr-figure :global(code) {
-        font-size: 0.875em;
-        color: var(--tr-heading);
-    }
-
-    .tr-figure :global(.dg-node) {
-        padding: 0.625rem 0.75rem;
-        border-radius: 8px;
-        background-color: var(--tr-page);
-        color: var(--tr-body);
-    }
-
-    .tr-figure :global(.dg-title) {
-        color: var(--tr-heading);
-        font-weight: 600;
-    }
-
-    /*
-     * The ticket: gold foil with a notch on each side. The notch radius is 8 px and its center
-     * sits on the edge at the vertical middle, as in the mark.
-     */
-    .tr-figure :global(.dg-ticket) {
-        --notch: 8px;
-        position: relative;
-        padding: 0.625rem 1rem 0.625rem 1.25rem;
-        border-radius: 6px;
-        background-color: var(--tr-gold);
-        background-image: linear-gradient(135deg, var(--tr-gold-light), var(--tr-gold) 45%, var(--tr-gold-dark));
-        color: var(--tr-gold-ink);
-        mask:
-            radial-gradient(circle var(--notch) at 0 50%, transparent var(--notch), #000 calc(var(--notch) + 0.5px)) left / 51% 100% no-repeat,
-            radial-gradient(circle var(--notch) at 100% 50%, transparent var(--notch), #000 calc(var(--notch) + 0.5px)) right / 51% 100% no-repeat;
-    }
-
-    .tr-figure :global(.dg-ticket code) {
-        color: inherit;
-    }
-
-    .tr-figure :global(.dg-stamp) {
-        display: inline-block;
-        padding: 0 0.5rem;
-        border: 2px solid currentColor;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        line-height: 1.25rem;
-        white-space: nowrap;
-        rotate: -3deg;
-    }
-
-    .tr-figure :global(.dg-stamp-ok) {
-        color: var(--tr-ok);
-    }
-
-    .tr-figure :global(.dg-stamp-bad) {
-        color: var(--tr-stamp);
-    }
-
-    .tr-figure :global(.dg-stamp-muted) {
-        color: var(--tr-muted);
-    }
-
-    .tr-figure :global(.dg-note) {
-        color: var(--tr-muted);
-        font-size: 0.8125rem;
-    }
-
     .tr-figure :global(.dg-arrow) {
         flex: none;
         align-self: center;
-        color: var(--tr-accent);
+        color: var(--tr-muted);
     }
 </style>
