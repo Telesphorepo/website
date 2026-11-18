@@ -97,12 +97,12 @@
     --sl-line-height-headings: 1.25;
 
     /*
-     * Layout (DESIGN 2.1): code and tables span the 44rem column, prose stops at the 36rem
-     * measure. The mobile "On this page" sits in the flow, so it takes no height at the top.
+     * Layout: prose, code, tables and callouts share one 50rem column, so every block has the
+     * same right edge. The mobile "On this page" sits in the flow, so it takes no height at the top.
      */
-    --sl-content-width: 44rem;
-    --tr-measure: 36rem;
-    --sl-sidebar-width: 16rem;
+    --sl-content-width: 50rem;
+    --tr-measure: 50rem;
+    --sl-sidebar-width: 18rem;
     --tr-toc-width: 14rem;
     --sl-nav-height: 3.5rem;
     --sl-mobile-toc-height: 0rem;

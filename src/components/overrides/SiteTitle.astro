@@ -1,8 +1,7 @@
 ---
 /*
  * The Telesphorepo lockup (the flat ticket mark and the wordmark, from src/assets/brand). A page
- * with no sidebar (the landing page) also shows four links to the places to start; a docs page has
- * the sidebar for that.
+ * with no sidebar (the landing page) also shows one Docs link; a docs page has the sidebar.
  *
  * Each brand file has fixed colors, so the header holds the dark and the light version and the theme
  * shows one. Both draw at scale 0.75 (30 px tall), so on a 2x screen every edge of the mark falls
@@ -15,12 +14,7 @@ import Mark from '../../assets/brand/logo-mark.svg';
 import MarkOnLight from '../../assets/brand/logo-mark-on-light.svg';
 
 const { siteTitle, siteTitleHref, hasSidebar } = Astro.locals.starlightRoute;
-const navLinks = hasSidebar ? [] : [
-    { label: 'Quick start', href: '/quick-start/' },
-    { label: 'Publish', href: '/install-cli/' },
-    { label: 'Run the server', href: '/run-the-server/' },
-    { label: 'Move from Nexus', href: '/move-from-nexus/' },
-];
+const navLinks = hasSidebar ? [] : [{ label: 'Docs', href: '/quick-start/' }];
 ---
 
 <div class="tr-title-bar">
@@ -95,13 +89,6 @@ const navLinks = hasSidebar ? [] : [
     .tr-nav-links a:hover {
         background-color: var(--tr-hover);
         color: var(--tr-heading);
-    }
-
-    /* The links need the width of a tablet. A phone reaches the same pages from the landing page. */
-    @media (max-width: 56rem) {
-        .tr-nav-links {
-            display: none;
-        }
     }
 
     /* Narrow screens: the mark alone. */

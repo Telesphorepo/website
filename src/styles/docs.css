@@ -522,16 +522,18 @@ starlight-file-tree ul {
 }
 
 /*
- * Sidebar: a plain list. A group label is a small muted line that does not fold. The current page
- * takes the surface fill and the heading colour.
+ * Sidebar: five rows. Each group folds, and only the group of the current page is open, so the
+ * sidebar holds the five rows and the pages of one group. The current page takes the surface fill
+ * and the heading colour.
  */
 
 #starlight__sidebar .top-level > li + li {
-    margin-top: 1.5rem;
+    margin-top: 0.125rem;
 }
 
-#starlight__sidebar .top-level > li:has(> a) + li:has(> a) {
-    margin-top: 0.125rem;
+#starlight__sidebar ul ul {
+    margin: 0.125rem 0 0.5rem;
+    padding-inline-start: 0.75rem;
 }
 
 #starlight__sidebar ul ul li {
@@ -541,19 +543,23 @@ starlight-file-tree ul {
 }
 
 #starlight__sidebar summary {
-    padding: 0 0.75rem 0.375rem;
-    cursor: default;
-    pointer-events: none;
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    cursor: pointer;
+}
+
+#starlight__sidebar summary:hover {
+    background-color: var(--tr-surface);
 }
 
 #starlight__sidebar summary .caret {
-    display: none;
+    color: var(--tr-muted);
 }
 
 #starlight__sidebar summary .large {
-    color: var(--tr-muted);
-    font-size: 0.8125rem;
-    font-weight: 600;
+    color: var(--tr-heading);
+    font-size: 0.9375rem;
+    font-weight: 500;
     letter-spacing: 0;
     text-transform: none;
 }

@@ -11,39 +11,43 @@ import starlightLlmsTxt from 'starlight-llms-txt';
 const sidebar = [
     {label: 'Quick start', link: '/quick-start'},
     {
-        label: 'Publish and use packages',
+        label: 'Publish',
+        collapsed: true,
         items: [
             {label: 'Install the CLI', link: '/install-cli'},
-            {label: 'Publish from your computer', link: '/publish-from-a-project'},
-            {label: 'Publish from CI', link: '/publish-from-ci'},
-            {label: 'Use packages in your builds', link: '/use-packages'},
+            {label: 'From your computer', link: '/publish-from-a-project'},
+            {label: 'From CI', link: '/publish-from-ci'},
+            {label: 'Use packages in builds', link: '/use-packages'},
         ]
     },
     {
         label: 'Run the server',
+        collapsed: true,
         items: [
             {label: 'Production setup', link: '/run-the-server'},
             {label: 'Repositories and access', link: '/repositories-and-access'},
             {label: 'People and sign-in', link: '/people-and-sign-in'},
             {label: 'File storage', link: '/store-files-in-r2'},
-            {label: 'Back up and restore', link: '/back-up-and-restore'},
-            {label: 'Upgrade', link: '/upgrade'},
+            {label: 'Backups', link: '/back-up-and-restore'},
+            {label: 'Upgrades', link: '/upgrade'},
             {label: 'Large Docker images', link: '/push-large-images'},
         ]
     },
     {
         label: 'Move from Nexus',
+        collapsed: true,
         items: [
-            {label: 'Copy your repositories', link: '/move-from-nexus'},
+            {label: 'Copy repositories', link: '/move-from-nexus'},
             {label: 'Move projects by hand', link: '/move-projects-by-hand'},
-            {label: 'Move projects with an AI agent', link: '/move-projects-with-an-agent'},
+            {label: 'Move with an AI agent', link: '/move-projects-with-an-agent'},
         ]
     },
     {
         label: 'Reference',
+        collapsed: true,
         items: [
-            {label: 'CLI and telesphorepo.toml', link: '/cli'},
-            {label: 'Server commands and settings', link: '/server-reference'},
+            {label: 'CLI', link: '/cli'},
+            {label: 'Server', link: '/server-reference'},
             {label: 'Repository addresses', link: '/repository-addresses'},
         ]
     },
@@ -82,7 +86,7 @@ export default defineConfig({
     redirects,
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'Telesphorepo is a self-hosted artifact repository for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files. It\'s delightfully simple to use, yet deeply sophisticated. Free and open source.',
+        description: 'Telesphorepo is a self-hosted artifact repository for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files. It\'s delightfully simple to use, yet remarkably sophisticated. Free and open source.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
