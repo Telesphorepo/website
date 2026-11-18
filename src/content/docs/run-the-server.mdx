@@ -51,7 +51,7 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
+2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled "First start: created admin user" with a "password:" line, and shows it only once.
 
    ```sh
    docker logs telesphorepo
@@ -60,6 +60,10 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
 </Steps>
 
 <Done>Done when you have the password of the user `admin`.</Done>
+
+:::caution
+Always keep the `telesphorepo-data` volume. It holds all your data.
+:::
 
 </Path>
 
@@ -95,7 +99,7 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
    docker compose up -d
    ```
 
-3. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
+3. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled "First start: created admin user" with a "password:" line, and shows it only once.
 
    ```sh
    docker compose logs telesphorepo
@@ -104,6 +108,10 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
 </Steps>
 
 <Done>Done when you have the password of the user `admin`.</Done>
+
+:::caution
+Always keep the `telesphorepo-data` volume. It holds all your data.
+:::
 
 </Path>
 
@@ -121,7 +129,7 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
+2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled "First start: created admin user" with a "password:" line, and shows it only once.
 
    ```sh
    podman logs telesphorepo
@@ -130,6 +138,10 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
 </Steps>
 
 <Done>Done when you have the password of the user `admin`.</Done>
+
+:::caution
+Always keep the `telesphorepo-data` volume. It holds all your data.
+:::
 
 </Path>
 
@@ -151,11 +163,11 @@ The server listens on `127.0.0.1:8080`, so only the web server on the same host 
 
 <Done>Done when you have the password of the user `admin`.</Done>
 
-</Path>
-
 :::caution
-Always keep the `telesphorepo-data` volume, or the `data` folder of the program. It holds all your data.
+Always keep the `data` folder. It holds all your data.
 :::
+
+</Path>
 
 ## Serve over HTTPS
 
@@ -326,11 +338,13 @@ It may speak HTTP/1.1 or HTTP/2 to the server. With no proxy at all, set `TR_TLS
 
 <Steps>
 
-1. Open your address. On your own computer, open `http://localhost:8080`.
+1. Open your address, such as `https://repo.example.com`.
 
 2. Sign in as `admin`, with the password from the log.
 
-3. The page asks for a second step before you go on. Under **Authenticator app**, click **Add**, scan the code with the app on your phone, and type the 6-digit code that the app shows.
+3. The page asks for a second step before you go on. Under **Authenticator app**, click **Add**. Type a name, such as `Phone`, and click **Continue**.
+
+4. Scan the code with the app on your phone, type the 6-digit code in **Code from the app**, and click **Add app**.
 
 </Steps>
 
@@ -338,7 +352,8 @@ It may speak HTTP/1.1 or HTTP/2 to the server. With no proxy at all, set `TR_TLS
 
 ## Trust the proxy
 
-The server then sees the real address of each client, which the audit log and the [network rules](/repositories-and-access/#let-a-network-download-without-signing-in) need. Sign in through your HTTPS address once first, so the server has seen the web server's requests.
+Tell the server which address is your web server, so it sees the real address of each client. The audit log and the [network rules](/repositories-and-access/#let-a-network-download-without-signing-in) need it. Sign in
+ through your HTTPS address once first, so the server has seen the web server's requests.
 
 <Place where="In Telesphorepo" />
 
