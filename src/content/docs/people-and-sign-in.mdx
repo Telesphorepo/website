@@ -77,59 +77,7 @@ A person needs a second step to sign in when they hold any permission other than
 
 ## Single sign-on
 
-People can sign in with an OpenID Connect provider, such as Keycloak, Entra ID, Okta or Google. Anyone at the provider can sign in, and the first sign-in makes an account with no permissions. You give permissions on the **People** page, as for any account, or let the provider decide them as described below.
-
-<Place where="At your provider, then in Telesphorepo" />
-
-<Steps>
-
-1. At your provider, add an app with the return address `https://repo.example.com/api/auth/oidc/callback`. Write your own address in place of `repo.example.com`. The **Return address** field on the **Sign-in options** page shows this address.
-
-</Steps>
-
-<Place where="In Telesphorepo" />
-
-<Steps>
-
-2. Open **Settings** › **Sign-in options**.
-
-3. Under **Connect your provider**, enter the **Provider address**, the **App ID** and the **App secret** that your provider shows for the app.
-
-4. Click **Test your edits**. The button reads **Test connection** when nothing is unsaved. A line says **Connected to** and the address of the provider when it works.
-
-5. Click **Save** in the bar at the bottom.
-
-</Steps>
-
-<Done>Done when the sign-in page shows a **Continue with single sign-on** button.</Done>
-
-### Permissions from the provider
-
-To let the provider decide the server permissions, put the people in groups there and name the groups in Telesphorepo. Each sign-in then sets the permissions of the person from their groups, and the **People** page shows them read-only. Repository permissions stay on the server.
-
-<Place where="At your provider, then in Telesphorepo" />
-
-<Steps>
-
-1. At your provider, make a group for each role, such as `repo-admins`. Put the groups in a field of the ID token, such as `groups`.
-
-</Steps>
-
-<Place where="In Telesphorepo, on Sign-in options" />
-
-<Steps>
-
-2. Under **Permissions from the provider**, enter that field in **Group field**.
-
-3. Under **Permissions by group**, click **Add a group**. A form opens.
-
-4. Enter the **Group**, choose its role, and click **Add group**.
-
-5. Click **Save** in the bar at the bottom.
-
-</Steps>
-
-<Done>Done when the group is listed under **Permissions by group**.</Done>
+People can sign in with the account they have at an OpenID Connect provider, such as Okta, Microsoft Entra ID or Keycloak. Anyone the provider lets sign in to the app gets an account at their first sign-in, with no server permissions. You give permissions on the **People** page, as for any account, or let the provider's groups set them. The steps for each provider are in [Set up single sign-on](/single-sign-on/).
 
 ### Make managers use single sign-on
 
@@ -173,12 +121,5 @@ A passkey belongs to the host of the server address. When the host changes, each
 <summary>Single sign-on broke, and managers cannot sign in</summary>
 
 Start the server with `-e TR_SIGNIN_PASSWORD_LOGIN=all`. Every local account can then sign in with a password again.
-
-</details>
-
-<details>
-<summary>Keycloak: the groups field</summary>
-
-Add a **Group Membership** mapper to the client scope. Turn off **Full group path**, so the value is `repo-admins` and not `/repo-admins`. Enter `groups` in **Group field**. For Keycloak realm roles, enter `realm_access.roles` instead.
 
 </details>
