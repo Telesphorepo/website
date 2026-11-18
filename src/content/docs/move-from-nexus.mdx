@@ -8,7 +8,7 @@ import NexusMove from '../../components/diagrams/NexusMove.astro';
 import Place from '../../components/docs/Place.astro';
 import Done from '../../components/docs/Done.astro';
 
-Telesphorepo copies the repositories of a Nexus 3 server and keeps the copies in sync until you switch over. Your builds keep using Nexus until the switch-over, because Telesphorepo only reads from Nexus.
+Telesphorepo copies the repositories of a Nexus 3 server and keeps the copies in sync until you switch over. Telesphorepo only reads from Nexus, so your builds and publishes keep working on Nexus until the switch-over.
 
 <NexusMove />
 
@@ -58,13 +58,14 @@ The copies are read only until the switch-over, and your builds can download fro
 
 [Repository addresses](/repository-addresses/) lists every format.
 
-Publishing needs a rehearsal repository first, because a copy takes no uploads. In the row of the repository, open the actions menu and click **Rehearse publishing**. That makes a private repository named after the copy, such as `maven-releases-rehearsal`, where everyone who can publish to the copy can publish. The developers' pages say when to ask for it.
+Publishing needs a rehearsal repository first, because a copy takes no uploads. On **Settings** › **Nexus migration**, open the Nexus server. In the row of the repository, open the actions menu and click **Rehearse publishing**. That makes a private repository named after the copy, such as `maven-releases-rehearsal`, where everyone who can publish to the copy can publish. The developers' pages say when to ask for it.
 
 ## Switch over
 
 <Place where="In Telesphorepo" who="For a server admin" />
 
-A repository switches over on its own, so the others keep copying. Switch over a repository when every project that publishes to it has rehearsed publishing on its rehearsal repository: see [Move publishing](/move-projects-by-hand/#move-publishing) and [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing).
+Each repository switches over separately, and the others keep copying.
+ Switch over a repository when every project that publishes to it has rehearsed publishing on its rehearsal repository: see [Move publishing](/move-projects-by-hand/#move-publishing) and [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing).
 
 <Steps>
 

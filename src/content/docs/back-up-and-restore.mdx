@@ -46,10 +46,12 @@ The master key encrypts the secret settings. The server keeps it in the data vol
 
 <Steps>
 
-1. Before the first start, make a key and save it as a secret.
+1. Before the first start, make a key and save it in a file that only root can read, such as `/etc/telesphorepo/master.key`.
 
    ```sh
-   openssl rand -base64 32
+   sudo mkdir -p /etc/telesphorepo
+   openssl rand -base64 32 | sudo tee /etc/telesphorepo/master.key > /dev/null
+   sudo chmod 600 /etc/telesphorepo/master.key
    ```
 
 2. Pass it to the server in `TR_MASTER_KEY`.
@@ -57,7 +59,7 @@ The master key encrypts the secret settings. The server keeps it in the data vol
    ```sh
    docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
      -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
-     -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
+     -e TR_MASTER_KEY="$(sudo cat /etc/telesphorepo/master.key)" \
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
@@ -65,7 +67,8 @@ The master key encrypts the secret settings. The server keeps it in the data vol
 
 <Done>Done when a backup on **Settings** › **Backups** shows the **No master key** badge, because the backup holds no key.</Done>
 
-Never change the key later. Backups hold no key, so keep the key with them.
+Keep a copy of the key where you keep the backups: a backup cannot be restored without it. Never change the key later.
+
 
 ## Restore
 
