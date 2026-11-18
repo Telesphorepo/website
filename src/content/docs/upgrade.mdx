@@ -3,57 +3,79 @@ title: Upgrade the server
 description: Pick an image tag, back up, then start the new version on the same data.
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-## Image tags
-
-The image is `ghcr.io/telesphorepo/telesphorepo`, for `linux/amd64` and `linux/arm64`.
-
-| Tag | Is |
-|---|---|
-| `latest` | The newest release |
-| `0.1.0`, `0.1` | One release, or the newest of a minor version |
-| `main` | The newest tested build of the main branch |
-| `sha-<commit>` | One build of the main branch |
-
-Use `latest`, or pin a version such as `0.1` to choose when you upgrade.
+Back up the server, then start the new version on the same data. The new version updates the database on its first start, so the step that matters is the backup.
 
 ## Upgrade
 
+<Choice questions={[
+    {key: 'engine', label: 'How do you run the server?', options: [
+        {value: 'docker', label: 'Docker'},
+        {value: 'compose', label: 'Docker Compose'},
+        {value: 'podman', label: 'Podman'},
+        {value: 'binary', label: 'Download the program'},
+    ]},
+]} />
+
+<Place where="In Telesphorepo" />
+
 <Steps>
 
-1. Open **Settings** › **Backups**, and click **Back up now**.
+1. Open **Settings** › **Backups**, and click **Back up now**. Wait until the new backup is in **Kept backups**.
+
+</Steps>
+
+<Place where="On the host of the server, in a terminal" />
+
+<Steps>
 
 2. Start the new version on the same data, with the same `-e` variables.
 
-   <Tabs syncKey="engine">
-   <TabItem label="Docker">
+   <Path title="Docker" engine="docker" level={3}>
 
    ```sh
    docker pull ghcr.io/telesphorepo/telesphorepo:latest
    docker rm -f telesphorepo
-   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+     ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-   With Podman, write `podman` in place of `docker`.
+   </Path>
 
-   </TabItem>
-   <TabItem label="Docker Compose">
+   <Path title="Docker Compose" engine="compose" level={3}>
 
    ```sh
    docker compose pull
    docker compose up -d
    ```
 
-   </TabItem>
-   <TabItem label="Program">
+   </Path>
 
-   Stop the server. Put the new `telesphorepo-server` from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases) in place of the old one, and start it.
+   <Path title="Podman" engine="podman" level={3}>
 
-   </TabItem>
-   </Tabs>
+   ```sh
+   podman pull ghcr.io/telesphorepo/telesphorepo:latest
+   podman rm -f telesphorepo
+   podman run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+     ghcr.io/telesphorepo/telesphorepo:latest
+   ```
 
-3. Check that it runs. The answer is `ok`.
+   </Path>
+
+   <Path title="Download the program" engine="binary" level={3}>
+
+   Stop the server. Put the new `telesphorepo-server` from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases) in place of the old one, and start it as before.
+
+   </Path>
+
+3. Check that it runs. The server answers `ok`.
 
    ```sh
    curl https://repo.example.com/healthz
@@ -61,7 +83,18 @@ Use `latest`, or pin a version such as `0.1` to choose when you upgrade.
 
 </Steps>
 
-On its first start, the new version updates the database.
+<Done>Done when the command prints `ok`.</Done>
+
+## Image tags
+
+The image is `ghcr.io/telesphorepo/telesphorepo`, for `linux/amd64` and `linux/arm64`. Use `latest`, or pin a version such as `0.1` to choose when you upgrade.
+
+| Tag | Is |
+|---|---|
+| `latest` | The newest release |
+| `0.1.0`, `0.1` | One release, or the newest of a minor version |
+| `main` | The newest tested build of the main branch |
+| `sha-<commit>` | One build of the main branch |
 
 ## Troubleshooting
 

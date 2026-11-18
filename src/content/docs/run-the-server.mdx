@@ -3,9 +3,11 @@ title: Set up a production server
 description: Start Telesphorepo, serve it over HTTPS, sign in, trust the proxy and set the public address.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 import MovedAnchors from '../../components/qol/MovedAnchors.astro';
 
 <MovedAnchors map={{
@@ -20,9 +22,11 @@ import MovedAnchors from '../../components/qol/MovedAnchors.astro';
     'push-large-images': '/push-large-images/',
 }} />
 
-To try it on your own computer, [Start the server](#start-the-server) and [Sign in](#sign-in) are enough.
+This page sets up a server that other people use, with HTTPS and its own address. It takes a host, a DNS name such as `repo.example.com` that points at the host, and ports 80 and 443 open. To try Telesphorepo on your own computer first, follow the [Quick start](/quick-start/).
 
-For production, you need a host, a DNS name such as `repo.example.com` that points at it, and ports 80 and 443 open.
+## Start the server
+
+The server listens on `127.0.0.1:8080`, so only the web server on the same host reaches it. The next section puts that web server in front.
 
 <Choice questions={[
     {key: 'engine', label: 'How do you run the server?', options: [
@@ -33,19 +37,21 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
     ]},
 ]} />
 
-## Start the server
-
 <Path title="Docker" engine="docker" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
 1. Start the server.
 
    ```sh
-   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+     ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Copy the admin password from the log.
+2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
 
    ```sh
    docker logs telesphorepo
@@ -53,9 +59,13 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
 
 </Steps>
 
+<Done>Done when you have the password of the user `admin`.</Done>
+
 </Path>
 
 <Path title="Docker Compose" engine="compose" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
@@ -79,13 +89,13 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
        name: telesphorepo-backups
    ```
 
-2. Start the server.
+2. Start the server from that folder.
 
    ```sh
    docker compose up -d
    ```
 
-3. Copy the admin password from the log.
+3. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
 
    ```sh
    docker compose logs telesphorepo
@@ -93,19 +103,25 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
 
 </Steps>
 
+<Done>Done when you have the password of the user `admin`.</Done>
+
 </Path>
 
 <Path title="Podman" engine="podman" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
 1. Start the server.
 
    ```sh
-   podman run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   podman run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+     ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
-2. Copy the admin password from the log.
+2. Print the log of the server, and copy the admin password from it. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line, and shows it only once.
 
    ```sh
    podman logs telesphorepo
@@ -113,15 +129,19 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
 
 </Steps>
 
+<Done>Done when you have the password of the user `admin`.</Done>
+
 </Path>
 
 <Path title="Download the program" engine="binary" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
 1. Download `telesphorepo-server` for your system from [GitHub Releases](https://github.com/Telesphorepo/Telesphorepo/releases), and unpack it.
 
-2. Start the server, and copy the admin password that it shows.
+2. Start the server from the folder that holds the program. It keeps its data in `./data`, next to where you started it, and shows the admin password once on its first start.
 
    ```sh
    TR_LISTEN=127.0.0.1:8080 ./telesphorepo-server serve
@@ -129,17 +149,17 @@ For production, you need a host, a DNS name such as `repo.example.com` that poin
 
 </Steps>
 
-The data is in `./data`, next to where you started it.
+<Done>Done when you have the password of the user `admin`.</Done>
 
 </Path>
 
-<Aside type="caution">
-Always keep the `telesphorepo-data` volume. It holds all your data.
-</Aside>
+:::caution
+Always keep the `telesphorepo-data` volume, or the `data` folder of the program. It holds all your data.
+:::
 
 ## Serve over HTTPS
 
-Put a web server in front. It gets the certificate and passes each request on to `localhost:8080`.
+Put a web server in front. It gets the certificate and passes each request on to `localhost:8080`. The examples use `repo.example.com`, so write your own DNS name in its place.
 
 <Choice questions={[
     {key: 'webserver', label: 'Which web server?', options: [
@@ -154,15 +174,15 @@ Put a web server in front. It gets the certificate and passes each request on to
 
 [Caddy](https://caddyserver.com) gets and renews the certificate itself.
 
+<Place where="On the host of the server, in a terminal" />
+
 <Steps>
 
-1. Install Caddy. On Debian and Ubuntu:
+1. Install Caddy. On Debian and Ubuntu, run the command below. Other systems have their own steps in [Install Caddy](https://caddyserver.com/docs/install).
 
    ```sh
    sudo apt install caddy
    ```
-
-   For other systems, see [Install Caddy](https://caddyserver.com/docs/install).
 
 2. Put this in `/etc/caddy/Caddyfile`, in place of what is there.
 
@@ -180,9 +200,13 @@ Put a web server in front. It gets the certificate and passes each request on to
 
 </Steps>
 
+<Done>Done when `https://repo.example.com` opens the sign-in page of Telesphorepo.</Done>
+
 </Path>
 
 <Path title="nginx" webserver="nginx" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
@@ -223,9 +247,13 @@ Put a web server in front. It gets the certificate and passes each request on to
 
 </Steps>
 
+<Done>Done when `https://repo.example.com` opens the sign-in page of Telesphorepo.</Done>
+
 </Path>
 
 <Path title="Apache" webserver="apache" level={3}>
+
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
@@ -257,7 +285,7 @@ Put a web server in front. It gets the certificate and passes each request on to
    </VirtualHost>
    ```
 
-4. Turn on the site.
+4. Turn on the site and reload Apache.
 
    ```sh
    sudo a2ensite telesphorepo
@@ -272,6 +300,8 @@ Put a web server in front. It gets the certificate and passes each request on to
 
 </Steps>
 
+<Done>Done when `https://repo.example.com` opens the sign-in page of Telesphorepo.</Done>
+
 </Path>
 
 <Path title="Another proxy" webserver="another" level={3}>
@@ -282,61 +312,65 @@ Set up your proxy to:
 - set `X-Forwarded-For` and `X-Forwarded-Proto`,
 - take bodies of any size, or at least the **Max upload size** (2 GiB by default),
 - stream uploads and downloads, and wait up to an hour,
-- keep `%2F` in paths as it is. npm needs it.
+- keep `%2F` in paths as it is, because npm needs it.
 
-It may speak HTTP/1.1 or HTTP/2 to the server.
+It may speak HTTP/1.1 or HTTP/2 to the server. With no proxy at all, set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to PEM files, and the server serves HTTPS itself.
 
-No proxy? Set `TR_TLS_CERT_FILE` and `TR_TLS_KEY_FILE` to PEM files, and the server serves HTTPS itself.
+<Done>Done when your address opens the sign-in page of Telesphorepo.</Done>
 
 </Path>
 
 ## Sign in
 
+<Place where="In a browser, at your address, such as https://repo.example.com" />
+
 <Steps>
 
-1. Open your address, such as `https://repo.example.com`. On your own computer, open `http://localhost:8080`.
+1. Open your address. On your own computer, open `http://localhost:8080`.
 
 2. Sign in as `admin`, with the password from the log.
 
-3. Add your authenticator app when the page asks. Under **Authenticator app**, click **Add**, scan the code, and type the code from your phone.
+3. The page asks for a second step before you go on. Under **Authenticator app**, click **Add**, scan the code with the app on your phone, and type the 6-digit code that the app shows.
 
 </Steps>
 
+<Done>Done when the page says **Two-step verification is on**.</Done>
+
 ## Trust the proxy
 
-The server then sees the real address of each client. The audit log and the [network rules](/repositories-and-access/#limit-where-requests-come-from) need it.
+The server then sees the real address of each client, which the audit log and the [network rules](/repositories-and-access/#let-a-network-download-without-signing-in) need. Sign in through your HTTPS address once first, so the server has seen the web server's requests.
+
+<Place where="In Telesphorepo" />
 
 <Steps>
 
 1. Open **Settings** › **Network and proxy**.
 
-2. Under **Detected proxies**, click **Trust** on the row of your web server.
+2. Under **Detected proxies**, click **Trust** on the row of your web server. The address moves to **Specific addresses**.
 
-3. Click **Save**, then **Save changes**.
+3. Click **Save** in the bar at the bottom, then **Save changes** in the dialog.
 
 </Steps>
 
+<Done>Done when the bar is gone and your web server is listed under **Specific addresses**.</Done>
+
 ## Set the public address
 
-Your first sign-in sets the public address. Check it once.
+Your first sign-in sets the public address, and snippets, CI jobs and passkeys use it. Check it once.
+
+<Place where="In Telesphorepo" />
 
 <Steps>
 
 1. Open **Settings** › **General**.
 
-2. Check that **Public base URL** is the address that people use, such as `https://repo.example.com`. Fix it and click **Save** if not.
+2. Check that **Public base URL** is the address that people use, such as `https://repo.example.com`. If it is not, type the right address and click **Save**.
 
 </Steps>
 
-Snippets, CI jobs and passkeys use this address.
+<Done>Done when **Public base URL** shows your HTTPS address.</Done>
 
-## Next steps
-
-- [Store files in R2 or S3](/store-files-in-r2/)
-- [Back up and restore](/back-up-and-restore/)
-- [Upgrade the server](/upgrade/)
-- [Push large images](/push-large-images/)
-- [Repositories and access](/repositories-and-access/)
+Next, [make a repository and give people access](/repositories-and-access/).
 
 ## Troubleshooting
 
@@ -382,6 +416,6 @@ Open the server once at your HTTPS address, then reload the page.
 <details>
 <summary>Cloudflare sits in front of your web server</summary>
 
-Under **Where your proxy is**, also tick **Cloudflare**. Then see [Push large images](/push-large-images/).
+Under **Where your proxy is**, also tick **Cloudflare**. Behind Cloudflare, image layers over 100 MB need an upload address: see [Push large Docker images](/push-large-images/).
 
 </details>

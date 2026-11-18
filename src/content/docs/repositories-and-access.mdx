@@ -1,127 +1,186 @@
 ---
 title: Repositories and access
-description: Make repositories, proxies and groups, give people Publish, add CI pipelines and limit the networks a repository takes requests from.
+description: Make repositories, proxies and groups, give people Download or Publish, add CI pipelines and let a network download without signing in.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
+import MovedAnchors from '../../components/qol/MovedAnchors.astro';
+
+<MovedAnchors map={{
+    'limit-where-requests-come-from': '/repositories-and-access/#let-a-network-download-without-signing-in',
+}} />
+
+Make the repositories your team publishes to, add proxies for the public registries your builds use, and say who can download and who can publish. Each repository has an **Access** tab with a **Download** card and a **Publish** card, and that tab is where you give and take away access.
 
 ## Make a repository
+
+<Place where="In Telesphorepo" />
 
 <Steps>
 
 1. Open **Settings** › **Repositories**, and click **New repository**.
 
-2. Choose **A repository**.
+2. Under **What to create**, choose **A repository**.
 
-3. Type a name, such as `releases`.
+3. Type a **Name**, such as `releases`. Builds and clients use the name in the address of the repository.
 
-4. Choose the format.
+4. Under **Format**, choose the format, such as **Maven / Gradle** or **npm**.
 
-5. Under **Who can download**, choose **Private** or **Public**.
+5. Under **Who can download**, choose **Private** or **Public**. A public repository lets anyone download without signing in, and publishing still needs access.
 
 6. Click **Create repository**.
 
 </Steps>
 
-The **Use this repository** tab of the new repository shows the setup for its clients. All addresses are in [Repository addresses](/repository-addresses/).
+<Done>Done when the new repository opens on its **Use this repository** tab, which shows the setup for each client. [Repository addresses](/repository-addresses/) lists the address of every format.</Done>
 
-## Add public packages
+### Make a Docker repository
 
-A **proxy** keeps a copy of each package that people download from a public registry.
+Make it in the same way, and choose **Docker** as the format. It holds container images, Helm charts and other OCI files. Its name, such as `docker`, is the first part of every image name.
 
-A **group** puts several repositories behind one address. Put your repository and a proxy in a group, and people get both through one address.
+Docker needs the server at the root of a host, such as `https://repo.example.com`. For layers over 100 MB behind Cloudflare, see [Push large Docker images](/push-large-images/).
+
+## Give people Download or Publish
+
+The **Access** tab has two cards. **Download** lists who can read the repository, and **Publish** lists who can add packages to it. A person who can publish can also download. The person needs an account first, so make one on [People and sign-in](/people-and-sign-in/) if they have none.
+
+### Let someone download
+
+<Place where="In Telesphorepo, on the Access tab of the repository" />
 
 <Steps>
 
-1. Click **New repository**, and choose **A proxy of a remote repository**.
+1. Open **Settings** › **Repositories**, click the repository, then click its **Access** tab.
 
-2. Type a name, pick the format, and click a well-known remote, such as **Maven Central** or **npm registry**.
+2. In the **Download** card, under **Who can download**, click **Add**. A dialog opens with **Available** on the left and **Giving access** on the right.
+
+   If the card shows only a **Public** switch, the repository is public and anyone can download. Turn **Public** off first to choose people.
+
+3. In **Available**, type the start of a name in the search field. Click the person to move them to **Giving access**. Repeat for each person.
+
+4. Click the button at the bottom, which counts what you chose, such as **Add 2 items**.
+
+</Steps>
+
+<Done>Done when the person is a row under **Who can download**, marked **Person**.</Done>
+
+### Let someone publish
+
+<Place where="In Telesphorepo, on the Access tab of the repository" />
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, click the repository, then click its **Access** tab.
+
+2. In the **Publish** card, under **Who can publish**, click **Add**. A dialog opens with **Available** on the left and **Giving access** on the right.
+
+3. In **Available**, type the start of a name in the search field. Click the person to move them to **Giving access**. Repeat for each person.
+
+4. Check **Permissions for new items**, at the top of **Giving access**. It starts with **Download** and **Publish** ticked, and that is what a publisher needs. To give one person something else, click their card and change its boxes.
+
+5. Click the button at the bottom, such as **Add 2 items**.
+
+</Steps>
+
+<Done>Done when the person is a row under **Who can publish**.</Done>
+
+Send a new publisher [Install the CLI](/install-cli/), and a person who only downloads [Use packages in your builds](/use-packages/).
+
+To change what a person can do on the repository, click their name in either card, change the boxes in the dialog, and click **Save permissions**. To remove access, click the **×** on their row and confirm. **Delete files**, **Edit settings**, **Manage access** and **Manage CI pipelines** are the other repository permissions, and they appear as boxes in the same dialog.
+
+:::note
+A group or a proxy takes no uploads, so its **Publish** card says that nobody can publish.
+:::
+
+## Add public packages
+
+A **proxy** keeps a copy of each package that people download from a public registry. A **group** puts several repositories behind one address, so people get your repository and a proxy through one address.
+
+<Place where="In Telesphorepo" />
+
+<Steps>
+
+1. Open **Settings** › **Repositories**, click **New repository**, and choose **A proxy of a remote repository**.
+
+2. Type a **Name**, choose the format, and under **Remote** click a well-known remote, such as **Maven Central** or **npm registry**.
 
 3. Click **Create proxy**.
 
 4. Click **New repository** again, and choose **A group of repositories**.
 
-5. Type a name, pick the same format, and tick your repository and the proxy. Your own repositories come first.
+5. Type a **Name**, choose the same format, and under **Members** tick your repository and the proxy. The group reads its members in the order of the numbers beside them, so tick your own repositories first.
 
 6. Click **Create group**.
 
 </Steps>
 
-A group reads its members in order. In an npm, Python, Cargo or NuGet group, the first member that has a package name owns that name. So a public package cannot take the place of your private one.
+<Done>Done when the group opens on its **Overview** tab. Point your builds at the address of the group.</Done>
 
-## Make a Docker repository
-
-Make it as above, and choose **Docker** as the format. It holds container images, Helm charts and other OCI files.
-
-The name, such as `docker`, is the first part of every image name.
-
-Docker needs the server at the root of a host, such as `https://repo.example.com`. For big images, see [Push large images](/push-large-images/).
-
-## Give people Publish
-
-<Steps>
-
-1. Open **Settings** › **Repositories** › your repository › **Access**.
-
-2. Under **People**, click **Give access**.
-
-3. Tick the people.
-
-4. Tick **Publish**.
-
-5. Click **Give 1 person access**.
-
-</Steps>
-
-To add a person first, see [People and sign-in](/people-and-sign-in/).
-
-Then send them [Install the CLI](/install-cli/) and [Publish from a project](/publish-from-a-project/). For downloads, send [Use packages in your builds](/use-packages/).
+In an npm, Python, Cargo or NuGet group, the first member that has a package name owns that name, so a public package cannot take the place of your private one.
 
 ## Add a CI pipeline
 
-A CI pipeline lets the jobs of one GitHub repository or one Jenkins publish, with no stored secret. A developer sends you the values. [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline) tells them which ones.
+A CI pipeline is a rule on the server that says which CI job may publish to which repositories, so the job stores no secret. A developer sends you the values, and [Publish from CI](/publish-from-ci/#ask-for-a-ci-pipeline) tells them which ones.
+
+<Place where="In Telesphorepo" who="For someone who can manage CI pipelines" />
 
 <Steps>
 
-1. Open **Settings** › **CI pipelines**, and click **New CI pipeline**.
+1. Open **Settings** › **CI pipelines**, and click **New CI pipeline**. A form opens in numbered parts.
 
-2. Choose **GitHub Actions** or **Jenkins**.
+2. Under **Where the job runs**, choose **GitHub Actions** or **Jenkins**.
 
-3. Fill in the values from the developer.
+3. In the next part, **Which runs can publish** for GitHub or **Which Jenkins jobs can publish** for Jenkins, fill in the form from the developer's message. Each line of the message starts with the name of its field, such as **GitHub repository** or **Jenkins address**.
 
-4. Tick the repository.
+   | Field | What goes in it |
+   |---|---|
+   | **GitHub repository** | The repository, such as `acme/app` |
+   | **Workflow file** | The file in `.github/workflows` that publishes, such as `publish.yml`. Empty lets every workflow of the repository publish |
+   | **Branches** | The branches that may publish, such as `main`. A `*` matches any text |
+   | **Jenkins address** | The address that people open Jenkins at |
+   | **Jobs** | Each full job name, folders included, such as `team/app` |
+
+4. Under **Repositories it can publish to**, tick the repositories that the message lists.
 
 5. Click **Create CI pipeline**.
 
 </Steps>
 
+<Done>Done when **Settings** › **CI pipelines** lists the new pipeline. The job can then publish to those repositories, and each repository shows it in its **Publish** card.</Done>
+
 ### Jenkins: a freestyle job or a Jenkinsfile
 
-Both kinds of job use the same CI pipeline.
+Both kinds of job use the same CI pipeline. Write each full job name with its folders under **Jobs**, such as `team/app`. A branch of a multibranch pipeline is its own job, such as `app/main`.
 
-Under **Jobs**, write each full job name with its folders, such as `team/app`. A branch of a multibranch pipeline is its own job, such as `app/main`.
+## Let a network download without signing in
 
-## Limit where requests come from
+A private repository can let downloads in from chosen networks with no sign-in, such as the build machines of your office or the runners of GitHub Actions. An address only grants downloads. Publishing always needs access.
 
-A repository can take downloads or publishes from some networks only. With no rule, any network works.
+<Place where="In Telesphorepo, on the Access tab of the repository" />
 
 <Steps>
 
-1. Open **Settings** › **Repositories** › your repository › **Access**.
+1. Open **Settings** › **Repositories**, click the repository, then click its **Access** tab.
 
-2. Under **Download** or **Publish**, find **From where**.
+2. In the **Download** card, under **Who can download**, click **Add**.
 
-3. Click **Add network list** to pick a list, such as **GitHub Actions**. Or click **Add addresses** to paste addresses.
+3. In **Available**, click a network list, such as **GitHub Actions**. Or click **Custom address**, then type an address or a range such as `203.0.113.0/24` in the card that appears under **Giving access**, with a label if you like. To allow the address you are using now, click **Add my address**.
 
-4. Click **Save**, then **Save access**.
+4. Click the button at the bottom, such as **Add 1 item**.
 
 </Steps>
 
-The rules hold for everyone, admins too.
+<Done>Done when the network list or the address is a row under **Who can download**. Click **×** on the row to remove it.</Done>
+
+:::note
+Public and networks do not go together. Turning **Public** on asks first, then removes the networks.
+:::
 
 ### Network lists
 
-Open **Settings** › **Networks**.
+A network list is a named set of addresses that several repositories can use. Open **Settings** › **Networks** to see them.
 
 - **Downloaded lists**: Cloudflare and GitHub Actions. The server refreshes them every day.
 - **Your lists**: click **New network list**, and paste addresses in any layout.
@@ -133,22 +192,20 @@ A change to a list applies to every repository that uses it.
 <details>
 <summary>A proxy cannot reach its remote</summary>
 
-Check the address. To create the proxy anyway, click **Create anyway**.
+The server checks the remote address when you create the proxy. Check the address. To create the proxy anyway, click **Create anyway**.
 
 </details>
 
 <details>
 <summary>Jenkins jobs cannot publish, and the server cannot reach Jenkins</summary>
 
-Open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys** on the CI pipeline. Do it again when Jenkins changes its keys.
+Open the Jenkins address followed by `/oidc/jwks`. Paste the whole page into **Jenkins keys** on the CI pipeline, and do it again when Jenkins changes its keys.
 
 </details>
 
 <details>
-<summary>A request gets 403: your address is not allowed</summary>
+<summary>A network that you added still has to sign in</summary>
 
-The address is outside the **From where** rules of the repository. **Activity** shows the address.
-
-If every visitor seems to have the address of your proxy, the server does not trust that proxy yet. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+The server sees the address of your web server in place of the address of each visitor, so no network matches. **Activity** shows the address that each request came from. Tell the server to [trust the proxy](/run-the-server/#trust-the-proxy), and every visitor gets their own address.
 
 </details>

@@ -3,25 +3,25 @@ title: Push large Docker images
 description: Push Docker image layers over 100 MB when Cloudflare sits in front of the server.
 ---
 
-import { Steps, Aside } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB. Pulls have no limit.
-
-Not behind Cloudflare? You have nothing to do.
+Behind Cloudflare (Free and Pro plans), each image layer must be under 100 MB, while pulls have no limit. A second address lets the layers skip Cloudflare: people still push to the main address, and the server sends the layers to the upload address. A server that is not behind Cloudflare needs none of this.
 
 ## Add an upload address
 
-The layers can skip Cloudflare through a second address. People still push to the main address, and the server sends the layers to the upload address.
-
-<Aside type="caution">
+:::caution
 This makes the IP address of your server public.
-</Aside>
+:::
+
+<Place where="In Cloudflare, then on the host of the server" />
 
 <Steps>
 
 1. In Cloudflare, add a second name for your server, such as `upload.example.com`. Make the record **DNS only**.
 
-2. Serve that name over HTTPS too, as in [Serve over HTTPS](/run-the-server/#serve-over-https). With Caddy, list both names:
+2. Serve that name over HTTPS too, as in [Serve over HTTPS](/run-the-server/#serve-over-https). With Caddy, list both names in the Caddyfile on the host of the server.
 
    ```text title="/etc/caddy/Caddyfile"
    repo.example.com, upload.example.com {
@@ -31,15 +31,25 @@ This makes the IP address of your server public.
 
 3. In the firewall of your server, open the HTTPS port for the computers that push.
 
+</Steps>
+
+<Place where="In Telesphorepo" />
+
+<Steps>
+
 4. Open **Settings** › **General**. Under **Docker**, set **Docker upload address** to `https://upload.example.com`.
 
-5. Turn on **Expose the origin IP for Docker uploads**, then click **Save**.
+5. Turn on **Expose the origin IP for Docker uploads**, then click **Save** in the bar at the bottom.
 
 </Steps>
 
+<Done>Done when a push of a layer over 100 MB succeeds.</Done>
+
 ## Push with ORAS and Helm 4
 
-ORAS and Helm 4 send layers only to the address in the command. Push to the upload address:
+ORAS and Helm 4 send layers only to the address in the command, so push to the upload address.
+
+<Place where="In a terminal on your computer" />
 
 ```sh
 helm push mychart-0.1.0.tgz oci://upload.example.com/docker

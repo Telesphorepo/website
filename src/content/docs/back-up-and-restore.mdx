@@ -4,12 +4,18 @@ description: Back up the server, keep the master key safe, and restore a backup.
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
+
+The server backs itself up into the `/backups` volume every 24 hours and keeps the newest 7, so a restore needs only the volume and a command. Put the volume on another disk if you can.
 
 ## Back up
 
-The server backs itself up into the `/backups` volume every 24 hours, and keeps the newest 7. Put that volume on another disk if you can.
+A backup holds the database, the master key and the stored files. With R2 or S3, the files stay in the bucket, so back up the bucket too, with its versioning or replication.
 
 To back up now:
+
+<Place where="In Telesphorepo" />
 
 <Steps>
 
@@ -19,27 +25,24 @@ To back up now:
 
 </Steps>
 
-A backup holds the database, the master key and the stored files.
+<Done>Done when the new backup appears under **Kept backups**.</Done>
 
-With R2 or S3, the files stay in the bucket. Back up the bucket too, with its versioning or replication.
+### Back up from the command line
 
-<details>
-<summary>Back up from the command line</summary>
+This works while the server runs.
 
-This works while the server runs:
+<Place where="On the host of the server, in a terminal" />
 
 ```sh
 docker run --rm -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
   ghcr.io/telesphorepo/telesphorepo:latest backup /backups
 ```
 
-</details>
-
 ## Keep the master key safe
 
-The master key encrypts the secret settings. The server keeps it in the data volume, and each backup holds a copy.
+The master key encrypts the secret settings. The server keeps it in the data volume, and each backup holds a copy. To keep it out of the volume instead, give the server the key in `TR_MASTER_KEY`.
 
-To keep it out of the volume instead:
+<Place where="On the host of the server, in a terminal" />
 
 <Steps>
 
@@ -52,20 +55,33 @@ To keep it out of the volume instead:
 2. Pass it to the server in `TR_MASTER_KEY`.
 
    ```sh
-   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups \
      -e TR_MASTER_KEY="$(cat /run/secrets/tr_master_key)" \
      ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 </Steps>
 
-Never change it later. Backups then hold no key, so keep the key with them.
+<Done>Done when a backup on **Settings** › **Backups** shows the **No master key** badge, because the backup holds no key.</Done>
+
+Never change the key later. Backups hold no key, so keep the key with them.
 
 ## Restore
 
+A restore copies a backup into a new, empty volume and starts the server on it.
+
+<Place where="In Telesphorepo" />
+
 <Steps>
 
-1. On **Settings** › **Backups**, point at a backup to see its folder name, such as `20261020T201500.123Z`.
+1. On **Settings** › **Backups**, point at the date of a backup to see its folder name, such as `20261020T201500.123Z`. If the server is down, the folder name is the name of a folder in the `/backups` volume.
+
+</Steps>
+
+<Place where="On the host of the server, in a terminal" />
+
+<Steps>
 
 2. Remove the server container.
 
@@ -83,10 +99,14 @@ Never change it later. Backups then hold no key, so keep the key with them.
 4. Start the server on that volume.
 
    ```sh
-   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 -v telesphorepo-restored:/data -v telesphorepo-backups:/backups ghcr.io/telesphorepo/telesphorepo:latest
+   docker run -d --name telesphorepo -p 127.0.0.1:8080:8080 \
+     -v telesphorepo-restored:/data -v telesphorepo-backups:/backups \
+     ghcr.io/telesphorepo/telesphorepo:latest
    ```
 
 </Steps>
+
+<Done>Done when you can sign in to the server and your repositories and people are there.</Done>
 
 ## Troubleshooting
 

@@ -4,101 +4,136 @@ description: Add people, give permissions, set up two-step verification and sing
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
+
+Add accounts for your team, give each person the repositories and server permissions they need, and choose how they sign in: with a password and a second step, or with the single sign-on of your company.
 
 ## Add people and give permissions
+
+<Place where="In Telesphorepo" />
 
 <Steps>
 
 1. Open **Settings** › **People**, and click **New account**.
 
-2. Enter a username and a password, and click **Create account**.
+2. Enter a **Username** and a **Password**, and click **Create account**. The page of the new person opens.
 
-3. On the page of the person, under **Repositories**, click **Give access**.
+3. On that page, under **Repositories**, click **Give access**. A dialog opens.
 
-4. Tick the repositories, and tick **Download** or **Publish**.
+4. Click each repository to move it to **Giving access**, then tick **Download** or **Publish** under **Permissions for new repositories**. **Download** is ticked already.
 
-5. Click **Give access to 1 repository**.
+5. Click **Give access to 1 repository**. The button counts the repositories you chose.
 
 </Steps>
 
-The other repository permissions are **Delete files**, **Edit settings**, **Manage access** and **Manage CI pipelines**.
+<Done>Done when the repository is listed under **Repositories** on the page of the person.</Done>
 
-To add people from the command line, see [user add](/server-reference/#user-add).
+The other repository permissions are **Delete files**, **Edit settings**, **Manage access** and **Manage CI pipelines**. To give several people access to one repository, use its **Access** tab, as in [Repositories and access](/repositories-and-access/#give-people-download-or-publish). To add people from the command line, see [user add](/server-reference/#user-add).
 
-### Server permissions
+### Give server permissions
 
-Under **Server permissions** on the page of the person, choose a role:
+Server permissions decide who can change settings, people, storage and the rest of the server. A person with none uses only the repositories they are given.
 
-- **Member**: no server permissions. The person uses only the repositories they are given.
-- **Administrator**: every server permission.
-- **Custom**: one switch per permission, each with what it opens.
-
-Then click **Save**, and **Save permissions**. You can give only the permissions that you hold.
-
-## Two-step verification
-
-These people need a second step:
-
-- To sign in: anyone with a permission other than **Download** and **Publish**.
-- To approve a computer or make a publish token: everyone.
+<Place where="In Telesphorepo, on the page of the person" />
 
 <Steps>
 
-1. Open **Settings** › **Sign-in and security**.
+1. Open **Settings** › **People**, and click the person.
 
-2. Click **Add** on the **Authenticator app** row or the **Passkey** row.
+2. Under **Server permissions**, choose a role.
+
+   | Role | What it gives |
+   |---|---|
+   | **Member** | No server permissions |
+   | **Administrator** | Every server permission |
+   | **Custom** | One switch per permission, each with what it opens |
+
+3. Click **Save** in the bar at the bottom, then **Save permissions** in the dialog.
+
+</Steps>
+
+<Done>Done when the bar is gone and the page shows the role you chose.</Done>
+
+You can give only the permissions that you hold.
+
+## Set up two-step verification
+
+A person needs a second step to sign in when they hold any permission other than **Download** and **Publish**. Everyone needs one to approve a computer or make a publish token. A single sign-on account has no second step, and it approves a computer with a new single sign-on.
+
+<Place where="In Telesphorepo, on the page of your own account" />
+
+<Steps>
+
+1. Open the menu of your account in the top bar, click **Your account**, then click **Sign-in and security**.
+
+2. Under **Two-step verification**, click **Add** on the **Authenticator app** row or the **Passkey** row, and follow the page.
 
 3. Under **Recovery codes**, click **Generate codes**. Keep the codes in a safe place.
 
 </Steps>
 
-A single sign-on account has no second step. It approves a computer with a new single sign-on.
+<Done>Done when the page says **Two-step verification is on**.</Done>
 
 ## Single sign-on
 
-People can sign in with an OpenID Connect provider, such as Keycloak, Entra ID, Okta or Google. Anyone at the provider can sign in. The first sign-in makes an account with no permissions.
+People can sign in with an OpenID Connect provider, such as Keycloak, Entra ID, Okta or Google. Anyone at the provider can sign in, and the first sign-in makes an account with no permissions. You give permissions on the **People** page, as for any account, or let the provider decide them as described below.
+
+<Place where="At your provider, then in Telesphorepo" />
 
 <Steps>
 
-1. At your provider, add an app with the return address `https://repo.example.com/api/auth/oidc/callback`.
-
-2. Open **Settings** › **Sign-in options**.
-
-3. Under **Connect your provider**, enter the **Provider address**, the **App ID** and the **App secret**.
-
-4. Click **Test connection**.
-
-5. Click **Save**.
+1. At your provider, add an app with the return address `https://repo.example.com/api/auth/oidc/callback`. Write your own address in place of `repo.example.com`. The **Return address** field on the **Sign-in options** page shows this address.
 
 </Steps>
 
-Then you give permissions on the **People** page, as for any account.
+<Place where="In Telesphorepo" />
+
+<Steps>
+
+2. Open **Settings** › **Sign-in options**.
+
+3. Under **Connect your provider**, enter the **Provider address**, the **App ID** and the **App secret** that your provider shows for the app.
+
+4. Click **Test your edits**. The button reads **Test connection** when nothing is unsaved. A line says **Connected to** and the address of the provider when it works.
+
+5. Click **Save** in the bar at the bottom.
+
+</Steps>
+
+<Done>Done when the sign-in page shows a **Continue with single sign-on** button.</Done>
 
 ### Permissions from the provider
 
-To let the provider decide the server permissions:
+To let the provider decide the server permissions, put the people in groups there and name the groups in Telesphorepo. Each sign-in then sets the permissions of the person from their groups, and the **People** page shows them read-only. Repository permissions stay on the server.
+
+<Place where="At your provider, then in Telesphorepo" />
 
 <Steps>
 
 1. At your provider, make a group for each role, such as `repo-admins`. Put the groups in a field of the ID token, such as `groups`.
 
-2. On **Sign-in options**, enter that field in **Group field**.
+</Steps>
 
-3. Under **Permissions by group**, click **Add a group**.
+<Place where="In Telesphorepo, on Sign-in options" />
 
-4. Enter the group, choose its role, and click **Add group**.
+<Steps>
 
-5. Click **Save**.
+2. Under **Permissions from the provider**, enter that field in **Group field**.
+
+3. Under **Permissions by group**, click **Add a group**. A form opens.
+
+4. Enter the **Group**, choose its role, and click **Add group**.
+
+5. Click **Save** in the bar at the bottom.
 
 </Steps>
 
-Each sign-in then sets the server permissions of the person from their groups. The **People** page shows them read-only. Repository permissions stay on the server.
+<Done>Done when the group is listed under **Permissions by group**.</Done>
 
 ### Make managers use single sign-on
 
-Set **Password sign-in** to **Only people who publish; people who manage use single sign-on**.
-
-People who only download and publish keep their password. Sign in once with single sign-on first.
+On the **Sign-in options** page, under **How people sign in**, set **Password sign-in** to **Only people who publish; people who manage use single sign-on**, and click **Save**. People who only download and publish keep their password, and a manager signs in with single sign-on once first.
 
 ## Troubleshooting
 
@@ -143,8 +178,6 @@ Start the server with `-e TR_SIGNIN_PASSWORD_LOGIN=all`. Every local account can
 <details>
 <summary>Keycloak: the groups field</summary>
 
-Add a **Group Membership** mapper to the client scope. Turn off **Full group path**, so the value is `repo-admins` and not `/repo-admins`. Enter `groups` in **Group field**.
-
-For Keycloak realm roles, enter `realm_access.roles` instead.
+Add a **Group Membership** mapper to the client scope. Turn off **Full group path**, so the value is `repo-admins` and not `/repo-admins`. Enter `groups` in **Group field**. For Keycloak realm roles, enter `realm_access.roles` instead.
 
 </details>

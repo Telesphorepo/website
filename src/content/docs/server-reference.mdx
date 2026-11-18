@@ -23,11 +23,11 @@ import MovedAnchors from '../../components/qol/MovedAnchors.astro';
     'repository-addresses': '/repository-addresses/',
 }} />
 
+The reference for the person who runs the server: the commands of `telesphorepo-server`, the environment variables, every setting with its default, the server permission IDs, the HTTP API and the licenses. The page for people who publish is [CLI and telesphorepo.toml](/cli/).
+
 ## Server commands
 
-The program `telesphorepo-server` runs the server and changes its data.
-
-In the container, put `docker exec -it telesphorepo /telesphorepo-server` in front of a command. Run `telesphorepo-server help <command>` to see its examples.
+The program `telesphorepo-server` runs the server and changes its data. In the container, put `docker exec -it telesphorepo /telesphorepo-server` in front of a command. Run `telesphorepo-server help <command>` to see its examples.
 
 | Command | What it does |
 |---|---|
@@ -52,13 +52,11 @@ telesphorepo-server serve
 
 ### dev
 
-Runs a local server at `http://localhost:8080`, with its data in `./.telesphorepo-dev`.
-
-The first run fills it with demo repositories, demo users and demo files. It prints the address and the passwords at every start. Delete the folder to start over.
+Runs a local server at `http://localhost:8080`, with its data in `./.telesphorepo-dev`. The first run fills it with demo repositories, demo users and demo files, and every start prints the address and the passwords. Delete the folder to start over.
 
 ```sh
 telesphorepo-server dev
-telesphorepo-server dev --empty   # one empty public repository per format, no demo data
+telesphorepo-server dev --empty   # one empty repository per format, no demo data
 ```
 
 ### user add
@@ -81,7 +79,7 @@ telesphorepo-server user passwd alice
 
 ### user reset-2fa
 
-Removes every authenticator app, passkey and recovery code of a user. The user adds a new second factor at the next sign-in.
+Removes every authenticator app, passkey and recovery code of a user. The user signs in with the password and adds a new second factor, and approved computers stay approved.
 
 ```sh
 telesphorepo-server user reset-2fa alice
@@ -125,9 +123,16 @@ Any setting below can also come from the environment. See [Force a setting](#for
 
 ## Settings
 
-Change settings under **Settings** in the web UI. A change applies at once.
+Change settings under **Settings** in the web UI. A change applies at once. Durations take values such as `15m`, `24h` or `90d`, and sizes take values such as `512MiB` or `2GiB`.
 
-Durations take values such as `15m`, `24h` or `90d`. Sizes take values such as `512MiB` or `2GiB`.
+| Group | Where in the web UI |
+|---|---|
+| [Server identity](#server-identity), [General](#general), [Activity](#activity), [Publishing](#publishing), [Docker](#docker), [Download links](#download-links), [Nexus migration](#nexus-migration) | **Settings** › **General**, one section for each |
+| [Storage](#storage) | **Settings** › **Storage** |
+| [Backups](#backups) | **Settings** › **Backups** |
+| [Network](#network) | **Settings** › **Network and proxy** |
+| [Edge delivery](#edge-delivery) | **Settings** › **Edge delivery** |
+| [Sign-in options](#sign-in-options) | **Settings** › **Sign-in options** |
 
 ### Force a setting
 
@@ -140,6 +145,15 @@ Set `TR_` plus the key in capitals, with `_` for each `.`. The web UI then shows
 
 A wrong value stops the server at startup. A `TR_` variable that names no setting is logged and ignored.
 
+### Server identity
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `server_name` | `Telesphorepo` | **Server name**: the name that the top bar, the sign-in page and the browser tab show |
+| `server_logo` | none | **Logo**: a PNG, JPEG or WebP image of at most 256 KiB and 512 pixels on its long side, shown before the server name |
+
 ### General
 
 On **Settings** › **General**.
@@ -147,6 +161,7 @@ On **Settings** › **General**.
 | Key | Default | What it sets |
 |---|---|---|
 | `base_url` | none | **Public base URL**: the address that clients use. While it is empty, the first web sign-in of a person with **General settings** sets it, unless that address is `localhost` |
+| `repo_domains` | none | **Repository domains**: domains that each serve one repository at their root, each as `<domain>=<repository>`. A domain only reads. Docker repositories cannot have one |
 | `log.level` | `info` | **Log level**: `debug`, `info`, `warn` or `error` |
 | `max_upload_size` | `2GiB` | **Max upload size**, also of one image layer |
 | `max_json_size` | `1MiB` | **Max JSON body size** of an API request |
@@ -156,9 +171,17 @@ On **Settings** › **General**.
 | `index.max_delay` | `30s` | **Max index rebuild delay** while changes go on |
 | `blobs.gc_grace` | `1h` | **Unused file grace period**: how long stored content that no file uses stays |
 | `upload.session_ttl` | `24h` | **Resumable upload lifetime** with no new data |
+| `delete.wait` | `2s` | **Background delete after**: a delete that takes longer goes on in the background |
 | `tls.cert_file`, `tls.key_file` | none | **TLS certificate file** and **TLS key file** (PEM), for HTTPS in the server. Set both or neither. Turning TLS on or off applies at the next start |
+
+### Activity
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
 | `audit.retention` | `365d` | **Audit log retention** |
-| `nexus.sync_interval` | `15m` | **Nexus sync interval**, at least `1m`. Needs **Manage the Nexus migration** |
+| `stats.retention` | `400d` | **Download statistics retention**: how long the download counts of each day stay |
 
 ### Publishing
 
@@ -178,6 +201,24 @@ On **Settings** › **General**. See [Push large images](/push-large-images/).
 | `docker.direct_uploads` | `false` | **Expose the origin IP for Docker uploads**: send the layers of a push to `docker.upload_url`. It makes the IP address of the server public |
 | `docker.upload_url` | none | **Docker upload address**: the DNS-only name of the server, such as `https://upload.example.com`. Only a scheme and a host. Needed when `docker.direct_uploads` is on |
 | `docker.link_grace` | `24h` | **Unused layer grace period**: how long a layer that no image uses stays, at least `1s` |
+
+### Download links
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `links.ttl` | `1h` | **Download link lifetime**: how long a link works when it names no lifetime |
+| `links.max_ttl` | `7d` | **Longest download link lifetime**, at most `30d`. No link works longer, also one made before a change |
+| `links.secret` | made at the first link | **Download link key**: the key that signs the links, at least 32 characters. A new key ends every link made before |
+
+### Nexus migration
+
+On **Settings** › **General**, for a person with **Manage the Nexus migration**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `nexus.sync_interval` | `15m` | **Nexus sync interval**, at least `1m` |
 
 ### Storage
 
@@ -212,7 +253,8 @@ On **Settings** › **Network and proxy**. See [Trust the proxy](/run-the-server
 
 | Key | Default | What it sets |
 |---|---|---|
-| `trusted_proxies` | none | The reverse proxies that the server trusts |
+| `trusted_proxies` | none | **Trusted proxies**: the reverse proxies that the server trusts |
+| `network.probe_hosts` | none | **Address probe hosts**: two names of this server, one with only an IPv4 address and one with only an IPv6 address, such as `v4.repo.example.com` and `v6.repo.example.com`. **Add my address** on the **Access** tab of a repository uses them to add both addresses of your network |
 
 ### Edge delivery
 
@@ -220,10 +262,12 @@ On **Settings** › **Edge delivery**. See [edge delivery](https://github.com/Te
 
 | Key | Default | What it sets |
 |---|---|---|
-| `edge.enabled` | `false` | Serve downloads from a Cloudflare Worker. Needs R2 storage and a `base_url` without a path |
-| `edge.home_hint` | none | The region of the home bucket: `wnam`, `enam`, `weur`, `eeur`, `apac` or `oc`. Needed when edge delivery is on |
+| `edge.enabled` | `false` | **Edge delivery**: serve downloads from a Cloudflare Worker. Needs R2 storage and a `base_url` without a path |
+| `edge.home_hint` | none | **Home region**: the region of the home bucket, one of `wnam`, `enam`, `weur`, `eeur`, `apac` or `oc`. Needed when edge delivery is on |
 | `edge.regions` | none | The buckets in other regions, each as `<region>=<bucket>` |
-| `edge.access_ttl` | `30s` | How long the Worker keeps the access rules, `0` to 5 minutes. A change of access reaches the edge within this time |
+| `edge.access_ttl` | `30s` | **Access lifetime**: how long the Worker keeps the access rules, `0` to 5 minutes. A change of access reaches the edge within this time |
+| `edge.cloudflare_token` | none | **Cloudflare API token**: with it, the server deploys the Worker itself |
+| `edge.auto_deploy` | `true` | Deploy the Worker again when its regions, domains, storage or the server version change. Needs the token |
 
 ### Sign-in options
 
