@@ -5,46 +5,49 @@ description: Copy your Nexus 3 repositories into Telesphorepo, keep them in sync
 
 import { Steps } from '@astrojs/starlight/components';
 import NexusMove from '../../components/diagrams/NexusMove.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-The move from Nexus has three parts:
-
-1. **Copy** the repositories into Telesphorepo. This page.
-2. **Move** each project, [by hand](/move-projects-by-hand/) or [with an AI agent](/move-projects-with-an-agent/).
-3. **Switch over**, so that your builds publish to Telesphorepo.
-
-Your builds keep using Nexus until the switch-over. Telesphorepo only reads from Nexus.
+Telesphorepo copies the repositories of a Nexus 3 server and keeps the copies in sync until you switch over. Your builds keep using Nexus until the switch-over, because Telesphorepo only reads from Nexus.
 
 <NexusMove />
 
+## Before you start
+
+- A Telesphorepo account with the **Manage the Nexus migration** permission, and a Nexus account that can read every repository you copy.
+- A backup of Telesphorepo. [Back up](/back-up-and-restore/#back-up) shows how.
+
 ## Copy the repositories
+
+<Place where="In Telesphorepo" who="For a server admin" once="Once for each Nexus server" />
 
 <Steps>
 
-1. Back up Telesphorepo first. See [Back up](/back-up-and-restore/#back-up).
+1. Open **Settings** › **Nexus migration**, and click **Add a Nexus server**.
 
-2. Open **Settings › Nexus migration**, and click **Add a Nexus server**.
+2. Fill in the form, then click **Add server**. The server opens on its own page.
 
-3. Fill in the form, then click **Add server**:
+   | Field | Value |
+   |---|---|
+   | **Name** | A short name, such as `old-nexus` |
+   | **Address** | The address of Nexus, such as `https://nexus.example.com` |
+   | **Username** and **Password** | A Nexus account that can read every repository you copy |
 
-   - **Name:** a short name, such as `old-nexus`
-   - **Address:** such as `https://nexus.example.com`
-   - **Username** and **Password:** a Nexus account that can read every repository you copy
+3. In the **Repositories to copy** table, click each repository you want. A repository that cannot be copied shows the reason next to its name.
 
-4. Under **Repositories to copy**, tick each repository.
+4. In the **Name here** column, type the name the repository gets in Telesphorepo. In the **Who can download** column, choose **Public** or **Private**.
 
-5. In **Name here**, type its name in Telesphorepo. In **Who can download**, choose **Public** or **Private**.
-
-6. Click **Copy 3 repositories**. The button counts the repositories you ticked.
+5. Click **Copy 3 repositories**. The button counts the repositories you picked.
 
 </Steps>
 
-The first sync copies every file, and the page shows the progress. Then Telesphorepo checks Nexus for new files every 15 minutes. Click **Sync now** to check at once.
+<Done>Done when the status next to the server name reads **Up to date**.</Done>
+
+The first sync copies every file, and the page shows its progress. Then Telesphorepo checks Nexus for new files every 15 minutes. Click **Sync now** to check at once.
 
 ## Move your projects
 
-The copies are read only until the switch-over. Your builds can download from them now.
-
-Each project still names Nexus. Move each one [by hand](/move-projects-by-hand/) or [with an AI agent](/move-projects-with-an-agent/). The addresses change like this:
+The copies are read only until the switch-over, and your builds can download from them now. Each project still names Nexus, so each developer moves their own, [by hand](/move-projects-by-hand/) or with an [AI agent](/move-projects-with-an-agent/). The addresses change like this:
 
 | Nexus | Telesphorepo |
 |---|---|
@@ -53,27 +56,53 @@ Each project still names Nexus. Move each one [by hand](/move-projects-by-hand/)
 | `https://nexus.example.com/repository/pypi-hosted/simple/` | `https://repo.example.com/pypi/pypi-hosted/simple/` |
 | `nexus.example.com:8082/team/app:1.0` | `repo.example.com/docker-hosted/team/app:1.0` |
 
-[Repository addresses](/repository-addresses/) has every format.
+[Repository addresses](/repository-addresses/) lists every format.
+
+Publishing needs a rehearsal repository first, because a copy takes no uploads. In the row of the repository, open the actions menu and click **Rehearse publishing**. That makes a private repository named after the copy, such as `maven-releases-rehearsal`, where everyone who can publish to the copy can publish. The developers' pages say when to ask for it.
 
 ## Switch over
 
+<Place where="In Telesphorepo" who="For a server admin" />
+
+A repository switches over on its own, so the others keep copying. Switch over a repository when every project that publishes to it has rehearsed publishing on its rehearsal repository: see [Move publishing](/move-projects-by-hand/#move-publishing) and [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing).
+
 <Steps>
 
-1. In each project, set up publishing and rehearse it on a test repository. See [Move publishing](/move-projects-by-hand/#move-publishing) and [Rehearse publishing](/move-projects-by-hand/#rehearse-publishing).
+1. Stop all publishing to the repository in Nexus. A file that reaches Nexus after the final sync is not copied.
 
-2. Stop all publishing to Nexus. A file that reaches Nexus after the final sync is not copied.
+2. Open **Settings** › **Nexus migration**, then the Nexus server.
 
-3. Open the page of the Nexus server, and click **Switch over**.
+3. To switch over one repository, open the actions menu in its row and click **Switch over**. To switch over every repository that still copies, click **Switch over everything** at the top of the page.
 
-4. Read the count of failed files. Then click **Run the final sync and switch over**.
-
-5. In each project, point `telesphorepo.toml` at the real repository, and publish. See [After the switch-over](/move-projects-by-hand/#after-the-switch-over).
+4. Read what the dialog lists, such as the count of files that failed in the last sync. Then click **Run the final sync and switch over**.
 
 </Steps>
 
-After the final sync, the repositories take uploads, and Telesphorepo deletes the saved Nexus password.
+<Done>Done when the **State** of the repository reads **Switched over**.</Done>
 
-You can then delete the Nexus server: click **Delete** on its page. The repositories and their files stay.
+A switched-over repository takes uploads, and it never copies from Nexus again. When the final sync of a whole repository fails, that repository stays as it was and keeps copying: fix the cause, then switch over again. Proxies and groups need no switch-over, because they serve from Telesphorepo already.
+
+When every repository has switched over, the server reads **Switched over**, and Telesphorepo deletes the saved Nexus password. Each developer then follows [After the switch-over](/move-projects-by-hand/#after-the-switch-over). To remove the Nexus server from Telesphorepo, click **Delete** on its page. The repositories and their files stay.
+
+### Switch over a busy repository in stages
+
+<Place where="In Telesphorepo" who="For a server admin" />
+
+When many projects publish to one repository, they cannot all switch at once. Instead they move one at a time to a new repository, and the new repository merges into the copy when the last one has moved. Builds read both repositories meanwhile.
+
+<Steps>
+
+1. In the row of the repository, open the actions menu and click **Move it project by project**. Type the name of the new repository, then click the **Create** button, which carries that name. If **Also create the group** shows, keep it ticked: the group `<repository>-all` reads the new repository first and then the copy.
+
+2. Each developer sets their project up to publish to the new repository, the way [Move publishing](/move-projects-by-hand/#move-publishing) does for a rehearsal repository.
+
+3. When the last project has moved, open the actions menu again and click **Merge into** and the repository name. This needs the **All repositories** permission as well.
+
+4. On the plan page, choose for each conflict, a file that both repositories hold with different contents, which one stays. Under **Which name stays**, choose a name, then click **Start the merge** and confirm.
+
+</Steps>
+
+<Done>Done when every step on the merge page shows a green check.</Done>
 
 ## What gets copied
 
@@ -97,25 +126,19 @@ Proxies and groups work for Maven, npm, PyPI, Cargo, NuGet and Docker. Proxies a
 <details>
 <summary>Some files failed</summary>
 
-A sync goes on when a file fails. The page lists each failed file with the reason.
-
-A common reason is a release file with the same path but other bytes than the copy in Telesphorepo.
-
-Fix failed files before you switch over. After the switch-over, Telesphorepo cannot read Nexus again.
+A sync goes on when a file fails. The server page lists each failed file with the reason, under **Files that failed to copy**. A common reason is a release file with the same path but other bytes than the copy in Telesphorepo. Fix failed files before you switch over: a switched-over repository cannot read Nexus again.
 
 </details>
 
 <details>
 <summary>The final sync stopped</summary>
 
-A whole repository failed, for example because Nexus did not answer. The repositories stay read only.
-
-Fix the cause, then click **Switch over** again.
+A whole repository failed, for example because Nexus did not answer. Nothing switches over, and the repositories keep copying. Fix the cause, then switch over again.
 
 </details>
 
 <details>
-<summary>A repository cannot be ticked</summary>
+<summary>A repository cannot be picked</summary>
 
 The table shows the reason next to the repository. A repository that is offline in Nexus cannot be copied.
 
@@ -124,15 +147,13 @@ The table shows the reason next to the repository. A repository that is offline 
 <details>
 <summary>An apt repository asks for a signing key</summary>
 
-Choose the key in the **Signing key** column. Choose the Nexus key to keep the key that your machines trust already.
-
-Nexus does not give the passphrase of its key. Type it in **Passphrase of the Nexus key**, under the table.
+Choose the key in the **Signing key** column. Choose the Nexus key to keep the key that your machines trust already. Nexus does not give the passphrase of its key, so type it in **Passphrase of the Nexus key**, under the table.
 
 </details>
 
 <details>
 <summary>New files take too long to arrive</summary>
 
-Open **Settings › General**, and lower **Nexus sync interval**. The shortest is 1 minute.
+Open **Settings** › **General**, and lower **Nexus sync interval**. The shortest is 1 minute.
 
 </details>

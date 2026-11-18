@@ -6,14 +6,10 @@ description: Paste a prompt into a coding agent, and it moves a project from Nex
 import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-After the [copy from Nexus](/move-from-nexus/), each project still names Nexus. A coding agent, such as Claude Code, can move a project with you.
-
-The agent changes the files. It asks you for the few steps that need a person.
-
-To make the changes yourself, see [Move your projects by hand](/move-projects-by-hand/).
-
-## Choose the prompt
+A coding agent, such as Claude Code, moves one project from Nexus to Telesphorepo with you. It changes the files, and it asks you for the few steps that need a person.
 
 <Choice questions={[
     {key: 'ecosystem', label: 'What does the project use?', options: [
@@ -26,24 +22,23 @@ To make the changes yourself, see [Move your projects by hand](/move-projects-by
         {value: 'debian', label: 'Debian or raw files'},
     ]},
     {key: 'scope', label: 'How far do you move it now?', options: [
-        {value: 'downloads', label: 'Download addresses only'},
-        {value: 'full', label: 'Full switch-over with publishing'},
+        {value: 'downloads', label: 'Download addresses only', description: 'Publishing stays on Nexus'},
+        {value: 'full', label: 'Full switch-over with publishing', description: 'Downloads first, then publishing with the CLI'},
     ]},
 ]} />
 
-<Steps>
+## Before you start
 
-1. Copy the prompt below.
+- The [copy from Nexus](/move-from-nexus/) has run, so your repositories exist in Telesphorepo.
+- The name of each repository in Nexus and in Telesphorepo. The **Repositories** page lists them, and a lock after a name means the repository is private.
+- For the full switch-over, a server admin you can reach. The agent asks for a rehearsal repository and a CI pipeline.
+- To make the changes yourself instead, follow [Move your projects by hand](/move-projects-by-hand/).
 
-2. Fill in its first lines: your two server addresses, and the name of each repository in Nexus and in Telesphorepo. The **Repositories** page lists the names. A lock after a name means it is private.
+## Get the prompt
 
-3. Open the agent in the project folder, and paste the prompt.
+The prompt below matches your two answers. Its first lines hold the two server addresses and the repository names, which you fill in before you send it.
 
-4. Read the changes before you commit them.
-
-</Steps>
-
-<Path title="Gradle or Maven: download addresses only" ecosystem="gradle" scope="downloads">
+<Path title="Gradle or Maven: download addresses only" ecosystem="gradle" scope="downloads" level={3}>
 
 ```text title="Prompt: Gradle or Maven, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -106,7 +101,7 @@ Do this:
 
 </Path>
 
-<Path title="Gradle or Maven: full switch-over with publishing" ecosystem="gradle" scope="full">
+<Path title="Gradle or Maven: full switch-over with publishing" ecosystem="gradle" scope="full" level={3}>
 
 ```text title="Prompt: Gradle or Maven, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -236,7 +231,7 @@ Do this:
 
 </Path>
 
-<Path title="npm, pnpm, Yarn or Bun: download addresses only" ecosystem="npm" scope="downloads">
+<Path title="npm, pnpm, Yarn or Bun: download addresses only" ecosystem="npm" scope="downloads" level={3}>
 
 ```text title="Prompt: npm, pnpm, Yarn or Bun, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -299,7 +294,7 @@ Do this:
 
 </Path>
 
-<Path title="npm, pnpm, Yarn or Bun: full switch-over with publishing" ecosystem="npm" scope="full">
+<Path title="npm, pnpm, Yarn or Bun: full switch-over with publishing" ecosystem="npm" scope="full" level={3}>
 
 ```text title="Prompt: npm, pnpm, Yarn or Bun, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -422,7 +417,7 @@ Do this:
 
 </Path>
 
-<Path title="Python: download addresses only" ecosystem="python" scope="downloads">
+<Path title="Python: download addresses only" ecosystem="python" scope="downloads" level={3}>
 
 ```text title="Prompt: Python, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -484,7 +479,7 @@ Do this:
 
 </Path>
 
-<Path title="Python: full switch-over with publishing" ecosystem="python" scope="full">
+<Path title="Python: full switch-over with publishing" ecosystem="python" scope="full" level={3}>
 
 ```text title="Prompt: Python, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -603,7 +598,7 @@ Do this:
 
 </Path>
 
-<Path title="Rust and Cargo: download addresses only" ecosystem="cargo" scope="downloads">
+<Path title="Rust and Cargo: download addresses only" ecosystem="cargo" scope="downloads" level={3}>
 
 ```text title="Prompt: Rust and Cargo, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -654,7 +649,7 @@ Do this:
 
 </Path>
 
-<Path title="Rust and Cargo: full switch-over with publishing" ecosystem="cargo" scope="full">
+<Path title="Rust and Cargo: full switch-over with publishing" ecosystem="cargo" scope="full" level={3}>
 
 ```text title="Prompt: Rust and Cargo, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -759,7 +754,7 @@ Do this:
 
 </Path>
 
-<Path title=".NET and NuGet: download addresses only" ecosystem="nuget" scope="downloads">
+<Path title=".NET and NuGet: download addresses only" ecosystem="nuget" scope="downloads" level={3}>
 
 ```text title="Prompt: .NET and NuGet, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -812,7 +807,7 @@ Do this:
 
 </Path>
 
-<Path title=".NET and NuGet: full switch-over with publishing" ecosystem="nuget" scope="full">
+<Path title=".NET and NuGet: full switch-over with publishing" ecosystem="nuget" scope="full" level={3}>
 
 ```text title="Prompt: .NET and NuGet, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -920,7 +915,7 @@ Do this:
 
 </Path>
 
-<Path title="Docker and Helm: download addresses only" ecosystem="docker" scope="downloads">
+<Path title="Docker and Helm: download addresses only" ecosystem="docker" scope="downloads" level={3}>
 
 ```text title="Prompt: Docker and Helm, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -992,7 +987,7 @@ Do this:
 
 </Path>
 
-<Path title="Docker and Helm: full switch-over with publishing" ecosystem="docker" scope="full">
+<Path title="Docker and Helm: full switch-over with publishing" ecosystem="docker" scope="full" level={3}>
 
 ```text title="Prompt: Docker and Helm, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -1124,7 +1119,7 @@ Do this:
 
 </Path>
 
-<Path title="Debian or raw files: download addresses only" ecosystem="debian" scope="downloads">
+<Path title="Debian or raw files: download addresses only" ecosystem="debian" scope="downloads" level={3}>
 
 ```text title="Prompt: Debian or raw files, download addresses only"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -1181,7 +1176,7 @@ Do this:
 
 </Path>
 
-<Path title="Debian or raw files: full switch-over with publishing" ecosystem="debian" scope="full">
+<Path title="Debian or raw files: full switch-over with publishing" ecosystem="debian" scope="full" level={3}>
 
 ```text title="Prompt: Debian or raw files, full switch-over with publishing"
 Move this project from our Nexus server to Telesphorepo with me. Do every step you can. For
@@ -1294,34 +1289,62 @@ Do this:
 
 </Path>
 
-## The steps that need you
+## Run the prompt
 
-The agent asks for each step when it needs it. It waits until you say it is done.
+<Place where="In your coding agent, in the project folder" />
 
-- **Approve the computer.** Open the link that the agent gives you, and sign in. Check the code, click **Approve device**, and confirm with your second step.
-- **Make a read token**, only for a private repository. Open **Settings › Tokens**, click **New read token**, type a name, and click **Create token**. Put it in the variables that the agent names. Never paste it to the agent.
-- **Make the test repository**, for the full switch-over. Open the **Repositories** page, and click **New repository**. Make a hosted repository where your account has **Publish**.
-- **Add the CI pipeline**, for the full switch-over. A server admin adds it on **Settings › People and CI › CI pipelines**, with the values that the agent gives you. For Jenkins, see also [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
+<Steps>
 
-## After the switch-over
+1. Copy the prompt above, and fill in its first lines: your two server addresses, and the name of each repository in Nexus and in Telesphorepo.
 
-When your admin has [switched over](/move-from-nexus/#switch-over), follow the note in the agent's report:
+2. Open the agent in the project folder, paste the prompt, and send it.
+
+3. Answer the agent when it stops at a step marked ME. Tell it when you have done the step, and it goes on.
+
+4. Read the changes before you commit them.
+
+</Steps>
+
+<Done>Done when the agent's report says the project is moved, and you have read and committed its changes.</Done>
+
+### Do the steps that need you
+
+<Place where="In Telesphorepo, as the agent asks" />
+
+The agent asks for each of these when it needs it, and waits until you say it is done.
+
+- Approve the computer. Open the link that the agent gives you, and sign in. Check that the page shows the code the agent printed, click **Approve device**, and confirm with your second step.
+- Make a read token, for a private repository only. Open **Settings** › **Tokens**, click **New read token**, type a name, and click **Create token**. Put the token in the variables that the agent names, and never paste it to the agent.
+- Make the rehearsal repository, for the full switch-over. Ask your server admin to open **Settings** › **Nexus migration**, open the Nexus server, and choose **Rehearse publishing** in the actions menu of the repository's row. You can also make a hosted repository yourself, with the name the agent gives you, on **Settings** › **Repositories** with **New repository**. Your account needs **Publish** on it.
+- Add the CI pipeline, for the full switch-over. A server admin adds it on **Settings** › **CI pipelines**, with the values that the agent gives you. For Jenkins, see also [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
+
+<Path title="After the switch-over" scope="full" level={2}>
+
+When your server admin has [switched over](/move-from-nexus/#switch-over) the repository, follow the note in the agent's report. The real repository then takes uploads.
+
+<Place where="In the project folder, then in Telesphorepo" />
 
 <Steps>
 
 1. Set `repo` in `telesphorepo.toml` to the real repository.
 
-2. Check that the CI pipeline lists the real repository.
+2. If CI publishes the project, check that its CI pipeline lists the real repository.
 
-3. Publish once.
+3. Run `telesphorepo publish` once.
 
-4. Delete the test repository.
+4. Ask your server admin to delete the rehearsal repository.
 
 </Steps>
 
-## Use the skill
+<Done>Done when the **Files** tab of the real repository shows the new version.</Done>
 
-With Claude Code, you can use the skill [telesphorepo-migrate](https://github.com/Telesphorepo/Telesphorepo/tree/main/skills/telesphorepo-migrate) instead of a prompt. It asks you for the addresses and names, and finds the ecosystems in the project by itself.
+</Path>
+
+## Use the skill instead
+
+With Claude Code, the skill [telesphorepo-migrate](https://github.com/Telesphorepo/Telesphorepo/tree/main/skills/telesphorepo-migrate) replaces the prompt. It asks you for the addresses and names, and finds the ecosystems in the project by itself.
+
+<Place where="In a terminal, then in Claude Code in the project folder" />
 
 <Steps>
 
@@ -1340,3 +1363,5 @@ With Claude Code, you can use the skill [telesphorepo-migrate](https://github.co
    ```
 
 </Steps>
+
+<Done>Done when Claude Code asks you for the two server addresses.</Done>
