@@ -1,5 +1,5 @@
 ---
-title: Push large images
+title: Push large Docker images
 description: Push Docker image layers over 100 MB when Cloudflare sits in front of the server.
 ---
 
@@ -46,7 +46,7 @@ helm push mychart-0.1.0.tgz oci://upload.example.com/docker
 oras push upload.example.com/docker/team/art:1.0 file.txt
 ```
 
-## If something goes wrong
+## Troubleshooting
 
 <details>
 <summary>A push stops with `413` behind Cloudflare</summary>

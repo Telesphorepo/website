@@ -14,33 +14,33 @@ You need three things: a CI file, a CI pipeline on the server, and a job that ru
 
 [Set up the project](/publish-from-a-project/#set-up-the-project) first. A Docker repository needs no `telesphorepo.toml`: its **Publish to this repository** tab shows the CI file.
 
-<Fill />
-
 <Choice questions={[
     {key: 'from', label: 'Where does the job run?', options: [
-        {value: 'github', label: 'GitHub Actions'},
-        {value: 'jenkins-pipeline', label: 'Jenkins with a Jenkinsfile'},
-        {value: 'jenkins-freestyle', label: 'Jenkins freestyle job'},
+        {value: 'github', label: 'GitHub Actions', description: 'A workflow file in the repository'},
+        {value: 'jenkins-pipeline', label: 'Jenkinsfile', description: 'A Pipeline job that reads a Jenkinsfile'},
+        {value: 'jenkins-freestyle', label: 'Jenkins freestyle job', description: 'A job set up in the Jenkins web UI'},
     ]},
 ]} />
+
+<Fill />
 
 ## Get the CI file
 
 When the CLI asks for a CI file at setup, choose it.
 
-<Path title="GitHub Actions" from="github" level={4}>
+<Path title="GitHub Actions" from="github" level={3}>
 
 Choose **GitHub Actions**. The CLI writes `.github/workflows/publish.yml`.
 
 </Path>
 
-<Path title="Jenkins with a Jenkinsfile" from="jenkins-pipeline" level={4}>
+<Path title="Jenkins with a Jenkinsfile" from="jenkins-pipeline" level={3}>
 
 Choose **Jenkinsfile**. The CLI writes `Jenkinsfile`.
 
 </Path>
 
-<Path title="Jenkins freestyle job" from="jenkins-freestyle" level={4}>
+<Path title="Jenkins freestyle job" from="jenkins-freestyle" level={3}>
 
 Choose **Jenkins freestyle job**. The CLI prints a build step. Keep it for [the job](#set-up-the-job).
 
@@ -52,7 +52,7 @@ Commit the file with `telesphorepo.toml`, and push it.
 
 The CI pipeline says which job may publish to which repository. Send these values to your server admin.
 
-<Path title="GitHub Actions" from="github" level={4}>
+<Path title="GitHub Actions" from="github" level={3}>
 
 Put your GitHub repository in place of `your-org/your-app`.
 
@@ -68,7 +68,7 @@ If you added the publish steps to a workflow you had, send its file name, such a
 
 </Path>
 
-<Path title="Jenkins" from="jenkins-pipeline jenkins-freestyle" level={4}>
+<Path title="Jenkins" from="jenkins-pipeline jenkins-freestyle" level={3}>
 
 Put your Jenkins address and the full name of your job in their places.
 
@@ -85,13 +85,13 @@ The admin adds it as in [Add a CI pipeline](/repositories-and-access/#add-a-ci-p
 
 ## Set up Jenkins
 
-<Path title="GitHub Actions" from="github" level={4}>
+<Path title="GitHub Actions" from="github" level={3}>
 
 GitHub Actions gives each job its token. Skip this part.
 
 </Path>
 
-<Path title="Jenkins: the identity token" from="jenkins-pipeline jenkins-freestyle" level={4}>
+<Path title="Jenkins: the identity token" from="jenkins-pipeline jenkins-freestyle" level={3}>
 
 Do this once on each Jenkins.
 
@@ -114,7 +114,7 @@ Do this once on each Jenkins.
 
 ## Set up the job
 
-<Path title="GitHub Actions: the run" from="github" level={4}>
+<Path title="GitHub Actions: the run" from="github" level={3}>
 
 Push to `main`. The workflow file is the job.
 
@@ -122,7 +122,7 @@ Done when the run shows a green check on the **Actions** tab of GitHub.
 
 </Path>
 
-<Path title="Jenkins with a Jenkinsfile: the job" from="jenkins-pipeline" level={4}>
+<Path title="Jenkins with a Jenkinsfile: the job" from="jenkins-pipeline" level={3}>
 
 <Steps>
 
@@ -136,7 +136,7 @@ Done when the build log ends with `Finished: SUCCESS`.
 
 </Path>
 
-<Path title="Jenkins freestyle job: the job" from="jenkins-freestyle" level={4}>
+<Path title="Jenkins freestyle job: the job" from="jenkins-freestyle" level={3}>
 
 <Steps>
 
@@ -224,7 +224,7 @@ A freestyle job needs no file. Follow [Set up the job](#set-up-the-job).
 
 </Path>
 
-## If something goes wrong
+## Troubleshooting
 
 <details>
 <summary>The job got no identity token</summary>
@@ -284,6 +284,6 @@ Put `cd` and the subfolder before `telesphorepo publish`. The CLI prints the lin
 <details>
 <summary>`no telesphorepo.toml in this folder or above` in CI</summary>
 
-Commit `telesphorepo.toml`, and push it. If git ignores the file, see [Publish from a project](/publish-from-a-project/#if-something-goes-wrong).
+Commit `telesphorepo.toml`, and push it. If git ignores the file, see [Publish from a project](/publish-from-a-project/#troubleshooting).
 
 </details>

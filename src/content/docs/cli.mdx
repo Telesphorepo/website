@@ -1,0 +1,160 @@
+---
+title: CLI and telesphorepo.toml
+description: Every command of the Telesphorepo CLI, the keys of telesphorepo.toml, the rules that publish by version, and the variables of a CI job.
+tableOfContents:
+  maxHeadingLevel: 3
+---
+
+## CLI commands
+
+The server serves the Telesphorepo CLI of its own version. [Install the CLI](/install-cli/) from your server. Run `telesphorepo help <command>` to see its examples.
+
+| Command | What it does |
+|---|---|
+| [`setup LINK`](#setup) | Sets up the project of this folder |
+| [`publish [FILE...]`](#publish) | Publishes the project, or uploads files |
+| [`login SERVER`](#login) | Approves this computer for a server |
+| [`logout [SERVER]`](#logout) | Revokes this computer and removes its files |
+| [`status`](#status) | Shows the approvals and the project of this folder |
+| [`update [SERVER]`](#update) | Installs the CLI of the server |
+| [`version`, `help`](#cli-version-and-help) | Prints the version, or the help of a command |
+
+### setup
+
+Sets up the project of this folder from the setup line on the **Publish to this repository** tab. A setup line works once, for 10 minutes.
+
+It approves this computer and writes `telesphorepo.toml`. For a Docker repository, it adds the credential helper to the Docker config instead. On a terminal, it then offers a CI file.
+
+```sh
+telesphorepo setup 'https://repo.example.com/#/setup/trsu_...'
+telesphorepo setup 'https://repo.example.com/#/setup/trsu_...' --name "build box"
+```
+
+`--name` names the computer. The default is the host name.
+
+### publish
+
+Publishes the project of this folder with its own build tool: Maven, Gradle, npm, Python, Cargo, .NET or a Helm chart.
+
+With files, it uploads them: to a raw or Debian repository, `.nupkg` files to NuGet, or wheels and sdists to Python with no build. See [Publish from a project](/publish-from-a-project/#publish).
+
+```sh
+telesphorepo publish
+telesphorepo publish build/hello_1.0_amd64.deb
+telesphorepo publish dist/app-1.0-py3-none-any.whl
+```
+
+A Docker repository publishes with `docker push` and the credential helper.
+
+| Flag | What it does |
+|---|---|
+| `--version V` | The version that [the rules](#publish-by-version) of `telesphorepo.toml` match, in place of the one the CLI reads |
+| `--into FOLDER` | Raw: uploads into this folder, in place of `path` |
+| `--if-new` | Raw: uploads only when the path holds no file |
+| `--if-match ETAG` | Raw: uploads one file only over the file of this ETag, from a GET of it. Takes `*` for any file |
+
+When the server holds another file than `--if-new` or `--if-match` says, the CLI stores nothing and exits with code 3. Read the file again, and publish again. See [Use raw files for an updater](https://github.com/Telesphorepo/Telesphorepo/blob/main/docs/updater.md).
+
+### login
+
+Approves this computer for a server, with no project. Open the link that the CLI prints, sign in and approve the code.
+
+```sh
+telesphorepo login https://repo.example.com
+telesphorepo login https://repo.example.com --name "build box"
+```
+
+### logout
+
+Revokes the approval of this computer, and removes its files and its Docker helper entries.
+
+With no server, it uses the server of the project in this folder, else the one server of this computer.
+
+```sh
+telesphorepo logout https://repo.example.com
+```
+
+### status
+
+Shows the approvals of this computer, whether each server accepts them, the Docker helper entries, and the project of this folder. It shows no secret.
+
+```sh
+telesphorepo status
+```
+
+### update
+
+Installs the CLI of the server: the server of this project, else the one you name, else the one server of this computer. A newer CLI stays, because it works with an older server.
+
+```sh
+telesphorepo update
+```
+
+### CLI version and help
+
+```sh
+telesphorepo version
+telesphorepo help publish
+```
+
+### Files and the Docker helper
+
+- The key of each approved computer is in `~/.telesphorepo/<server>/device.json`. Only you can read it.
+- `docker-credential-telesphorepo` is the same program under the name that Docker, Podman, Helm and ORAS call.
+
+## telesphorepo.toml
+
+The project file that `telesphorepo setup` writes. Commit it: it holds no secret. The CLI finds it in this folder or a folder above.
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "releases"
+```
+
+| Key | Needed | What it sets |
+|---|---|---|
+| `server` | yes | The address of the server |
+| `repo` | yes | The repository |
+| `kind` | no | `maven` or `gradle`, when the folder holds both |
+| `path` | no | The folder in a raw repository |
+| `dist` | no | The distribution of a Debian repository |
+| `component` | no | The component of a Debian repository |
+| `[[when]]` | no | A rule that publishes some versions elsewhere. See [Publish by version](#publish-by-version) |
+
+The file names one repository. To publish to two, such as a library and a Debian package from one git repository, put a `telesphorepo.toml` in each folder and run `telesphorepo publish` in each.
+
+### Publish by version
+
+Each `[[when]]` rule names a `version` pattern and the keys it changes: `repo`, `path`, `dist` or `component`. The first rule that matches decides. A version that no rule matches goes where the keys above say. In a pattern, `*` stands for any text.
+
+```toml title="telesphorepo.toml"
+server = "https://repo.example.com"
+repo = "maven-releases"
+
+[[when]]
+version = "*-SNAPSHOT"
+repo = "maven-snapshots"
+```
+
+The CLI prints the version and the repository before it publishes. It reads the version from the project:
+
+| Project | Version |
+|---|---|
+| Gradle | `version` of the root project |
+| Maven | `project.version` |
+| npm | `version` in `package.json` |
+| Cargo | `version` in `Cargo.toml` |
+| Python | `version` in `pyproject.toml` |
+| Helm | `version` in `Chart.yaml` |
+| Files | the version in each package, such as a `.deb`. Files of different versions can go to different repositories |
+
+Raw files have no version: give one with `--version`. Each ecosystem marks a pre-release its own way, so write the pattern for yours: `*-SNAPSHOT` for Maven, `*-*` for npm pre-releases, `*~*` for a Debian version that sorts before its release.
+
+### CI variables
+
+| Variable | What it is |
+|---|---|
+| `OIDC_TOKEN` | The identity token of a Jenkins job. Its audience must be the address of the server |
+| `TELESPHOREPO_SERVER` | The server of the Docker credential helper in a CI job |
+
+A GitHub Actions job needs no variable. It needs `permissions: id-token: write`.

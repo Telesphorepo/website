@@ -1,0 +1,274 @@
+---
+title: Server commands and settings
+description: The commands of telesphorepo-server, its environment variables, every setting with its default, the server permission IDs, the HTTP API and the licenses.
+tableOfContents:
+  maxHeadingLevel: 3
+---
+
+import MovedAnchors from '../../components/qol/MovedAnchors.astro';
+
+<MovedAnchors map={{
+    'cli-commands': '/cli/',
+    'setup': '/cli/#setup',
+    'publish': '/cli/#publish',
+    'login': '/cli/#login',
+    'logout': '/cli/#logout',
+    'status': '/cli/#status',
+    'update': '/cli/#update',
+    'cli-version-and-help': '/cli/#cli-version-and-help',
+    'files-and-the-docker-helper': '/cli/#files-and-the-docker-helper',
+    'telesphorepotoml': '/cli/#telesphorepotoml',
+    'publish-by-version': '/cli/#publish-by-version',
+    'ci-variables': '/cli/#ci-variables',
+    'repository-addresses': '/repository-addresses/',
+}} />
+
+## Server commands
+
+The program `telesphorepo-server` runs the server and changes its data.
+
+In the container, put `docker exec -it telesphorepo /telesphorepo-server` in front of a command. Run `telesphorepo-server help <command>` to see its examples.
+
+| Command | What it does |
+|---|---|
+| [`serve`](#serve) | Runs the server. The default |
+| [`dev`](#dev) | Runs a local server with demo data |
+| [`user add`](#user-add) | Creates a user |
+| [`user passwd`](#user-passwd) | Sets a new password |
+| [`user reset-2fa`](#user-reset-2fa) | Removes every second factor of a user |
+| [`backup`](#backup) | Writes one backup |
+| [`restore`](#restore) | Restores a backup into an empty data folder |
+| [`version`, `help`](#version-and-help) | Prints the version, or the help of a command |
+
+### serve
+
+Runs the server. `telesphorepo-server` with no command does the same.
+
+On the first start, it creates the user `admin` and prints its password once. It also makes the signing key `default`.
+
+```sh
+telesphorepo-server serve
+```
+
+### dev
+
+Runs a local server at `http://localhost:8080`, with its data in `./.telesphorepo-dev`.
+
+The first run fills it with demo repositories, demo users and demo files. It prints the address and the passwords at every start. Delete the folder to start over.
+
+```sh
+telesphorepo-server dev
+telesphorepo-server dev --empty   # one empty public repository per format, no demo data
+```
+
+### user add
+
+Creates a user. It asks for the password twice, or reads one line from a pipe. The password needs at least 8 characters.
+
+```sh
+telesphorepo-server user add alice
+telesphorepo-server user add ops --admin   # every server permission
+echo 's3cretpass' | telesphorepo-server user add ci-bot
+```
+
+### user passwd
+
+Sets a new password and signs the user out everywhere. A single sign-on account has no password to set.
+
+```sh
+telesphorepo-server user passwd alice
+```
+
+### user reset-2fa
+
+Removes every authenticator app, passkey and recovery code of a user. The user adds a new second factor at the next sign-in.
+
+```sh
+telesphorepo-server user reset-2fa alice
+```
+
+### backup
+
+Writes one backup of the data folder (`TR_DATA_DIR`, else `./data`) into a folder. The server may keep running. See [Back up](/back-up-and-restore/#back-up).
+
+```sh
+telesphorepo-server backup /mnt/backups
+```
+
+### restore
+
+Restores a backup into an empty or missing data folder: `--data-dir`, else `TR_DATA_DIR`, else `./data`. See [Restore](/back-up-and-restore/#restore).
+
+```sh
+telesphorepo-server restore /mnt/backups/20261020T201500.123Z --data-dir /srv/tr
+```
+
+### version and help
+
+```sh
+telesphorepo-server version
+telesphorepo-server help user add
+```
+
+## Environment variables
+
+No variable is required. A change needs a restart.
+
+| Variable | Default | What it sets |
+|---|---|---|
+| `TR_DATA_DIR` | `./data`, `/data` in the image | The folder of the database, the files and the master key |
+| `TR_LISTEN` | `:8080` | The listen address |
+| `TR_MASTER_KEY` | the file `master.key` in the data folder | The key of the secret settings: 32 bytes in base64. See [Keep the master key safe](/back-up-and-restore/#keep-the-master-key-safe) |
+| `TR_BOOTSTRAP_ADMIN_USER`, `TR_BOOTSTRAP_ADMIN_PASSWORD` | `admin` and a random password | The first admin. Set both. Read only while the server has no users |
+
+Any setting below can also come from the environment. See [Force a setting](#force-a-setting).
+
+## Settings
+
+Change settings under **Settings** in the web UI. A change applies at once.
+
+Durations take values such as `15m`, `24h` or `90d`. Sizes take values such as `512MiB` or `2GiB`.
+
+### Force a setting
+
+Set `TR_` plus the key in capitals, with `_` for each `.`. The web UI then shows the setting read-only.
+
+| Key | Variable |
+|---|---|
+| `s3.bucket` | `TR_S3_BUCKET` |
+| `signin.password_login` | `TR_SIGNIN_PASSWORD_LOGIN` |
+
+A wrong value stops the server at startup. A `TR_` variable that names no setting is logged and ignored.
+
+### General
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `base_url` | none | **Public base URL**: the address that clients use. While it is empty, the first web sign-in of a person with **General settings** sets it, unless that address is `localhost` |
+| `log.level` | `info` | **Log level**: `debug`, `info`, `warn` or `error` |
+| `max_upload_size` | `2GiB` | **Max upload size**, also of one image layer |
+| `max_json_size` | `1MiB` | **Max JSON body size** of an API request |
+| `cookie.secure` | `true` | **Secure session cookie**: send it over HTTPS only |
+| `session_ttl` | `168h` | **Session lifetime** of a web sign-in |
+| `index.debounce` | `2s` | **Index rebuild delay** after a change |
+| `index.max_delay` | `30s` | **Max index rebuild delay** while changes go on |
+| `blobs.gc_grace` | `1h` | **Unused file grace period**: how long stored content that no file uses stays |
+| `upload.session_ttl` | `24h` | **Resumable upload lifetime** with no new data |
+| `tls.cert_file`, `tls.key_file` | none | **TLS certificate file** and **TLS key file** (PEM), for HTTPS in the server. Set both or neither. Turning TLS on or off applies at the next start |
+| `audit.retention` | `365d` | **Audit log retention** |
+| `nexus.sync_interval` | `15m` | **Nexus sync interval**, at least `1m`. Needs **Manage the Nexus migration** |
+
+### Publishing
+
+On **Settings** › **General**.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `publish.session_ttl` | `15m` | **Publish session lifetime**, at most `1h` |
+| `publish.device_ttl` | `90d` | **Device lifetime**: how long an approved computer can publish |
+
+### Docker
+
+On **Settings** › **General**. See [Push large images](/push-large-images/).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `docker.direct_uploads` | `false` | **Expose the origin IP for Docker uploads**: send the layers of a push to `docker.upload_url`. It makes the IP address of the server public |
+| `docker.upload_url` | none | **Docker upload address**: the DNS-only name of the server, such as `https://upload.example.com`. Only a scheme and a host. Needed when `docker.direct_uploads` is on |
+| `docker.link_grace` | `24h` | **Unused layer grace period**: how long a layer that no image uses stays, at least `1s` |
+
+### Storage
+
+On **Settings** › **Storage**. See [Store files in R2 or S3](/store-files-in-r2/).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `storage` | `fs` | **Storage type**: `fs` for a folder on the server, `s3` for a bucket (R2 and SeaweedFS are S3 buckets) |
+| `fs.root` | `blobs` in the data folder | **Folder** of the files with `fs` |
+| `s3.endpoint` | none | **Address** of the S3 API. Empty means AWS |
+| `s3.region` | none | **Region**. AWS needs it. With an address and no region, the server uses `auto` |
+| `s3.bucket` | none | **Bucket** |
+| `s3.prefix` | none | **Folder in the bucket** |
+| `s3.access_key_id`, `s3.secret_access_key` | none | **Access key ID** and **Secret access key** |
+| `s3.path_style` | `false` | **Path-style addresses**, for SeaweedFS and MinIO |
+| `s3.redirect` | `true` | **Download from the bucket**: send downloads to a signed link of the bucket |
+| `presign_ttl` | `5m` | **Download link lifetime** of a signed link |
+
+### Backups
+
+On **Settings** › **Backups**. See [Back up](/back-up-and-restore/#back-up).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `backup.dir` | `/backups` in the image, none for the program | **Folder** of the backups, an absolute path. Empty turns backups off |
+| `backup.interval` | `24h` | **Back up every**, at least `1m` |
+| `backup.keep` | `7` | **Backups to keep**, at most 1000 |
+
+### Network
+
+On **Settings** › **Network and proxy**. See [Trust the proxy](/run-the-server/#trust-the-proxy).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `trusted_proxies` | none | The reverse proxies that the server trusts |
+
+### Edge delivery
+
+On **Settings** › **Edge delivery**. See [edge delivery](https://github.com/Telesphorepo/Telesphorepo/tree/main/edge) in the source repository.
+
+| Key | Default | What it sets |
+|---|---|---|
+| `edge.enabled` | `false` | Serve downloads from a Cloudflare Worker. Needs R2 storage and a `base_url` without a path |
+| `edge.home_hint` | none | The region of the home bucket: `wnam`, `enam`, `weur`, `eeur`, `apac` or `oc`. Needed when edge delivery is on |
+| `edge.regions` | none | The buckets in other regions, each as `<region>=<bucket>` |
+| `edge.access_ttl` | `30s` | How long the Worker keeps the access rules, `0` to 5 minutes. A change of access reaches the edge within this time |
+
+### Sign-in options
+
+On **Settings** › **Sign-in options**. See [Single sign-on](/people-and-sign-in/#single-sign-on).
+
+| Key | Default | What it sets |
+|---|---|---|
+| `oidc.issuer` | none | **Provider address**. Single sign-on is on when it is set |
+| `oidc.client_id`, `oidc.client_secret` | none | **App ID** and **App secret** |
+| `oidc.redirect_url` | `base_url` + `/api/auth/oidc/callback` | **Return address** at the provider |
+| `oidc.scopes` | `openid profile email` | **Requested details** |
+| `oidc.permission_claim` | none | **Group field**: the field of the sign-in token with the groups, such as `groups` or `realm_access.roles` |
+| `oidc.permission_map` | `{}` | **Permissions by group**, such as `{"repo-admins": ["repositories.all"]}` |
+| `oidc.session_ttl` | `12h` | **Sign-in lifetime** of a single sign-on session |
+| `oidc.approval_max_age` | `5m` | **Sign-in age for approvals**: the oldest single sign-on that can approve a computer, `10s` to `1h` |
+| `signin.password_login` | `all` | **Password sign-in**: `all` for everyone, or `publishers`, so people who manage use single sign-on |
+
+### Server permission IDs
+
+`oidc.permission_map` names server permissions by ID.
+
+| ID | Permission |
+|---|---|
+| `repositories.all` | All repositories |
+| `people.manage` | Manage people |
+| `settings.general` | General settings |
+| `activity.read` | Read the audit log |
+| `storage.manage` | Manage storage |
+| `backup.manage` | Manage backups |
+| `edge.manage` | Manage edge delivery |
+| `network.manage` | Manage networks and proxy |
+| `signing.manage` | Manage signing keys |
+| `signin.manage` | Manage sign-in options |
+| `nexus.manage` | Manage the Nexus migration |
+
+## HTTP API
+
+The web UI uses a JSON API under `/api/`. Every route is in [SPEC.md](https://github.com/Telesphorepo/Telesphorepo/blob/main/SPEC.md#http-surface) in the source repository.
+
+`GET /healthz` answers `ok` when the server and its database work. Use it for health checks.
+
+## Licenses
+
+The server is [AGPL-3.0](https://github.com/Telesphorepo/Telesphorepo). The Telesphorepo CLI and its Docker credential helper are [MIT](https://github.com/Telesphorepo/Telesphorepo/tree/main/cmd/telesphorepo).
+
+Your artifacts stay yours: files that you store on the server do not fall under the AGPL.
+
+If you change the server and let other people use it over a network, offer them the source of your changed version.
