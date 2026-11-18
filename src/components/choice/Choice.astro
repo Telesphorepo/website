@@ -180,6 +180,28 @@ const script = `(() => {
         .tr-question:not([data-answered]) .tr-options {
             grid-template-columns: minmax(0, 1fr);
         }
+
+        /* After the answer, a phone shows the options as a compact row that wraps. */
+        .tr-question[data-answered] .tr-options {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .tr-question[data-answered] .tr-option {
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 2.75rem;
+            padding: 0.5rem 0.875rem;
+        }
+
+        .tr-question[data-answered] .tr-option-mark {
+            margin-top: 0;
+        }
+
+        .tr-question[data-answered] .tr-option-label {
+            font-size: 0.9375rem;
+            white-space: nowrap;
+        }
     }
 
     .tr-option {

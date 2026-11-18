@@ -1,10 +1,11 @@
 ---
 /*
- * One line of small text that names the placeholders in the commands below it: "The commands use
- * https://your-server and your-repo. Use your own". Click Use your own to open two inputs, "Your
- * server's address" and "Repository". As the reader types, the page puts the values in place of
- * https://your-server and your-repo: in the text, in each code line and in each copy button. With
- * values, the line names them and the button reads Change. Empty inputs keep the placeholders.
+ * One line of small text that names the placeholders in the commands below it: "The examples use
+ * https://your-server and your-repo. Use your own". It names only the placeholders the page holds,
+ * and shows an input only for those. Click Use your own to open the inputs, "Your server's address"
+ * and "Repository". As the reader types, the page puts the values in place of https://your-server
+ * and your-repo: in the text, in each code line and in each copy button. With values, the line
+ * names them and the button reads Change. Empty inputs keep the placeholders.
  *
  * Put it right above the first command that holds a placeholder. The values come from the address
  * (?server=&repo=), then from localStorage. Each change writes them to both, so an admin can share
@@ -58,6 +59,15 @@ const script = `(() => {
     const buttons = [...content.querySelectorAll('.expressive-code button[data-code]')]
         .map((b) => ({ b, code: b.getAttribute('data-code') }))
         .filter((x) => x.code.includes(SERVER) || x.code.includes(REPO));
+
+    // Name only the placeholders the page holds.
+    const texts = [...groups.map((g) => g.originals.join('')), ...buttons.map((x) => x.code)];
+    const present = { server: texts.some((t) => t.includes(SERVER)), repo: texts.some((t) => t.includes(REPO)) };
+    if (!present.server && !present.repo) return;
+    for (const part of root.querySelectorAll('[data-fill-part]')) {
+        const name = part.dataset.fillPart;
+        part.hidden = name === 'and' ? !(present.server && present.repo) : !present[name];
+    }
 
     const replaceAll = (s, values) => s.split(SERVER).map((part) => part.split(REPO).join(values.repo)).join(values.server);
 
@@ -123,15 +133,15 @@ const script = `(() => {
 
 <div id="tr-fill" class="tr-fill not-content" hidden>
     <p class="tr-fill-line">
-        The commands use <code data-fill-show="server">https://your-server</code> and <code data-fill-show="repo">your-repo</code>.{' '}
+        The examples use <span data-fill-part="server"><code data-fill-show="server">https://your-server</code></span><span data-fill-part="and"> and </span><span data-fill-part="repo"><code data-fill-show="repo">your-repo</code></span>.{' '}
         <button type="button" class="tr-fill-toggle" aria-expanded="false" aria-controls="tr-fill-fields">Use your own</button>
     </p>
     <div class="tr-fill-fields" id="tr-fill-fields" hidden>
-        <label>
+        <label data-fill-part="server">
             <span>Your server's address</span>
             <input id="tr-fill-server" type="url" inputmode="url" placeholder="https://repo.example.com" autocomplete="off" spellcheck="false" />
         </label>
-        <label>
+        <label data-fill-part="repo">
             <span>Repository</span>
             <input id="tr-fill-repo" type="text" placeholder="releases" autocomplete="off" spellcheck="false" />
         </label>
@@ -159,6 +169,10 @@ const script = `(() => {
         max-width: var(--tr-measure);
     }
 
+    .tr-fill [data-fill-part][hidden] {
+        display: none;
+    }
+
     .tr-fill-line code {
         padding: 0.1em 0.35em;
         border-radius: 4px;
@@ -166,9 +180,7 @@ const script = `(() => {
         color: var(--tr-body);
         font-family: var(--__sl-font-mono);
         font-size: 0.9em;
-        overflow-wrap: anywhere;
-        -webkit-box-decoration-break: clone;
-        box-decoration-break: clone;
+        white-space: nowrap;
     }
 
     .tr-fill-toggle {

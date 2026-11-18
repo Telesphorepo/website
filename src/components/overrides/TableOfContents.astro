@@ -1,7 +1,8 @@
 ---
 /*
  * Starlight's table of contents, with the page actions under the headings. A page with no section
- * shows only the page actions.
+ * shows only the page actions. While a choice hides every entry (Path.astro), the title hides too:
+ * the script checks the entries each time an answer on <html> changes.
  */
 import Default from '@astrojs/starlight/components/TableOfContents.astro';
 import PageActions from '../qol/PageActions.astro';
@@ -15,3 +16,31 @@ const { toc } = Astro.locals.starlightRoute;
         <PageActions/>
     </>
 )}
+
+<script is:inline>
+(() => {
+    const update = () => {
+        for (const nav of document.querySelectorAll('starlight-toc nav')) {
+            const title = nav.querySelector(':scope > h2');
+            if (!title) continue;
+            const visible = [...nav.querySelectorAll('li')].some((li) => getComputedStyle(li).display !== 'none');
+            title.hidden = !visible;
+        }
+    };
+    new MutationObserver(update).observe(document.documentElement, { attributes: true });
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', update);
+    else update();
+})();
+</script>
+
+<style is:global>
+    starlight-toc nav > h2[hidden] {
+        display: none;
+    }
+
+    /* With no entry above them, the page actions have no rule. */
+    .tr-page-actions:first-child,
+    starlight-toc:has(nav > h2[hidden]) ~ .tr-page-actions {
+        border-top: 0;
+    }
+</style>
