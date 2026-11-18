@@ -18,7 +18,16 @@ const { entry } = Astro.locals.starlightRoute;
 const { data } = entry;
 const { title = data.title, tagline, actions = [] } = data.hero || {};
 const notFound = entry.id === '404';
-const command = 'docker run -d -p 8080:8080 -v telesphorepo-data:/data ghcr.io/telesphorepo/telesphorepo:latest';
+const command = [
+    'docker run -d --name telesphorepo -p 8080:8080 \\',
+    '  -v telesphorepo-data:/data -v telesphorepo-backups:/backups \\',
+    '  ghcr.io/telesphorepo/telesphorepo:latest',
+].join('\n');
+const facts = [
+    ['One binary.', 'Go, with SQLite and the web UI inside. No database server and no JVM.'],
+    ['Nothing to configure first.', 'No environment variable is required. Change settings in the web UI, and they apply at once.'],
+    ['Your disk or your bucket.', 'Files go on local disk, or in Cloudflare R2, AWS S3 or SeaweedFS.'],
+];
 
 const file = { width: 720, height: 480 };
 const tCenter = { x: 40 + 22.5 * 10, y: 32 + 20 * 10 };
@@ -47,16 +56,24 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         <div class="run tr-paper">
             <p class="run-title">Run it</p>
             <div class="run-line">
-                <code>{command}</code>
+                <pre><code>{command.split('\n').map((line) => <span class="line" set:html={line.replace(/\//g, '/<wbr>')}/>)}</code></pre>
                 <button type="button" class="copy-button" data-copy-command={command}>
                     <span data-copy-label aria-live="polite">Copy</span>
                 </button>
             </div>
             <p class="run-note">
-                Then open port 8080 and sign in as admin. The first start prints the password
-                to the container log.
+                Then open <code>http://localhost:8080</code> and sign in as <code>admin</code>. The
+                password is in the log: <code>docker logs telesphorepo</code>.
             </p>
         </div>
+    )}
+
+    {!notFound && (
+        <ul class="facts">
+            {facts.map(([title, text]) => (
+                <li><strong>{title}</strong><span>{text}</span></li>
+            ))}
+        </ul>
     )}
 </div>
 
@@ -97,7 +114,8 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
             column-gap: 3rem;
         }
 
-        .run {
+        .run,
+        .facts {
             grid-column: 1 / -1;
         }
     }
@@ -109,11 +127,11 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
     }
 
     .tr-hero #_top {
-        max-width: 16ch;
+        max-width: 18ch;
         margin: 0;
-        font-size: clamp(2.375rem, 1.25rem + 4.2vw, 4.25rem);
+        font-size: clamp(2.5rem, 1.5rem + 3.6vw, 3.75rem);
         font-weight: 700;
-        line-height: 1;
+        line-height: 1.04;
         letter-spacing: -0.035em;
         text-wrap: balance;
     }
@@ -174,8 +192,20 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         display: flex;
         flex-direction: column;
         gap: 0.875rem;
+        max-width: 46rem;
         padding: 1.25rem;
         border-radius: 14px;
+    }
+
+    @media (min-width: 56rem) {
+        .run {
+            padding: 1.5rem;
+        }
+    }
+
+    .run pre {
+        margin: 0;
+        overflow-x: auto;
     }
 
     .run p {
@@ -193,19 +223,36 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         display: grid;
         grid-template-columns: minmax(0, 1fr) auto;
         gap: 0.75rem;
-        align-items: center;
-        padding: 0.75rem 0.75rem 0.75rem 1rem;
+        align-items: start;
+        padding: 0.875rem 0.75rem 0.875rem 1rem;
         border-radius: 8px;
         background-color: var(--tr-page);
         box-shadow: inset 0 1px 2px rgb(5 7 26 / 0.35);
     }
 
+    @media (max-width: 47.99rem) {
+        .run-line {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .copy-button {
+            justify-self: end;
+        }
+    }
+
+    .run-line .line {
+        display: block;
+        white-space: pre-wrap;
+    }
+
     .run-line code {
         color: var(--tr-heading);
         font-family: var(--sl-font-mono);
-        font-size: 0.875rem;
-        line-height: 1.6;
-        overflow-wrap: anywhere;
+        font-size: 0.8125rem;
+        background: none;
+        padding: 0;
+        line-height: 1.7;
+        overflow-wrap: break-word;
     }
 
     .copy-button {
@@ -246,6 +293,47 @@ const stampAt = `left: ${(tCenter.x / file.width) * 100}%; top: ${(tCenter.y / f
         color: var(--tr-body);
         font-family: var(--sl-font-mono);
         font-size: 0.8125rem;
+    }
+
+    /* Three facts under the slip: in a row from 48rem, stacked on a phone. */
+    .facts {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    @media (min-width: 48rem) {
+        .facts {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 2rem;
+        }
+    }
+
+    .facts li {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin: 0;
+        padding-top: 1rem;
+        border-top: 1px solid var(--tr-line-strong);
+    }
+
+    .facts strong {
+        color: var(--tr-heading);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
+    .facts span {
+        max-width: 24rem;
+        color: var(--tr-muted);
+        font-size: 0.9375rem;
+        line-height: 1.55;
+        text-wrap: pretty;
     }
 
     @media (prefers-reduced-motion: reduce) {

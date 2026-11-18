@@ -1,51 +1,79 @@
 ---
 title: Telesphorepo
-description: A lean, self-hosted artifact repository for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian and raw files.
+description: A self-hosted artifact repository that stays simple. One small server for Maven, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files.
 template: splash
 editUrl: false
 lastUpdated: false
 hero:
-  title: A lean, fast, secure artifact repository.
-  tagline: One binary for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian and raw files. Every publish gets a token that ends within 15 minutes.
+  title: The artifact repository that stays simple.
+  tagline: One small server for Maven, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files. It has the features you would pick, and it is free and open source.
   actions:
-    - text: Find your starting point
-      link: '#start-here'
+    - text: Quick start
+      link: /quick-start/
       variant: primary
-    - text: Source on GitHub
-      link: https://github.com/Telesphorepo/Telesphorepo
+    - text: Try the live demo
+      link: https://telesphorepo.com
       variant: secondary
 ---
 
-import { LinkCard } from '@astrojs/starlight/components';
 import Ticket from '../../components/landing/Ticket.astro';
 
 <div class="tr-split tr-section tr-flip">
 <div>
 
-## No password can publish
+## One command to publish
 
-A password or a read token can only download. Each publish gets its own token for one repository, and the token ends within 15 minutes.
+Run `telesphorepo publish`, and the CLI runs the publish command of your own build tool: `mvn deploy`, `npm publish`, `cargo publish`, `dotnet pack`, `helm push`. You set the project up once, with one line from the web UI. You add no repository address and no password to the build.
 
-One command, `telesphorepo publish`, gets the token for Gradle, Maven, npm, Python, Cargo, .NET, Helm, Debian and raw files, on your computer and in CI. Docker gets it from the same CLI.
+Run the same command in GitHub Actions and in Jenkins. Push Docker images with no `docker login`.
+
+<a class="tr-more" href="/publish-from-a-project/">Publish from your computer</a>
 
 </div>
 <figure class="tr-ticket-figure not-content">
     <Ticket
-        kind="Publish session"
-        token="trs_9c1e4b7a02f3_..."
-        rows={[['repo', 'releases'], ['via', 'device, CLI'], ['opened', '14:02:11'], ['expires', '14:17:11']]}
-        stub={['One repo', '15 min']}
-        stamp="Closed 14:03:41"
+        kind="Published"
+        token="com.example:app:1.4.2"
+        rows={[['repo', 'maven-releases'], ['by', 'alice'], ['from', 'GitHub Actions'], ['at', '14:03']]}
+        stub={['Admit', 'one']}
+        stamp="Published"
     />
-    <figcaption>An example token. The CLI closed it after a 90-second Gradle publish.</figcaption>
+    <figcaption>An example: one package, admitted.</figcaption>
 </figure>
+</div>
+
+## The features you would pick
+
+Other artifact servers carry years of features, and a price to match. Telesphorepo has the ones a team uses every week.
+
+<ul class="tr-features not-content">
+<li><a href="/use-packages/"><strong>Every repository explains itself</strong><span>Open a repository and copy the setup for your tool, with your address filled in: Maven, Gradle, npm, pip, Cargo, apt, dnf, Docker.</span></a></li>
+<li><a href="/repositories-and-access/#add-public-packages"><strong>Proxies and groups</strong><span>Keep a copy of what your builds download from Maven Central, npm or PyPI. Serve it with your own packages from one address.</span></a></li>
+<li><a href="/publish-from-ci/"><strong>CI with no stored secret</strong><span>A GitHub Actions or Jenkins job publishes as itself. There is no key to store and none to rotate.</span></a></li>
+<li><a href="/move-from-nexus/"><strong>A way out of Nexus</strong><span>Add your Nexus 3 server. Telesphorepo copies its repositories and keeps them in sync until you switch over.</span></a></li>
+<li><div><strong>Search that stays fast</strong><span>A search takes the same time with a million files as with a hundred thousand.</span></div></li>
+<li><a href="https://github.com/Telesphorepo/Telesphorepo/tree/main/edge"><strong>Downloads from a nearby region</strong><span>With Cloudflare R2, people far from the server download from a bucket near them.</span></a></li>
+<li><a href="/back-up-and-restore/"><strong>Backups built in</strong><span>The server writes a backup every day and keeps the last seven. One command restores one.</span></a></li>
+<li><a href="/people-and-sign-in/"><strong>The sign-in your company has</strong><span>Single sign-on with any OpenID Connect provider, passkeys, permissions for each repository, and an audit log.</span></a></li>
+</ul>
+
+<div class="tr-free tr-paper">
+<div>
+
+## Free, and yours to run
+
+The server is open source under AGPL-3.0, and the CLI under MIT. There are no seats, no tiers and no sales call. It runs on your machine, and your packages stay yours.
+
+<a class="tr-more" href="https://github.com/Telesphorepo/Telesphorepo">Source on GitHub</a>
+
+</div>
 </div>
 
 ## Start here
 
-<div class="tr-start not-content">
-<LinkCard title="Publish a package" description="Install the CLI, set up the project once, then run one command." href="/install-cli/" />
-<LinkCard title="Use packages in your builds" description="Point a build at a repository. The server shows the setup for your tool." href="/use-packages/" />
-<LinkCard title="Run the server" description="Start it, put it behind HTTPS, and sign in." href="/run-the-server/" />
-<LinkCard title="Move from Nexus" description="Copy your Nexus repositories, then move each project." href="/move-from-nexus/" />
+<div class="tr-entries not-content">
+<a href="/quick-start/"><span class="tr-entry-title">Quick start</span><span class="tr-entry-text">Run the server on your computer and publish a first package.</span></a>
+<a href="/install-cli/"><span class="tr-entry-title">Publish a package</span><span class="tr-entry-text">Install the CLI, set up the project once, then run one command.</span></a>
+<a href="/run-the-server/"><span class="tr-entry-title">Run it for your team</span><span class="tr-entry-text">Put the server behind HTTPS, then add repositories and people.</span></a>
+<a href="/move-from-nexus/"><span class="tr-entry-title">Move from Nexus</span><span class="tr-entry-text">Copy your Nexus repositories, then move each project.</span></a>
 </div>
