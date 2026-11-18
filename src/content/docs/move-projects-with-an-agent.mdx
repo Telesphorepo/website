@@ -34,6 +34,8 @@ A coding agent, such as Claude Code, moves one project from Nexus to Telesphorep
 - For the full switch-over, a server admin you can reach. The agent asks for a rehearsal repository and a CI pipeline.
 - To make the changes yourself instead, follow [Move your projects by hand](/move-projects-by-hand/).
 
+<Path title="The prompt" ecosystem="gradle npm python cargo nuget docker debian" scope="downloads full" level={2}>
+
 ## Get the prompt
 
 The prompt below matches your two answers. Its first lines hold the two server addresses and the repository names, which you fill in before you send it.
@@ -617,8 +619,8 @@ Do this:
 The agent asks for each of these when it needs it, and waits until you say it is done.
 
 - Approve the computer. Open the link that the agent gives you, and sign in. Check that the page shows the code the agent printed, click **Approve device**, and confirm with your second step.
-- Make a read token, for a private repository only. Open **Settings** › **Tokens**, click **New read token**, type a name, and click **Create token**. Put the token in the variables that the agent names, and never paste it to the agent.
-- Make the rehearsal repository, for the full switch-over. Ask your server admin to open **Settings** › **Nexus migration**, open the Nexus server, and choose **Rehearse publishing** in the actions menu of the repository's row. You can also make a hosted repository yourself, with the name the agent gives you, on **Settings** › **Repositories** with **New repository**. Your account needs **Publish** on it.
+- Make a read token, for a private repository only. Open the account menu at the top right, click **Your account**, then **Tokens**, and click **New read token**. Put the token in the variables that the agent names, and never paste it to the agent.
+- Make the rehearsal repository, for the full switch-over. Ask your server admin to open **Settings** › **Nexus migration**, open the Nexus server, and choose **Rehearse publishing** in the actions menu of the repository's row.
 - Add the CI pipeline, for the full switch-over. A server admin adds it on **Settings** › **CI pipelines**, with the values that the agent gives you. For Jenkins, see also [Set up Jenkins](/publish-from-ci/#set-up-jenkins).
 
 <Path title="After the switch-over" scope="full" level={2}>
@@ -640,6 +642,8 @@ When your server admin has [switched over](/move-from-nexus/#switch-over) the re
 </Steps>
 
 <Done>Done when the **Files** tab of the real repository shows the new version.</Done>
+
+</Path>
 
 </Path>
 
