@@ -82,7 +82,7 @@ export default defineConfig({
     redirects,
     integrations: [starlight({
         title: 'Telesphorepo',
-        description: 'Telesphorepo is a self-hosted artifact repository that is delightfully simple to use, and quietly sophisticated: only the features you actually want, for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files. Free and open source.',
+        description: 'Telesphorepo is a self-hosted artifact repository for Maven, Gradle, npm, Python, Cargo, NuGet, Docker, Helm, Debian, Arch, RPM and raw files. It\'s delightfully simple to use, and yet very sophisticated. Free and open source.',
         favicon: '/favicon.svg',
         social: [
             {icon: 'github', label: 'GitHub', href: 'https://github.com/Telesphorepo/Telesphorepo'},
