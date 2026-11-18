@@ -3,64 +3,34 @@ title: Publish from your computer
 description: Set up a project once, then publish it from your computer with one command.
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 import Fill from '../../components/choice/Fill.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-One person sets up each project once. After that, everyone publishes with `telesphorepo publish`.
-
-To publish from GitHub Actions or Jenkins, set up the project here first. Then go on to [Publish from CI](/publish-from-ci/).
-
-<Fill />
+Set up a project once with one line from the web UI, then publish it with `telesphorepo publish`. The CLI runs the publish command of your own build tool, so you add no repository address and no password to the build.
 
 ## Set up the project
 
-Does the project folder hold `telesphorepo.toml` already? Then someone set it up. Pull the latest commit, and go on to [Publish](#publish).
+If the project folder holds `telesphorepo.toml` already, someone set it up: pull the latest commit, and go on to [Publish](#publish). To publish from GitHub Actions or Jenkins, follow [Publish from CI](/publish-from-ci/) instead: it runs the same line.
+
+<Place where="In Telesphorepo, then in a terminal in the project folder" />
 
 <Steps>
 
-1. Open your repository in the web UI, then the **Publish to this repository** tab.
+1. In Telesphorepo, open your repository, then its **Publish to this repository** tab. Click **Set up a project**, and confirm with your second factor. The page shows the setup line: one command that installs the CLI and sets up the project.
 
-2. Click **Set up a project**, and confirm with your second factor.
+2. Copy the setup line from the page. Open a terminal in the project folder, paste the line, and press Enter. The page shows the line for the system of your browser, with a switch for the other. The line works once, for 10 minutes.
 
-3. Open a terminal in the project folder. Paste the setup line from the page, then press Enter.
-
-   <Tabs syncKey="os">
-   <TabItem label="macOS or Linux">
-
-   ```sh
-   curl -fsSL https://your-server/install.sh | sh -s -- setup 'https://your-server/#/setup/trsu_...'
-   ```
-
-   </TabItem>
-   <TabItem label="Windows">
-
-   ```powershell
-   & ([scriptblock]::Create((irm https://your-server/install.ps1))) setup 'https://your-server/#/setup/trsu_...'
-   ```
-
-   </TabItem>
-   <TabItem label="The CLI is installed">
-
-   ```sh
-   telesphorepo setup 'https://your-server/#/setup/trsu_...'
-   ```
-
-   </TabItem>
-   </Tabs>
-
-4. When the CLI asks for a CI file, choose **No CI file**.
-
-   To publish from CI too, choose **GitHub Actions**, **Jenkinsfile** or **Jenkins freestyle job**. Then follow [Publish from CI](/publish-from-ci/).
+3. The CLI approves this computer, writes `telesphorepo.toml` and asks `Add a CI file that publishes to your-repo?`. Press Enter to take `1) No CI file`. The CLI asks before it changes a file that you have.
 
 </Steps>
 
-Done when the CLI prints `publishing to your-repo` with the format and your username.
-
-The line installs the CLI, approves this computer and writes `telesphorepo.toml`. It asks before it changes a file.
+<Done>Done when the CLI prints `Wrote` and the path of `telesphorepo.toml`.</Done>
 
 ## Commit the files
 
-Commit `telesphorepo.toml` and push it. Add the CI file too, if the CLI wrote one. The files hold no secrets.
+Commit `telesphorepo.toml` and push it. The file holds no secret. Your teammates and CI read it, so they publish to the same repository.
 
 ```sh
 git add telesphorepo.toml
@@ -68,35 +38,37 @@ git commit -m "Publish to Telesphorepo"
 git push
 ```
 
-Your teammates and CI read this file, so they publish to the same repository.
-
 ## Publish
+
+<Place where="In a terminal in the project folder" />
 
 <Steps>
 
-1. In the project folder, run this.
+1. Run the publish. The CLI prints the command of your build tool, such as `mvn deploy`, then runs it.
 
    ```sh
    telesphorepo publish
    ```
 
-2. The first time, the CLI prints a link and a code. Open the link, then click **Approve device**.
+2. On a computer that a teammate set up the project from, the CLI prints `This computer has no device of` and the address of your server, then a link and a code. Open the link, check that the page shows the same code, and click **Approve device**.
 
 </Steps>
 
-Done when your build tool says the publish worked.
+<Done>Done when your build tool says the publish worked, and the **Files** tab of the repository shows the new version.</Done>
 
-The CLI runs the build tool of the project for you, and prints the command first. To see that command without a publish, run `telesphorepo status`.
-
-For a Debian or raw repository, name the files:
+To see the command without a publish, run `telesphorepo status`. For a Debian or raw repository, name the files:
 
 ```sh
 telesphorepo publish app-1.2.0.tar.gz
 ```
 
-## Send releases and snapshots to different repositories
+## Related tasks
 
-Add a rule to `telesphorepo.toml`. The CLI reads the project's version, and a version that matches the rule goes to its repository. You never edit the file for a release.
+### Send releases and snapshots to different repositories
+
+Add a rule to `telesphorepo.toml`. The CLI reads the version of the project, and a version that matches the rule goes to its repository, so you never edit the file for a release. The rules are in [Publish by version](/cli/#publish-by-version).
+
+<Fill />
 
 ```toml title="telesphorepo.toml"
 server = "https://your-server"
@@ -107,23 +79,23 @@ version = "*-SNAPSHOT"
 repo = "maven-snapshots"
 ```
 
-See [Publish by version](/cli/#publish-by-version).
-
-## Publish to more than one repository
+### Publish to more than one repository
 
 A `telesphorepo.toml` names one repository. When one git repository publishes to two, such as jars and a Debian package, give each its own folder with its own `telesphorepo.toml`, and run `telesphorepo publish` in each folder.
 
-## Push Docker images
+### Push Docker images
 
-Do this once on each computer.
+A Docker repository needs no `telesphorepo.toml`: Docker gets a token from the credential helper of the CLI at each push, so you run no `docker login`. Podman, Helm and ORAS use the same helper. Set it up once on each computer.
+
+<Place where="In Telesphorepo, then in a terminal" />
 
 <Steps>
 
-1. On a Docker repository, [set up the project](#set-up-the-project) as above.
+1. [Set up the project](#set-up-the-project) on the Docker repository, as above.
 
-2. When the CLI asks to add the credential helper to `~/.docker/config.json`, type `y`.
+2. When the CLI asks `Add the credential helper to` your Docker config file, type `y` and press Enter.
 
-3. Tag the image with your server's host name and the repository name, then push it.
+3. Tag the image with the host name of your server and the name of the repository, then push it.
 
    ```sh
    docker push your-server/your-repo/app:1.0
@@ -131,11 +103,13 @@ Do this once on each computer.
 
 </Steps>
 
-You run no `docker login`. Docker, Podman, Helm and ORAS get a token from the helper at each push.
+<Done>Done when `docker push` prints the digest of the image.</Done>
 
-## Set it up by hand
+### Set it up by hand
 
 Use this when you cannot run the setup line.
+
+<Place where="In a terminal in the project folder" />
 
 <Steps>
 
@@ -147,7 +121,7 @@ Use this when you cannot run the setup line.
    telesphorepo login https://your-server
    ```
 
-3. Create `telesphorepo.toml` in the project folder, and commit it.
+3. Create `telesphorepo.toml` in the project folder, and commit it. Some repositories need more keys, such as `path` for raw: see [telesphorepo.toml](/cli/#telesphorepotoml).
 
    ```toml title="telesphorepo.toml"
    server = "https://your-server"
@@ -156,7 +130,7 @@ Use this when you cannot run the setup line.
 
 </Steps>
 
-Some repositories need more keys, such as `path` for raw. See [telesphorepo.toml](/cli/#telesphorepotoml).
+<Done>Done when `telesphorepo status` shows the approval and the project.</Done>
 
 To publish with the build tool's own command instead, open **Set it up by hand** on the **Publish to this repository** tab.
 
@@ -179,12 +153,12 @@ Run the line in the folder that holds the project file, such as `pom.xml` or `pa
 <details>
 <summary>The setup line was used or ended</summary>
 
-A line works once, for 10 minutes. Click **Set up a project** again for a new line.
+A line works once, for 10 minutes. Click **Make another line** on the tab for a new one.
 
 </details>
 
 <details>
-<summary>The CLI says that git ignores `telesphorepo.toml`</summary>
+<summary>`Warning: git ignores telesphorepo.toml`</summary>
 
 Then CI and your teammates do not get the file. Remove the line that the warning names from `.gitignore`, or run `git add -f telesphorepo.toml`.
 
@@ -193,16 +167,14 @@ Then CI and your teammates do not get the file. Remove the line that the warning
 <details>
 <summary>No browser page opens, or it asks for two-step verification</summary>
 
-Copy the address from the terminal, and open it yourself.
-
-If the page asks for two-step verification, click **Set up two-step verification**. Add your phone app, then approve.
+Copy the address from the terminal, and open it yourself. If the page asks for two-step verification, click **Set up two-step verification**, add your phone app, then approve.
 
 </details>
 
 <details>
 <summary>The server refused the device</summary>
 
-Run `telesphorepo login https://your-server`, and approve again. An approval lasts 90 days, unless someone removes the device.
+An approval lasts 90 days, unless someone removes the device. Run `telesphorepo login https://your-server`, and approve again.
 
 </details>
 
@@ -216,7 +188,7 @@ Install the build tool of the project, such as `pnpm`, `poetry` or `dotnet`. The
 <details>
 <summary>403 when you publish</summary>
 
-You cannot publish to this repository yet. Ask your server admin for **Publish**.
+You cannot publish to this repository yet. Ask your server admin for **Publish** on it.
 
 </details>
 

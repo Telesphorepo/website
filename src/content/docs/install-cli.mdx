@@ -1,41 +1,38 @@
 ---
 title: Install the CLI
 description: Install the Telesphorepo CLI from your server on Linux, macOS or Windows, and keep it up to date.
-tableOfContents: false
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 import Choice from '../../components/choice/Choice.astro';
 import Path from '../../components/choice/Path.astro';
+import Place from '../../components/docs/Place.astro';
+import Done from '../../components/docs/Done.astro';
 
-Install the CLI once on each computer that publishes. Every publish runs through it.
+Install the CLI once on each computer that publishes. You install it from the server you publish to, so the CLI always matches that server.
 
-Install it from the server you publish to. Put your server's address in place of `https://repo.example.com`.
-
-The web UI has the same lines with your address filled in. Open the account menu, then click **Install the CLI**.
+The commands below use `https://repo.example.com`: put your server's address in its place. The web UI has the same lines with your address filled in. Open the account menu at the top right, then click **Install the CLI**.
 
 <Choice questions={[
-    {key: 'os', label: 'Which computer?', options: [
+    {key: 'os', label: 'Which computer?', detect: 'os', options: [
         {value: 'unix', label: 'macOS or Linux'},
         {value: 'windows', label: 'Windows'},
     ]},
 ]} />
 
-<Path title="macOS or Linux" os="unix">
+<Path title="macOS or Linux" os="unix" level={3}>
+
+<Place where="In a terminal" />
 
 <Steps>
 
-1. Run this in a terminal.
+1. Run the install line. It downloads the CLI from your server, checks its SHA-256, and puts it in `~/.local/bin`.
 
    ```sh
    curl -fsSL https://repo.example.com/install.sh | sh
    ```
 
-2. If the script asks to add `~/.local/bin` to your `PATH`, press Enter.
-
-   ```text
-   Add ~/.local/bin to your PATH in ~/.zshrc? [Y/n]
-   ```
+2. If the script asks `Add ~/.local/bin to your PATH in ~/.zshrc? [Y/n]`, press Enter. The name of the file follows your shell.
 
 3. Open a new terminal, and check the install.
 
@@ -47,11 +44,13 @@ The web UI has the same lines with your address filled in. Open the account menu
 
 </Path>
 
-<Path title="Windows" os="windows">
+<Path title="Windows" os="windows" level={3}>
+
+<Place where="In PowerShell" />
 
 <Steps>
 
-1. Run this in PowerShell.
+1. Run the install line. It downloads the CLI from your server, checks its SHA-256, and adds its folder to your user PATH.
 
    ```powershell
    irm https://repo.example.com/install.ps1 | iex
@@ -67,11 +66,13 @@ The web UI has the same lines with your address filled in. Open the account menu
 
 </Path>
 
-Done when the CLI prints its version. Next, [publish from a project](/publish-from-a-project/).
+<Done>Done when the CLI prints its version. Next, [publish from your computer](/publish-from-a-project/).</Done>
 
-## Install in CI
+## Related tasks
 
-Add the install line as a step before `telesphorepo publish`. Outside GitHub Actions, also put the folder on the `PATH`:
+### Install in CI
+
+The workflow files and the Jenkinsfile that the CLI writes install it already: see [Publish from CI](/publish-from-ci/). In a CI file of your own, add the install line as a step before `telesphorepo publish`. Outside GitHub Actions, also put the folder on the PATH:
 
 ```sh
 curl -fsSL https://repo.example.com/install.sh | sh
@@ -79,52 +80,40 @@ export PATH="$HOME/.local/bin:$PATH"
 telesphorepo publish
 ```
 
-The CI files that the CLI writes hold these lines already. See [Publish from CI](/publish-from-ci/).
+### Update the CLI
 
-## Update the CLI
-
-Run this after your server admin updates the server.
+Run `telesphorepo update` after your server admin updates the server. When a server needs a newer CLI, the CLI asks `Update now?` on its own. Press Enter, and the CLI updates, then runs your command again.
 
 ```sh
 telesphorepo update
 ```
 
-When a server needs a newer CLI, the CLI asks `Update now?`. Press Enter. The CLI updates, then runs your command again.
+### Download by hand
 
-## Download by hand
-
-Open the account menu, then click **Install the CLI**. The page lists the archive for your system, its SHA-256, and the commands to check and install it.
-
-The archives and a `SHA256SUMS` file are also at `https://repo.example.com/cli/`.
+Open the account menu, then click **Install the CLI**. The page lists the archive for your system, its SHA-256, and the commands to check and install it. The archives and a `SHA256SUMS` file are also at `https://repo.example.com/cli/`.
 
 ## Troubleshooting
 
 <details>
 <summary>`telesphorepo` is not found in a new terminal</summary>
 
-Run the install line again, and press Enter when the script asks about the `PATH`.
+The folder of the CLI is not on your PATH. Run the install line again, and press Enter when the script asks about the PATH. The script asks only on a terminal: without one, it prints the line and the file to add it to, and you add that line yourself.
 
-The script asks only on a terminal. Without one, it prints the line and the file to add it to. Add that line yourself.
-
-On Windows, open a new terminal. The install adds its folder to your user `PATH`.
+On Windows, open a new terminal. The install adds its folder to your user PATH, and only new terminals read it.
 
 </details>
 
 <details>
 <summary>The script says that the SHA-256 differs</summary>
 
-The script installed nothing. Run the line again.
-
-If it fails again, a proxy may cache an old file. Ask your server admin.
+The download broke, and the script installed nothing. Run the line again. If it fails again, a proxy may cache an old file: ask your server admin.
 
 </details>
 
 <details>
 <summary>The server has no CLI for your system, or no CLI downloads</summary>
 
-The server has the CLI for Linux, macOS and Windows, on x86-64 and ARM.
-
-If the page says the server has no CLI downloads, ask your server admin to install a release, or a build made with `go tool task build`.
+The server has the CLI for Linux, macOS and Windows, on x86-64 and ARM. If the page says the server has no CLI downloads, ask your server admin to install a release, or a build made with `go tool task build`.
 
 </details>
 
@@ -138,6 +127,6 @@ Run the install line again, or fix the rights of the folder that the CLI names.
 <details>
 <summary>You lost a laptop</summary>
 
-Open **Settings** › **Devices**, and revoke that laptop.
+Open **Your account** › **Devices**, and revoke that laptop.
 
 </details>

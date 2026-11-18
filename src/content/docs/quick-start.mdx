@@ -4,12 +4,23 @@ description: Run Telesphorepo on your own computer, make a repository and publis
 ---
 
 import { Steps } from '@astrojs/starlight/components';
+import Choice from '../../components/choice/Choice.astro';
+import Path from '../../components/choice/Path.astro';
 import Place from '../../components/docs/Place.astro';
 import Done from '../../components/docs/Done.astro';
 
 Run Telesphorepo on your own computer, make a repository and publish a package to it. It takes Docker and a project to publish: Maven, Gradle, npm, Python, Cargo or .NET.
 
+<Choice questions={[
+    {key: 'os', label: 'Which computer?', detect: 'os', options: [
+        {value: 'unix', label: 'macOS or Linux'},
+        {value: 'windows', label: 'Windows'},
+    ]},
+]} />
+
 ## Start the server
+
+<Path title="macOS or Linux" os="unix" level={3}>
 
 <Place where="In a terminal" />
 
@@ -30,6 +41,32 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
    ```
 
 </Steps>
+
+</Path>
+
+<Path title="Windows" os="windows" level={3}>
+
+<Place where="In PowerShell, with Docker Desktop running" />
+
+<Steps>
+
+1. Start the server. Docker keeps its data in the volume `telesphorepo-data`, and its daily backups in `telesphorepo-backups`.
+
+   ```powershell
+   docker run -d --name telesphorepo -p 8080:8080 `
+     -v telesphorepo-data:/data -v telesphorepo-backups:/backups `
+     ghcr.io/telesphorepo/telesphorepo:latest
+   ```
+
+2. Print the log of the server. On its first start, the server writes a box titled `First start: created admin user` with a `password:` line in it. Copy that password: the server shows it only once.
+
+   ```powershell
+   docker logs telesphorepo
+   ```
+
+</Steps>
+
+</Path>
 
 <Done>Done when you have the password of the user `admin`.</Done>
 
@@ -75,9 +112,11 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
 
 <Steps>
 
-1. Click the **Publish to this repository** tab, then **Set up a project**. Type the code from your authenticator app to confirm. The page shows a setup line: one command that installs the Telesphorepo CLI and sets up the project.
+1. Click the **Publish to this repository** tab, then **Set up a project**. Type the code from your authenticator app to confirm. The page shows a setup line: one command that installs the Telesphorepo CLI and sets up the project. It shows the line for the system of your browser, and a switch for the other.
 
 </Steps>
+
+<Path title="macOS or Linux" os="unix" level={3}>
 
 <Place where="In a terminal, in the project folder" />
 
@@ -94,6 +133,28 @@ Run Telesphorepo on your own computer, make a repository and publish a package t
    ```
 
 </Steps>
+
+</Path>
+
+<Path title="Windows" os="windows" level={3}>
+
+<Place where="In PowerShell, in the project folder" />
+
+<Steps>
+
+2. Copy the setup line, paste it into PowerShell, and press Enter. The line installs the CLI, approves this computer, and writes `telesphorepo.toml` into the folder.
+
+3. The CLI asks `Add a CI file that publishes to releases?` and numbers four answers. Press Enter to take `1) No CI file`. [Publish from CI](/publish-from-ci/) adds one later.
+
+4. Publish the project in the same window. The CLI runs the publish command of your build tool, such as `mvn deploy` or `npm publish`.
+
+   ```powershell
+   telesphorepo publish
+   ```
+
+</Steps>
+
+</Path>
 
 <Done>Done when the **Files** tab of the repository shows your package.</Done>
 
